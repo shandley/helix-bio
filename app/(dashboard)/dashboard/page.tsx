@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SequenceUploader } from "@/components/upload/sequence-uploader";
+import { LoadExamplesButton } from "@/components/upload/load-examples-button";
 import { Badge } from "@/components/ui/badge";
 import type { Sequence } from "@/types/database";
 
@@ -44,22 +45,26 @@ export default async function DashboardPage() {
 		.select("*")
 		.order("created_at", { ascending: false });
 	const sequences = rawSequences as Sequence[] | null;
+	const hasSequences = sequences && sequences.length > 0;
 
 	return (
 		<div className="mx-auto max-w-4xl px-4 py-8">
-			<div className="mb-8">
-				<h1 className="text-2xl font-bold tracking-tight">My Sequences</h1>
-				<p className="mt-1 text-sm text-muted-foreground">
-					Upload and manage plasmids, linear DNA, and protein sequences.
-				</p>
+			<div className="mb-8 flex items-start justify-between gap-4">
+				<div>
+					<h1 className="text-2xl font-bold tracking-tight">My Sequences</h1>
+					<p className="mt-1 text-sm text-muted-foreground">
+						Upload and manage plasmids, linear DNA, and protein sequences.
+					</p>
+				</div>
+				<LoadExamplesButton />
 			</div>
 
 			<SequenceUploader />
 
-			{sequences && sequences.length > 0 ? (
+			{hasSequences ? (
 				<div className="mt-8">
 					<h2 className="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">
-						Recent ({sequences.length})
+						Library ({sequences.length})
 					</h2>
 					<div className="grid gap-3 sm:grid-cols-2">
 						{sequences.map((seq) => (
@@ -68,9 +73,11 @@ export default async function DashboardPage() {
 					</div>
 				</div>
 			) : (
-				<p className="mt-8 text-center text-sm text-muted-foreground">
-					No sequences yet. Upload a file above to get started.
-				</p>
+				<div className="mt-8 text-center space-y-3">
+					<p className="text-sm text-muted-foreground">
+						No sequences yet. Upload a file above or load examples to get started.
+					</p>
+				</div>
 			)}
 		</div>
 	);

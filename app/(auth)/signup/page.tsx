@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 export default function SignupPage() {
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+	const [confirmedEmail, setConfirmedEmail] = useState<string | null>(null);
 
 	async function handleSubmit(formData: FormData) {
 		setLoading(true);
@@ -21,7 +22,32 @@ export default function SignupPage() {
 		if (result?.error) {
 			setError(result.error);
 			setLoading(false);
+			return;
 		}
+		if (result?.requiresConfirmation) {
+			setConfirmedEmail(result.email);
+			setLoading(false);
+		}
+	}
+
+	if (confirmedEmail) {
+		return (
+			<Card className="w-full max-w-sm">
+				<CardHeader>
+					<CardTitle>Check your email</CardTitle>
+					<CardDescription>We sent a confirmation link to {confirmedEmail}.</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<p className="text-sm text-muted-foreground">
+						Click the link in the email to activate your account. Check your spam folder if you
+						don&apos;t see it within a minute.
+					</p>
+					<Link href="/login" className={cn(buttonVariants(), "w-full justify-center")}>
+						Go to sign in
+					</Link>
+				</CardContent>
+			</Card>
+		);
 	}
 
 	return (

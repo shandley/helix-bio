@@ -2,13 +2,7 @@
 
 import { useEffect, useState } from "react";
 import SeqViz from "seqviz";
-
-const FORMAT_EXT: Record<string, string> = {
-	genbank: ".gb",
-	fasta: ".fasta",
-	dna: ".dna",
-	embl: ".embl",
-};
+import { parseGenBank, type ParsedSequence } from "@/lib/bio/parse-genbank";
 
 interface SequenceViewerProps {
 	fileUrl: string;
@@ -18,21 +12,34 @@ interface SequenceViewerProps {
 }
 
 export function SequenceViewer({ fileUrl, name, topology, fileFormat }: SequenceViewerProps) {
-	const [file, setFile] = useState<File | null>(null);
+	const [parsed, setParsed] = useState<ParsedSequence | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		const ext = FORMAT_EXT[fileFormat] ?? ".gb";
-		const filename = name.endsWith(ext) ? name : `${name}${ext}`;
-
 		fetch(fileUrl)
 			.then((r) => {
-				if (!r.ok) throw new Error("Failed to load sequence file");
-				return r.blob();
+				if (!r.ok) throw new Error(`Failed to fetch sequence (${r.status})`);
+				return r.text();
 			})
-			.then((blob) => setFile(new File([blob], filename)))
-			.catch((e) => setError(e.message));
-	}, [fileUrl, name, fileFormat]);
+			.then((text) => {
+				if (fileFormat === "genbank") {
+					setParsed(parseGenBank(text));
+				} else if (fileFormat === "fasta") {
+					// Simple FASTA: strip header, collect sequence
+					const lines = text.split("\n");
+					const seqName = lines[0]?.replace(/^>/, "").split(" ")[0] ?? name;
+					const seq = lines
+						.slice(1)
+						.join("")
+						.replace(/\s/g, "")
+						.toUpperCase();
+					setParsed({ name: seqName, seq, annotations: [], topology });
+				} else {
+					throw new Error(`Unsupported format: ${fileFormat}`);
+				}
+			})
+			.catch((e: Error) => setError(e.message));
+	}, [fileUrl, name, fileFormat, topology]);
 
 	if (error) {
 		return (
@@ -42,7 +49,7 @@ export function SequenceViewer({ fileUrl, name, topology, fileFormat }: Sequence
 		);
 	}
 
-	if (!file) {
+	if (!parsed) {
 		return (
 			<div className="flex h-full items-center justify-center text-sm text-muted-foreground">
 				Loading sequence…
@@ -50,15 +57,25 @@ export function SequenceViewer({ fileUrl, name, topology, fileFormat }: Sequence
 		);
 	}
 
+	// SeqViz AnnotationProp only allows {start, end, name, color, direction}
+	const seqvizAnnotations = parsed.annotations.map(({ start, end, name, color, direction }) => ({
+		start,
+		end,
+		name,
+		color,
+		direction,
+	}));
+
 	return (
 		<div className="h-full w-full">
 			<SeqViz
-				file={file}
+				name={parsed.name}
+				seq={parsed.seq}
+				annotations={seqvizAnnotations}
 				viewer={topology === "circular" ? "both" : "linear"}
 				style={{ height: "100%", width: "100%" }}
 				showIndex
 				showComplement
-				showAnnotations
 				enzymes={["EcoRI", "BamHI", "HindIII", "NcoI", "NheI", "XhoI", "SalI", "KpnI", "SacI", "XbaI"]}
 			/>
 		</div>

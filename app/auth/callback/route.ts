@@ -6,6 +6,12 @@ export async function GET(request: Request) {
 	const code = searchParams.get("code");
 	const next = searchParams.get("next") ?? "/dashboard";
 
+	// Supabase puts error details in query params when the link is invalid/expired
+	const errorCode = searchParams.get("error_code");
+	if (errorCode) {
+		return NextResponse.redirect(`${origin}/login?error_code=${errorCode}`);
+	}
+
 	if (code) {
 		const supabase = await createClient();
 		const { error } = await supabase.auth.exchangeCodeForSession(code);

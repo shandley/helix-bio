@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export async function login(formData: FormData) {
@@ -12,9 +13,11 @@ export async function login(formData: FormData) {
 	});
 
 	if (error) {
-		// Surface a friendlier message for the common cases
-		if (error.message.toLowerCase().includes("invalid login")) {
+		if (error.message.toLowerCase().includes("invalid login") || error.message.toLowerCase().includes("invalid credentials")) {
 			return { error: "Incorrect email or password." };
+		}
+		if (error.message.toLowerCase().includes("email not confirmed")) {
+			return { error: "Please confirm your email before signing in. Check your inbox for the confirmation link." };
 		}
 		return { error: error.message };
 	}
@@ -25,9 +28,16 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
 	const supabase = await createClient();
 
+	// Derive origin from the incoming request so this works on preview deployments too
+	const headersList = await headers();
+	const origin = headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://helix-bio.vercel.app";
+
 	const { data, error } = await supabase.auth.signUp({
 		email: formData.get("email") as string,
 		password: formData.get("password") as string,
+		options: {
+			emailRedirectTo: `${origin}/auth/callback`,
+		},
 	});
 
 	if (error) {

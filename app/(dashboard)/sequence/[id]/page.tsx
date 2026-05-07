@@ -74,6 +74,7 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 						fileUrl={fileUrl}
 						name={seq.name}
 						topology={seq.topology}
+						fileFormat={seq.file_format}
 					/>
 				) : (
 					<div className="flex h-full items-center justify-center text-sm text-muted-foreground">

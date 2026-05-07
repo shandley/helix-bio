@@ -3,25 +3,36 @@
 import { useEffect, useState } from "react";
 import SeqViz from "seqviz";
 
+const FORMAT_EXT: Record<string, string> = {
+	genbank: ".gb",
+	fasta: ".fasta",
+	dna: ".dna",
+	embl: ".embl",
+};
+
 interface SequenceViewerProps {
 	fileUrl: string;
 	name: string;
 	topology: "circular" | "linear";
+	fileFormat: string;
 }
 
-export function SequenceViewer({ fileUrl, name, topology }: SequenceViewerProps) {
+export function SequenceViewer({ fileUrl, name, topology, fileFormat }: SequenceViewerProps) {
 	const [file, setFile] = useState<File | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
+		const ext = FORMAT_EXT[fileFormat] ?? ".gb";
+		const filename = name.endsWith(ext) ? name : `${name}${ext}`;
+
 		fetch(fileUrl)
 			.then((r) => {
 				if (!r.ok) throw new Error("Failed to load sequence file");
 				return r.blob();
 			})
-			.then((blob) => setFile(new File([blob], name)))
+			.then((blob) => setFile(new File([blob], filename)))
 			.catch((e) => setError(e.message));
-	}, [fileUrl, name]);
+	}, [fileUrl, name, fileFormat]);
 
 	if (error) {
 		return (

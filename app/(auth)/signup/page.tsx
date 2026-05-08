@@ -3,12 +3,29 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signup } from "@/app/actions/auth";
-import { Button } from "@/components/ui/button";
-import { buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+
+const inputStyle: React.CSSProperties = {
+	width: "100%",
+	padding: "10px 14px",
+	fontFamily: "var(--font-karla)",
+	fontSize: "14px",
+	color: "#1c1a16",
+	background: "#faf7f2",
+	border: "1px solid #ddd8ce",
+	borderRadius: "4px",
+	outline: "none",
+	transition: "border-color 0.15s",
+};
+
+const labelStyle: React.CSSProperties = {
+	display: "block",
+	fontFamily: "var(--font-courier)",
+	fontSize: "9px",
+	letterSpacing: "0.12em",
+	textTransform: "uppercase",
+	color: "#5a5648",
+	marginBottom: "6px",
+};
 
 export default function SignupPage() {
 	const [error, setError] = useState<string | null>(null);
@@ -32,59 +49,158 @@ export default function SignupPage() {
 
 	if (confirmedEmail) {
 		return (
-			<Card className="w-full max-w-sm">
-				<CardHeader>
-					<CardTitle>Check your email</CardTitle>
-					<CardDescription>We sent a confirmation link to {confirmedEmail}.</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<p className="text-sm text-muted-foreground">
-						Click the link in the email to activate your account. Check your spam folder if you
-						don&apos;t see it within a minute.
+			<div style={{
+				width: "100%",
+				maxWidth: "380px",
+				background: "#faf7f2",
+				border: "1px solid #ddd8ce",
+				borderRadius: "4px",
+				padding: "40px 36px",
+			}}>
+				<div style={{ marginBottom: "24px", paddingBottom: "20px", borderBottom: "1px solid #ddd8ce" }}>
+					<h1 style={{
+						fontFamily: "var(--font-playfair)",
+						fontSize: "26px",
+						fontWeight: 400,
+						color: "#1c1a16",
+						letterSpacing: "-0.01em",
+						marginBottom: "6px",
+					}}>
+						Check your email
+					</h1>
+					<p style={{ fontFamily: "var(--font-karla)", fontSize: "13px", fontWeight: 300, color: "#5a5648" }}>
+						We sent a confirmation link to {confirmedEmail}.
 					</p>
-					<Link href="/login" className={cn(buttonVariants(), "w-full justify-center")}>
-						Go to sign in
-					</Link>
-				</CardContent>
-			</Card>
+				</div>
+				<p style={{ fontFamily: "var(--font-karla)", fontSize: "13px", lineHeight: 1.65, color: "#5a5648", fontWeight: 300, marginBottom: "24px" }}>
+					Click the link in the email to activate your account. Check your spam folder if you don&apos;t see it within a minute.
+				</p>
+				<Link
+					href="/login"
+					style={{
+						display: "block",
+						width: "100%",
+						padding: "12px",
+						background: "#1a4731",
+						color: "white",
+						fontFamily: "var(--font-karla)",
+						fontSize: "14px",
+						fontWeight: 500,
+						textAlign: "center",
+						textDecoration: "none",
+						borderRadius: "4px",
+						letterSpacing: "0.02em",
+					}}
+				>
+					Go to sign in
+				</Link>
+			</div>
 		);
 	}
 
 	return (
-		<Card className="w-full max-w-sm">
-			<CardHeader>
-				<CardTitle>Create account</CardTitle>
-				<CardDescription>Start visualizing and simulating DNA constructs.</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<form action={handleSubmit} className="space-y-4">
-					<div className="space-y-1.5">
-						<Label htmlFor="email">Email</Label>
-						<Input id="email" name="email" type="email" placeholder="you@lab.edu" required />
-					</div>
-					<div className="space-y-1.5">
-						<Label htmlFor="password">Password</Label>
-						<Input
-							id="password"
-							name="password"
-							type="password"
-							placeholder="8+ characters"
-							minLength={8}
-							required
-						/>
-					</div>
-					{error && <p className="text-sm text-destructive">{error}</p>}
-					<Button type="submit" className="w-full" disabled={loading}>
-						{loading ? "Creating account…" : "Create account"}
-					</Button>
-				</form>
-				<p className="mt-4 text-center text-sm text-muted-foreground">
-					Already have an account?{" "}
-					<Link href="/login" className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}>
-						Sign in
-					</Link>
+		<div style={{
+			width: "100%",
+			maxWidth: "380px",
+			background: "#faf7f2",
+			border: "1px solid #ddd8ce",
+			borderRadius: "4px",
+			padding: "40px 36px",
+		}}>
+			<div style={{ marginBottom: "32px", paddingBottom: "20px", borderBottom: "1px solid #ddd8ce" }}>
+				<h1 style={{
+					fontFamily: "var(--font-playfair)",
+					fontSize: "26px",
+					fontWeight: 400,
+					color: "#1c1a16",
+					letterSpacing: "-0.01em",
+					marginBottom: "6px",
+				}}>
+					Create account
+				</h1>
+				<p style={{ fontFamily: "var(--font-karla)", fontSize: "13px", fontWeight: 300, color: "#5a5648" }}>
+					Start visualizing and simulating DNA constructs.
 				</p>
-			</CardContent>
-		</Card>
+			</div>
+
+			<form action={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+				<div>
+					<label htmlFor="email" style={labelStyle}>Email</label>
+					<input
+						id="email"
+						name="email"
+						type="email"
+						placeholder="you@lab.edu"
+						required
+						style={inputStyle}
+						onFocus={e => { e.target.style.borderColor = "#1a4731"; }}
+						onBlur={e => { e.target.style.borderColor = "#ddd8ce"; }}
+					/>
+				</div>
+				<div>
+					<label htmlFor="password" style={labelStyle}>Password</label>
+					<input
+						id="password"
+						name="password"
+						type="password"
+						placeholder="8+ characters"
+						minLength={8}
+						required
+						style={inputStyle}
+						onFocus={e => { e.target.style.borderColor = "#1a4731"; }}
+						onBlur={e => { e.target.style.borderColor = "#ddd8ce"; }}
+					/>
+				</div>
+
+				{error && (
+					<p style={{
+						fontFamily: "var(--font-karla)",
+						fontSize: "13px",
+						color: "#8b3a2a",
+						padding: "10px 14px",
+						background: "rgba(139,58,42,0.06)",
+						border: "1px solid rgba(139,58,42,0.2)",
+						borderRadius: "4px",
+					}}>
+						{error}
+					</p>
+				)}
+
+				<button
+					type="submit"
+					disabled={loading}
+					style={{
+						width: "100%",
+						padding: "12px",
+						background: loading ? "#2d7a54" : "#1a4731",
+						color: "white",
+						fontFamily: "var(--font-karla)",
+						fontSize: "14px",
+						fontWeight: 500,
+						border: "none",
+						borderRadius: "4px",
+						cursor: loading ? "not-allowed" : "pointer",
+						letterSpacing: "0.02em",
+						transition: "opacity 0.15s",
+						opacity: loading ? 0.75 : 1,
+					}}
+				>
+					{loading ? "Creating account…" : "Create account"}
+				</button>
+			</form>
+
+			<p style={{
+				marginTop: "24px",
+				textAlign: "center",
+				fontFamily: "var(--font-karla)",
+				fontSize: "13px",
+				color: "#5a5648",
+			}}>
+				Already have an account?{" "}
+				<Link href="/login" style={{ color: "#1a4731", textDecoration: "none", borderBottom: "1px solid #1a4731" }}>
+					Sign in
+				</Link>
+			</p>
+		</div>
 	);
 }

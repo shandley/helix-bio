@@ -19,16 +19,54 @@ export function TopNav({ userEmail }: TopNavProps) {
 	const router = useRouter();
 
 	return (
-		<header className="flex h-12 shrink-0 items-center justify-between border-b border-border/40 bg-background px-4">
-			<Link href="/dashboard" className="flex items-center gap-2">
-				<span className="font-semibold tracking-tight">Ori</span>
-				<span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600">
+		<header style={{
+			height: "52px",
+			display: "flex",
+			alignItems: "center",
+			justifyContent: "space-between",
+			borderBottom: "1px solid #ddd8ce",
+			background: "rgba(245,240,232,0.97)",
+			backdropFilter: "blur(8px)",
+			padding: "0 24px",
+			flexShrink: 0,
+		}}>
+			<Link href="/dashboard" style={{ textDecoration: "none", display: "flex", alignItems: "baseline", gap: "10px" }}>
+				<span style={{
+					fontFamily: "var(--font-playfair)",
+					fontSize: "22px",
+					fontWeight: 400,
+					color: "#1c1a16",
+					letterSpacing: "-0.01em",
+				}}>
+					Ori
+				</span>
+				<span style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "9px",
+					letterSpacing: "0.12em",
+					textTransform: "uppercase",
+					color: "#1a4731",
+					border: "1px solid rgba(26,71,49,0.35)",
+					padding: "2px 7px",
+					borderRadius: "2px",
+				}}>
 					beta
 				</span>
 			</Link>
 
 			<DropdownMenu>
-				<DropdownMenuTrigger className="rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors outline-none">
+				<DropdownMenuTrigger style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "11px",
+					color: "#9a9284",
+					letterSpacing: "0.04em",
+					background: "none",
+					border: "none",
+					cursor: "pointer",
+					padding: "6px 10px",
+					borderRadius: "3px",
+					outline: "none",
+				}}>
 					{userEmail}
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-48">

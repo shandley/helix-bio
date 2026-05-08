@@ -764,13 +764,16 @@ function PreviewStep({
 					<div style={{ marginBottom: "4px", fontWeight: 600 }}>⚠ Homology arms missing — add these primer tails:</div>
 					{missingOverlaps.map((m, i) => (
 						<div key={i} style={{ marginBottom: "2px" }}>
-							{m.fragment} ({m.side}): <code style={{ background: "rgba(184,147,58,0.1)", padding: "0 3px" }}>{m.tail}</code>
+							{m.fragment} ({m.side}): <code style={{ background: "rgba(184,147,58,0.1)", padding: "0 3px" }}>{m.tail || "—"}</code>
 						</div>
 					))}
 				</div>
 			)}
 
-			<WarnList items={result.warnings ?? []} />
+			{/* For Gibson, overlap warnings are already shown above; only show non-overlap warnings */}
+			<WarnList items={(result.warnings ?? []).filter((w) =>
+				missingOverlaps.length === 0 || !w.startsWith("No ")
+			)} />
 
 			<div style={S.divider} />
 

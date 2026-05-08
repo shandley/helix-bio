@@ -2,30 +2,39 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
+// Demo plasmids are bundled as static GenBank files under public/demo/.
+// Source notes:
+//   pUC19    — sequence M77789 (NCBI), features hand-curated from NEB/literature
+//   pBR322   — J01749 (NCBI, 48 features — excellent)
+//   pACYC184 — X06403 (NCBI), TetA/CmR CDS added from sequence analysis
+//   pGEX-4T-1 — U13853 (NCBI, 11 features: CDS + rep_origin)
+//   pEGFP-N1 — U55762 (NCBI, correct 4733 bp sequence with egfp + neo CDS)
 const DEMO_PLASMIDS = [
 	{
-		accession: "L09137",
+		file: "pUC19.gb",
 		name: "pUC19",
 		note: "Common high-copy cloning vector. AmpR, lacZ-alpha, MCS. 2686 bp.",
 	},
 	{
-		accession: "J01749",
+		file: "pBR322.gb",
 		name: "pBR322",
 		note: "Classic cloning vector. AmpR + TetR. 4361 bp.",
 	},
 	{
-		accession: "X06403",
+		file: "pACYC184.gb",
 		name: "pACYC184",
 		note: "Low-copy compatible vector. CmR + TetR, p15A origin. 4245 bp.",
 	},
 	{
-		accession: "U13872",
+		file: "pGEX-4T-1.gb",
 		name: "pGEX-4T-1",
-		note: "GST fusion expression vector. AmpR, tac promoter, thrombin site.",
+		note: "GST fusion expression vector. AmpR, tac promoter, thrombin site. 4969 bp.",
 	},
 	{
-		accession: "AF177375",
+		file: "pEGFP-N1.gb",
 		name: "pEGFP-N1",
 		note: "EGFP expression vector. NeoR/KanR, CMV promoter. 4733 bp.",
 	},
@@ -55,13 +64,11 @@ function computeGC(content: string): number | null {
 	return Math.round(gc * 100) / 100;
 }
 
-async function fetchGenBank(accession: string): Promise<string | null> {
+async function loadBundledGenBank(fileName: string): Promise<string | null> {
 	try {
-		const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=${accession}&rettype=gbwithparts&retmode=text`;
-		const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-		if (!res.ok) return null;
-		const text = await res.text();
-		// Sanity-check: real GenBank records start with LOCUS
+		// public/demo/ is resolved relative to the project root at build/runtime
+		const filePath = join(process.cwd(), "public", "demo", fileName);
+		const text = await readFile(filePath, "utf-8");
 		return text.startsWith("LOCUS") ? text : null;
 	} catch {
 		return null;
@@ -75,20 +82,18 @@ export async function populateDemoSequences() {
 	} = await supabase.auth.getUser();
 	if (!user) return { error: "Not authenticated" };
 
-	// Check which demo sequences the user already has
+	// Build a map of existing demo sequences by name → id so we can upsert
 	const { data: existing } = await supabase
 		.from("sequences")
-		.select("name")
+		.select("id, name")
 		.eq("user_id", user.id);
-	const existingNames = new Set((existing ?? []).map((s) => s.name));
-
-	const toLoad = DEMO_PLASMIDS.filter((p) => !existingNames.has(p.name));
-	if (toLoad.length === 0) return { count: 0, alreadyLoaded: true };
+	const existingById = new Map((existing ?? []).map((s) => [s.name, s.id]));
 
 	let loaded = 0;
+	let updated = 0;
 
-	for (const plasmid of toLoad) {
-		const content = await fetchGenBank(plasmid.accession);
+	for (const plasmid of DEMO_PLASMIDS) {
+		const content = await loadBundledGenBank(plasmid.file);
 		if (!content) continue;
 
 		const topology = detectTopology(content);
@@ -99,6 +104,7 @@ export async function populateDemoSequences() {
 		const fileName = `${plasmid.name}.gb`;
 		const filePath = `${user.id}/demo/${fileName}`;
 
+		// Always upload fresh bundled content to storage
 		const { error: storageError } = await supabase.storage
 			.from("sequences")
 			.upload(filePath, new Blob([content], { type: "text/plain" }), {
@@ -108,23 +114,30 @@ export async function populateDemoSequences() {
 
 		if (storageError) continue;
 
-		const { error: dbError } = await supabase.from("sequences").insert({
-			user_id: user.id,
-			name: plasmid.name,
-			description,
-			topology,
-			length,
-			gc_content: gcContent,
-			file_path: filePath,
-			file_format: "genbank",
-		});
-
-		if (!dbError) loaded++;
-
-		// Be polite to NCBI — max 3 req/s without API key
-		await new Promise((r) => setTimeout(r, 400));
+		const existingId = existingById.get(plasmid.name);
+		if (existingId) {
+			// Update the existing DB record so the viewer gets the refreshed file
+			const { error } = await supabase
+				.from("sequences")
+				.update({ description, topology, length, gc_content: gcContent, file_path: filePath, file_format: "genbank" })
+				.eq("id", existingId);
+			if (!error) updated++;
+		} else {
+			const { error } = await supabase.from("sequences").insert({
+				user_id: user.id,
+				name: plasmid.name,
+				description,
+				topology,
+				length,
+				gc_content: gcContent,
+				file_path: filePath,
+				file_format: "genbank",
+			});
+			if (!error) loaded++;
+		}
 	}
 
 	revalidatePath("/dashboard");
-	return { count: loaded };
+	const total = loaded + updated;
+	return total > 0 ? { count: total } : { count: 0, alreadyLoaded: true };
 }

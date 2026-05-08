@@ -4,6 +4,12 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const ACCEPTED = [".gb", ".gbk", ".genbank", ".fa", ".fasta", ".fna", ".dna", ".embl"];
+const ACCEPTED_SET = new Set(ACCEPTED);
+
+function fileExt(name: string): string {
+	const idx = name.lastIndexOf(".");
+	return idx >= 0 ? name.slice(idx).toLowerCase() : "";
+}
 
 function UploadIcon({ color }: { color: string }) {
 	return (
@@ -44,7 +50,13 @@ export function SequenceUploader() {
 			e.preventDefault();
 			setDragging(false);
 			const file = e.dataTransfer.files[0];
-			if (file) upload(file);
+			if (!file) return;
+			const ext = fileExt(file.name);
+			if (!ACCEPTED_SET.has(ext)) {
+				setError(`Unsupported file type "${ext || file.name}". Use GenBank, FASTA, SnapGene, or EMBL.`);
+				return;
+			}
+			upload(file);
 		},
 		[upload],
 	);

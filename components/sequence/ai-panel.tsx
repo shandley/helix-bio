@@ -23,31 +23,99 @@ function TypingDots() {
 	);
 }
 
-function renderMarkdown(text: string) {
-	return text.split("\n").map((line, i, arr) => {
-		const parts = line.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-		const rendered = parts.map((part, j) => {
-			if (part.startsWith("**") && part.endsWith("**")) {
-				return <strong key={j}>{part.slice(2, -2)}</strong>;
-			}
-			if (part.startsWith("`") && part.endsWith("`")) {
-				return (
-					<code key={j} style={{
-						fontFamily: "var(--font-courier)", fontSize: "10px",
-						background: "rgba(26,71,49,0.08)", padding: "1px 4px", borderRadius: "2px",
-					}}>
-						{part.slice(1, -1)}
-					</code>
-				);
-			}
-			return part;
-		});
-		return (
-			<span key={i} style={{ display: "block", marginBottom: line === "" && i < arr.length - 1 ? "6px" : 0 }}>
-				{rendered}
-			</span>
-		);
+const inlineCodeStyle = {
+	fontFamily: "var(--font-courier)", fontSize: "10px",
+	background: "rgba(26,71,49,0.08)", padding: "1px 4px", borderRadius: "2px",
+};
+
+function renderInline(text: string): React.ReactNode[] {
+	return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, j) => {
+		if (part.startsWith("**") && part.endsWith("**"))
+			return <strong key={j}>{part.slice(2, -2)}</strong>;
+		if (part.startsWith("`") && part.endsWith("`"))
+			return <code key={j} style={inlineCodeStyle}>{part.slice(1, -1)}</code>;
+		return part;
 	});
+}
+
+function renderMarkdown(text: string): React.ReactNode[] {
+	const nodes: React.ReactNode[] = [];
+	const lines = text.split("\n");
+	let i = 0;
+
+	while (i < lines.length) {
+		const line = lines[i];
+
+		// Fenced code block
+		if (line.startsWith("```")) {
+			const codeLines: string[] = [];
+			i++;
+			while (i < lines.length && !lines[i].startsWith("```")) {
+				codeLines.push(lines[i]);
+				i++;
+			}
+			nodes.push(
+				<pre key={`cb-${i}`} style={{
+					fontFamily: "var(--font-courier)", fontSize: "10px",
+					background: "rgba(26,71,49,0.06)", border: "1px solid rgba(26,71,49,0.12)",
+					borderRadius: "3px", padding: "8px 10px", overflowX: "auto",
+					margin: "6px 0", whiteSpace: "pre-wrap", lineHeight: 1.6,
+				}}>
+					{codeLines.join("\n")}
+				</pre>
+			);
+			i++;
+			continue;
+		}
+
+		// Headings
+		if (line.startsWith("### ")) {
+			nodes.push(<p key={i} style={{ fontWeight: 600, fontSize: "11px", color: "#1c1a16", margin: "8px 0 2px" }}>{renderInline(line.slice(4))}</p>);
+			i++; continue;
+		}
+		if (line.startsWith("## ")) {
+			nodes.push(<p key={i} style={{ fontWeight: 700, fontSize: "12px", color: "#1c1a16", margin: "10px 0 2px" }}>{renderInline(line.slice(3))}</p>);
+			i++; continue;
+		}
+		if (line.startsWith("# ")) {
+			nodes.push(<p key={i} style={{ fontWeight: 700, fontSize: "13px", color: "#1c1a16", margin: "10px 0 4px" }}>{renderInline(line.slice(2))}</p>);
+			i++; continue;
+		}
+
+		// Bullet list — collect consecutive bullet lines
+		if (line.startsWith("- ") || line.startsWith("* ")) {
+			const items: React.ReactNode[] = [];
+			while (i < lines.length && (lines[i].startsWith("- ") || lines[i].startsWith("* "))) {
+				items.push(<li key={i} style={{ marginBottom: "2px" }}>{renderInline(lines[i].slice(2))}</li>);
+				i++;
+			}
+			nodes.push(<ul key={`ul-${i}`} style={{ paddingLeft: "16px", margin: "4px 0" }}>{items}</ul>);
+			continue;
+		}
+
+		// Numbered list
+		if (/^\d+\.\s/.test(line)) {
+			const items: React.ReactNode[] = [];
+			while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+				items.push(<li key={i} style={{ marginBottom: "2px" }}>{renderInline(lines[i].replace(/^\d+\.\s/, ""))}</li>);
+				i++;
+			}
+			nodes.push(<ol key={`ol-${i}`} style={{ paddingLeft: "16px", margin: "4px 0" }}>{items}</ol>);
+			continue;
+		}
+
+		// Empty line → spacer
+		if (line === "") {
+			nodes.push(<span key={i} style={{ display: "block", height: "6px" }} />);
+			i++; continue;
+		}
+
+		// Regular text
+		nodes.push(<span key={i} style={{ display: "block" }}>{renderInline(line)}</span>);
+		i++;
+	}
+
+	return nodes;
 }
 
 function MessageBubble({ msg, streaming }: { msg: ChatMessage; streaming?: boolean }) {

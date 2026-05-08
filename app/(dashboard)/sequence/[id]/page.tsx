@@ -14,6 +14,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 	return { title: data?.name ? `${data.name} — Ori` : "Ori" };
 }
 
+function formatExt(format: string): string {
+	if (format === "genbank") return ".gb";
+	if (format === "fasta") return ".fa";
+	if (format === "embl") return ".embl";
+	return ".gb";
+}
+
 function formatLength(bp: number | null) {
 	if (!bp) return "—";
 	if (bp >= 1_000_000) return `${(bp / 1_000_000).toFixed(2)} Mb`;
@@ -138,6 +145,31 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 							{seq.file_format}
 						</span>
 					</div>
+
+					{/* Divider */}
+					<div style={{ width: "1px", height: "16px", background: "#ddd8ce", flexShrink: 0 }} />
+
+					{/* Download */}
+					{fileUrl && (
+						<a
+							href={fileUrl}
+							download={`${seq.name}${formatExt(seq.file_format)}`}
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.08em",
+								textTransform: "uppercase",
+								color: "#5a5648",
+								textDecoration: "none",
+								border: "1px solid #ddd8ce",
+								padding: "3px 9px",
+								borderRadius: "2px",
+								flexShrink: 0,
+							}}
+						>
+							Download
+						</a>
+					)}
 
 					{/* Divider */}
 					<div style={{ width: "1px", height: "16px", background: "#ddd8ce", flexShrink: 0 }} />

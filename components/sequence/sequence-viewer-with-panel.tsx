@@ -7,6 +7,7 @@ import { SequenceViewer, type SeqVizSelection } from "./sequence-viewer";
 import { EnzymePanel } from "./enzyme-panel";
 import { PrimerPanel } from "./primer-panel";
 import { AIPanel } from "./ai-panel";
+import { CloningModal } from "@/components/cloning/cloning-modal";
 import type { SequenceContext } from "@/app/api/chat/route";
 
 interface SequenceViewerWithPanelProps {
@@ -113,6 +114,18 @@ export function SequenceViewerWithPanel({
 				flexDirection: "column",
 				overflow: "hidden",
 			}}>
+				{/* Clone button */}
+				<div style={{
+					padding: "8px 12px",
+					borderBottom: "1px solid #ddd8ce",
+					flexShrink: 0,
+					background: "#f5f0e8",
+					display: "flex",
+					justifyContent: "flex-end",
+				}}>
+					<CloningModal seq={parsed.seq} seqName={name} topology={topology} />
+				</div>
+
 				{/* Tab bar */}
 				<div style={{
 					display: "flex",

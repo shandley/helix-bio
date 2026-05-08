@@ -158,11 +158,8 @@ export function simulateRECloning(
 	let e2Pos: number;
 
 	if (sameEnzyme) {
-		// Single-enzyme: linearize at the first site, insert goes in one orientation
-		if (e1Sites.length < 1)
-			return { error: `${e1.name} has no site in this vector.` } as RECloningResult;
-		if (e1Sites.length === 1 && sameEnzyme) {
-			warnings.push("Single-enzyme cloning: insert may ligate in either orientation. Showing the selected orientation.");
+		if (e1Sites.length === 1) {
+			warnings.push("Single-enzyme cloning with one cut site: insert may ligate in either orientation. Showing the selected orientation.");
 		}
 		if (e1Sites.length > 1) {
 			warnings.push(`${e1.name} has ${e1Sites.length} sites; using the first two.`);
@@ -196,9 +193,8 @@ export function simulateRECloning(
 		? reverseComplement(ins)
 		: ins;
 
-	// Left junction: reconstituted at e1 site boundary
-	const leftJunction = junctionSequence(e1, e1);  // always reconstitutes e1 (vector + insert primer)
-	// Right junction: reconstituted at e2 site boundary
+	// Reconstituted junction sequences and cuttability
+	const leftJunction = junctionSequence(e1, e1);
 	const rightJunction = junctionSequence(e2, e2);
 
 	// Result: left_junction + insert + right_junction + backbone (circular)
@@ -208,10 +204,10 @@ export function simulateRECloning(
 		resultSeq,
 		productSize: resultSeq.length,
 		insertSize: ins.length,
-		leftJunction: e1.recognition,
-		rightJunction: e2.recognition,
-		leftJunctionCuttable: true,
-		rightJunctionCuttable: !sameEnzyme || e1.name === e2.name,
+		leftJunction,
+		rightJunction,
+		leftJunctionCuttable: junctionIsCuttable(e1, e1),
+		rightJunctionCuttable: junctionIsCuttable(e2, e2),
 		e1Sites,
 		e2Sites,
 		warnings,

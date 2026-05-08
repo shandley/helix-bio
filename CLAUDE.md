@@ -93,13 +93,61 @@ source /ref/sahlab/software/scott_conda/miniconda/etc/profile.d/conda.sh
 conda activate confphylo
 ```
 
-## Feature annotation database strategy
-SnapGene's moat = proprietary BLAST feature library. We build better with profile HMMs:
-1. Collect all Addgene (~200k) + iGEM Registry + NCBI RefSeq plasmid GenBank files
-2. Extract annotated features → FASTA per type
-3. MMseqs2 cluster at 80-90% identity
-4. MAFFT MSA → HMMER3 profile per cluster
-5. HMMscan any uploaded sequence → feature calls with confidence scores
-6. LLM (Claude) for novel regions and construct-level interpretation
+## Feature annotation database
 
-Data sources priority: Addgene (depositor-annotated, highest quality) > iGEM Registry > NCBI RefSeq
+**Goal**: Automatically annotate any uploaded plasmid by scanning it against a library of
+profile HMMs built from every depositor-annotated feature in public databases. This is
+Ori's core moat vs SnapGene's proprietary BLAST feature library.
+
+**Why HMMs over BLAST**: Profile HMMs capture sequence variation across a gene family,
+tolerate divergent homologs, and produce calibrated confidence scores. A single HMM for
+"CMV promoter" covers all variants; BLAST requires exact matches to stored examples.
+
+### Pipeline (scripts in `/scratch/sahlab/shandley/helix-feature-db/scripts/`)
+
+```
+01_fetch_addgene.py      → raw/addgene/*.gb         (requires Addgene credentials)
+02_fetch_igem.py         → raw/igem/*.gb             (iGEM Registry REST API, public)
+06_fetch_snapgene.py     → raw/snapgene/*.gb         (public SnapGene plasmid library)
+run_refseq_download.sh   → raw/refseq/*.gbff.gz      (NCBI FTP, public)
+
+03_extract_features.py   → features/all_features.fna + metadata.tsv
+04_cluster.sh            → clusters/ (MMseqs2 at 80% identity)
+05_build_hmms.sh         → hmm/ (MAFFT MSA → hmmbuild → hmmpress)
+
+Annotation query: hmmscan --domtblout against compressed hmm/features.hmm
+```
+
+### Data source status (as of 2026-05-08)
+
+| Source | Files | Records | Status | Notes |
+|--------|-------|---------|--------|-------|
+| SnapGene | 2,550 .gb | ~2,550 | ✅ Complete | Public library, high quality |
+| NCBI RefSeq plasmids | 8 .gbff.gz | 123,661 | ❌ Unusable | WGS annotation-only records — sequence length stored but no actual bases. `str(rec.seq)` raises `UndefinedSequenceError` on every record. Wrong file type. See note below. |
+| iGEM Registry | 11,395 .gb | ~11,000 | 🔄 Re-downloading | 110,879 total parts; job 39960873 running, ~11% done |
+| Addgene | 0 | ~200,000 | ❌ Not started | Requires login credentials; script: 01_fetch_addgene.py |
+
+### Downstream pipeline status
+
+| Step | Status | Blocker |
+|------|--------|---------|
+| Feature extraction | ❌ Broken | RefSeq: script passed `all_plasmids.gbff` (12 GB merged file) — BioPython UndefinedSequenceError. Fix: process individual `.gbff.gz` files directly with gzip support |
+| MMseqs2 clustering | ❌ Not started | Needs feature extraction |
+| MAFFT + hmmbuild | ❌ Not started | Needs clusters |
+| hmmpress (final DB) | ❌ Not started | Needs HMMs |
+
+### Key decisions & constraints
+- **RefSeq files**: Always process `raw/refseq/plasmid.*.genomic.gbff.gz` directly via gzip — never the merged `all_plasmids.gbff` (12 GB, causes BioPython to crash)
+- **Addgene auth**: `01_fetch_addgene.py` needs `ADDGENE_SESSION_ID` env var (browser cookie) or `--email`/`--password`. Without auth it falls back to catalog metadata only (IDs, no sequences). Catalog saved to `raw/addgene/catalog.tsv`.
+- **iGEM completeness**: iGEM API is slow (~2 min/100 parts), 110k parts total. Expect ~24h for full download. Many parts have no sequence (expected, ~10%).
+- **Feature deduplication**: `03_extract_features.py` deduplicates by `{accession}_{start}_{end}_{strand}` ID. Safe to re-run.
+- **Min feature length**: 20 bp. Max: 50,000 bp. Skips: source, gap, assembly_gap, primer_bind, variation.
+- **Target scale**: ~5–10M features extracted → cluster to ~100k–500k representative sequences → ~100k–500k HMM profiles
+
+### Next steps (in order)
+1. ✅ Fix `03_extract_features.py` for `.gz` RefSeq files
+2. Run feature extraction across SnapGene + RefSeq (iGEM after download finishes)
+3. Get Addgene credentials and run `01_fetch_addgene.py`
+4. Run `04_cluster.sh` (MMseqs2)
+5. Run `05_build_hmms.sh` (MAFFT + hmmbuild + hmmpress)
+6. Wire HMMscan into Ori upload pipeline

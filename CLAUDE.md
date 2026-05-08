@@ -15,6 +15,41 @@ Open-source, web-based, LLM-powered molecular biology platform.
 - **Supabase types**: Use `{ [_ in never]: never }` (NOT `Record<string, never>`) for Views/Functions/Enums or queries return `never`.
 - **SeqViz**: Pass `seq` + `annotations` props directly — do NOT use `file` prop (crashes on NCBI GenBank). Topology is controlled via `viewer` prop ("linear"/"circular"/"both"), not a `topology` prop.
 
+## Supabase CLI
+
+Linked project: `mexubhrfyfeacpnygpig` (supabase-ori-bio)
+URL: `https://mexubhrfyfeacpnygpig.supabase.co`
+Docker is NOT running locally — all operations target the remote project.
+
+### Key commands
+```bash
+# Query remote DB (use --linked flag)
+supabase db query --linked "SELECT * FROM public.sequences LIMIT 5;"
+
+# Query auth schema
+supabase db query --linked "SELECT id, email FROM auth.users;"
+
+# Push migrations to remote
+supabase db push --linked
+
+# Get API keys (anon + service_role)
+supabase --workdir . projects api-keys
+
+# List projects (● = linked)
+supabase projects list
+```
+
+### Gotchas
+- `supabase db query` defaults to local Docker — always pass `--linked` for remote
+- `supabase secrets` and `supabase auth` subcommands do NOT exist in this CLI version
+- No `--project-ref` flag on `db` commands — use `--linked` instead
+- Storage uploads and auth user creation require the service role key (in Vercel env as `SUPABASE_SERVICE_ROLE_KEY`)
+
+### Demo account
+- **Email**: `demo@ori.bio` | **Password**: `plasmids2025`
+- Pre-seeded with pUC19, pBR322, pACYC184, pGEX-4T-1, pEGFP-N1
+- Re-seed: `SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/seed-demo.ts`
+
 ## HPC (HTCF @ WashU)
 Login: `ssh shandley@login.htcf.wustl.edu`
 Scheduler: SLURM — default partition `general` (96 nodes × 24 CPU × 750GB RAM, unlimited time)

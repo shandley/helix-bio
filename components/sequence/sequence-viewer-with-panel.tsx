@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { parseGenBank, type ParsedSequence } from "@/lib/bio/parse-genbank";
 import { DEFAULT_ENZYMES } from "@/lib/bio/enzymes";
 import { SequenceViewer, type SeqVizSelection } from "./sequence-viewer";
 import { EnzymePanel } from "./enzyme-panel";
 import { PrimerPanel } from "./primer-panel";
 import { AIPanel } from "./ai-panel";
+import { DigestPanel } from "./digest-panel";
+import { ORFPanel } from "./orf-panel";
+import { SearchPanel } from "./search-panel";
 import { CloningModal } from "@/components/cloning/cloning-modal";
 import type { SequenceContext } from "@/app/api/chat/route";
+import type { SearchMatch } from "@/lib/bio/search";
 
 interface SequenceViewerWithPanelProps {
 	fileUrl: string;
@@ -18,11 +22,14 @@ interface SequenceViewerWithPanelProps {
 	gcContent: number | null;
 }
 
-type PanelTab = "enzymes" | "primers" | "ai";
+type PanelTab = "enzymes" | "primers" | "digest" | "orfs" | "search" | "ai";
 
 const TAB_LABELS: Record<PanelTab, string> = {
 	enzymes: "Enzymes",
 	primers: "Primers",
+	digest: "Digest",
+	orfs: "ORFs",
+	search: "Search",
 	ai: "Ask Ori",
 };
 
@@ -38,6 +45,11 @@ export function SequenceViewerWithPanel({
 	const [selectedEnzymes, setSelectedEnzymes] = useState<string[]>(DEFAULT_ENZYMES);
 	const [activeTab, setActiveTab] = useState<PanelTab>("enzymes");
 	const [selection, setSelection] = useState<SeqVizSelection | null>(null);
+	const [searchMatches, setSearchMatches] = useState<SearchMatch[]>([]);
+
+	const handleSearchMatches = useCallback((matches: SearchMatch[]) => {
+		setSearchMatches(matches);
+	}, []);
 
 	useEffect(() => {
 		fetch(fileUrl)
@@ -92,12 +104,28 @@ export function SequenceViewerWithPanel({
 		seq: parsed.seq,
 	};
 
+	// Merge search hit annotations into the parsed sequence for highlighting
+	const parsedWithSearch = searchMatches.length > 0 ? {
+		...parsed,
+		annotations: [
+			...parsed.annotations,
+			...searchMatches.map((m, i) => ({
+				start: m.start,
+				end: m.end,
+				name: `Hit ${i + 1}`,
+				color: "#f5a623",
+				direction: (m.strand === "+" ? 1 : -1) as 1 | -1,
+				type: "search_hit",
+			})),
+		],
+	} : parsed;
+
 	return (
 		<div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
 			{/* Sequence viewer */}
 			<div style={{ flex: 1, overflow: "hidden" }}>
 				<SequenceViewer
-					parsed={parsed}
+					parsed={parsedWithSearch}
 					topology={topology}
 					enzymes={selectedEnzymes}
 					onSelection={setSelection}
@@ -126,48 +154,59 @@ export function SequenceViewerWithPanel({
 					<CloningModal seq={parsed.seq} seqName={name} topology={topology} />
 				</div>
 
-				{/* Tab bar */}
-				<div style={{
-					display: "flex",
-					borderBottom: "1px solid #ddd8ce",
-					flexShrink: 0,
-					background: "#f5f0e8",
-				}}>
-					{(Object.keys(TAB_LABELS) as PanelTab[]).map((tab) => (
-						<button
-							key={tab}
-							onClick={() => setActiveTab(tab)}
-							style={{
-								flex: 1,
-								padding: "10px 0",
-								fontFamily: "var(--font-courier)",
-								fontSize: "8px",
-								letterSpacing: "0.1em",
-								textTransform: "uppercase",
-								color: activeTab === tab ? "#1a4731" : "#9a9284",
-								background: "none",
-								border: "none",
-								borderBottom: activeTab === tab ? "2px solid #1a4731" : "2px solid transparent",
-								cursor: "pointer",
-								transition: "color 0.1s",
-								marginBottom: "-1px",
-								position: "relative",
-							}}
-						>
-							{TAB_LABELS[tab]}
-							{tab === "primers" && selection !== null && (
-								<span style={{
-									display: "inline-block",
-									width: "4px",
-									height: "4px",
-									borderRadius: "50%",
-									background: "#b8933a",
-									marginLeft: "4px",
-									verticalAlign: "middle",
-									marginBottom: "1px",
-								}} />
-							)}
-						</button>
+				{/* Tab bar — two rows of 3 tabs each */}
+				<div style={{ flexShrink: 0, background: "#f5f0e8", borderBottom: "1px solid #ddd8ce" }}>
+					{[["enzymes", "primers", "digest"] as PanelTab[], ["orfs", "search", "ai"] as PanelTab[]].map((row, rowIdx) => (
+						<div key={rowIdx} style={{ display: "flex", borderBottom: rowIdx === 0 ? "1px solid rgba(221,216,206,0.4)" : undefined }}>
+							{row.map((tab) => (
+								<button
+									key={tab}
+									onClick={() => setActiveTab(tab)}
+									style={{
+										flex: 1,
+										padding: "8px 0",
+										fontFamily: "var(--font-courier)",
+										fontSize: "7.5px",
+										letterSpacing: "0.08em",
+										textTransform: "uppercase",
+										color: activeTab === tab ? "#1a4731" : "#9a9284",
+										background: activeTab === tab ? "rgba(26,71,49,0.05)" : "none",
+										border: "none",
+										borderBottom: activeTab === tab ? "2px solid #1a4731" : "2px solid transparent",
+										cursor: "pointer",
+										transition: "color 0.1s",
+										marginBottom: "-1px",
+										position: "relative",
+									}}
+								>
+									{TAB_LABELS[tab]}
+									{tab === "primers" && selection !== null && (
+										<span style={{
+											display: "inline-block",
+											width: "4px",
+											height: "4px",
+											borderRadius: "50%",
+											background: "#b8933a",
+											marginLeft: "4px",
+											verticalAlign: "middle",
+											marginBottom: "1px",
+										}} />
+									)}
+									{tab === "search" && searchMatches.length > 0 && (
+										<span style={{
+											display: "inline-block",
+											width: "4px",
+											height: "4px",
+											borderRadius: "50%",
+											background: "#f5a623",
+											marginLeft: "4px",
+											verticalAlign: "middle",
+											marginBottom: "1px",
+										}} />
+									)}
+								</button>
+							))}
+						</div>
 					))}
 				</div>
 
@@ -187,6 +226,19 @@ export function SequenceViewerWithPanel({
 							seqLen={parsed.seq.length}
 							selectionStart={selection?.start}
 							selectionEnd={selection?.end}
+						/>
+					)}
+					{activeTab === "digest" && (
+						<DigestPanel seq={parsed.seq} topology={topology} />
+					)}
+					{activeTab === "orfs" && (
+						<ORFPanel seq={parsed.seq} topology={topology} />
+					)}
+					{activeTab === "search" && (
+						<SearchPanel
+							seq={parsed.seq}
+							topology={topology}
+							onMatches={handleSearchMatches}
 						/>
 					)}
 					{activeTab === "ai" && (

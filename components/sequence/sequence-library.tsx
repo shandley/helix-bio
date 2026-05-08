@@ -15,9 +15,12 @@ function CircularIcon() {
 function LinearIcon() {
 	return (
 		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-label="Linear">
-			<line x1="1" y1="8" x2="15" y2="8" stroke="#8a8278" strokeWidth="1.5" strokeLinecap="round" />
-			<line x1="1" y1="5" x2="1" y2="11" stroke="#8a8278" strokeWidth="1.5" strokeLinecap="round" />
-			<line x1="15" y1="5" x2="15" y2="11" stroke="#8a8278" strokeWidth="1.5" strokeLinecap="round" />
+			{/* Horizontal bar */}
+			<line x1="2" y1="8" x2="14" y2="8" stroke="#8a8278" strokeWidth="1.5" />
+			{/* Left end cap (filled square notch) */}
+			<rect x="1" y="5.5" width="2.5" height="5" rx="0.5" fill="#8a8278" />
+			{/* Right end cap */}
+			<rect x="12.5" y="5.5" width="2.5" height="5" rx="0.5" fill="#8a8278" />
 		</svg>
 	);
 }
@@ -43,13 +46,17 @@ function GcBar({ gc }: { gc: number }) {
 }
 
 function relativeDate(dateStr: string): string {
-	const d = new Date(dateStr);
-	const days = Math.floor((Date.now() - d.getTime()) / 86_400_000);
-	if (days === 0) return "today";
+	const ms = Date.now() - new Date(dateStr).getTime();
+	const mins = Math.floor(ms / 60_000);
+	const hours = Math.floor(ms / 3_600_000);
+	const days = Math.floor(ms / 86_400_000);
+	if (mins < 2) return "just now";
+	if (mins < 60) return `${mins}m ago`;
+	if (hours < 24) return `${hours}h ago`;
 	if (days === 1) return "yesterday";
 	if (days < 7) return `${days}d ago`;
 	if (days < 30) return `${Math.floor(days / 7)}w ago`;
-	return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+	return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 function formatLength(bp: number | null): string {
@@ -68,7 +75,12 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 
 	const filtered = useMemo(() => {
 		const q = search.toLowerCase().trim();
-		const list = q ? sequences.filter((s) => s.name.toLowerCase().includes(q)) : sequences;
+		const list = q
+			? sequences.filter((s) =>
+				s.name.toLowerCase().includes(q) ||
+				s.description?.toLowerCase().includes(q)
+			)
+			: sequences;
 		return [...list].sort((a, b) => {
 			switch (sort) {
 				case "name": return a.name.localeCompare(b.name);
@@ -168,29 +180,43 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 							display: "flex",
 							alignItems: "center",
 							gap: "12px",
-							padding: "11px 16px",
+							padding: "10px 16px",
 							borderBottom: i < filtered.length - 1 ? "1px solid rgba(221,216,206,0.6)" : "none",
 							textDecoration: "none",
 						}}
 					>
 						{/* Topology icon */}
-						<span title={seq.topology} style={{ flexShrink: 0, display: "flex" }}>
+						<span title={seq.topology} style={{ flexShrink: 0, display: "flex", alignSelf: "flex-start", paddingTop: "2px" }}>
 							{seq.topology === "circular" ? <CircularIcon /> : <LinearIcon />}
 						</span>
 
-						{/* Name */}
-						<span className="sequence-row-name" style={{
-							fontFamily: "var(--font-sans)",
-							fontSize: "14px",
-							color: "#1c1a16",
-							fontWeight: 500,
-							flex: 1,
-							letterSpacing: "-0.01em",
-							overflow: "hidden",
-							textOverflow: "ellipsis",
-							whiteSpace: "nowrap",
-						}}>
-							{seq.name}
+						{/* Name + description */}
+						<span style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", gap: "2px" }}>
+							<span className="sequence-row-name" style={{
+								fontFamily: "var(--font-sans)",
+								fontSize: "14px",
+								color: "#1c1a16",
+								fontWeight: 500,
+								letterSpacing: "-0.01em",
+								overflow: "hidden",
+								textOverflow: "ellipsis",
+								whiteSpace: "nowrap",
+							}}>
+								{seq.name}
+							</span>
+							{seq.description && (
+								<span style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "10px",
+									color: "#9a9284",
+									overflow: "hidden",
+									textOverflow: "ellipsis",
+									whiteSpace: "nowrap",
+									letterSpacing: "0.01em",
+								}}>
+									{seq.description}
+								</span>
+							)}
 						</span>
 
 						{/* Format */}
@@ -204,6 +230,8 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 							padding: "2px 6px",
 							borderRadius: "2px",
 							flexShrink: 0,
+							alignSelf: "flex-start",
+							marginTop: "1px",
 						}}>
 							{seq.file_format}
 						</span>
@@ -216,15 +244,19 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 							flexShrink: 0,
 							minWidth: "56px",
 							textAlign: "right",
+							alignSelf: "flex-start",
+							paddingTop: "1px",
 						}}>
 							{formatLength(seq.length)}
 						</span>
 
 						{/* GC bar */}
-						{seq.gc_content != null
-							? <GcBar gc={seq.gc_content} />
-							: <div style={{ width: "86px", flexShrink: 0 }} />
-						}
+						<span style={{ alignSelf: "flex-start", paddingTop: "3px" }}>
+							{seq.gc_content != null
+								? <GcBar gc={seq.gc_content} />
+								: <span style={{ display: "inline-block", width: "86px" }} />
+							}
+						</span>
 
 						{/* Date */}
 						<span style={{
@@ -234,6 +266,8 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 							flexShrink: 0,
 							minWidth: "58px",
 							textAlign: "right",
+							alignSelf: "flex-start",
+							paddingTop: "2px",
 						}}>
 							{relativeDate(seq.created_at)}
 						</span>

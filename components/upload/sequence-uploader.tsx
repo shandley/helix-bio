@@ -62,7 +62,7 @@ export function SequenceUploader() {
 				alignItems: "center",
 				justifyContent: "center",
 				gap: "10px",
-				padding: "36px 24px",
+				padding: "20px 24px",
 				border: `1px ${dragging ? "solid" : "dashed"} ${dragging ? "#1a4731" : "#c8c0b4"}`,
 				borderRadius: "3px",
 				background: dragging ? "rgba(26,71,49,0.03)" : "#faf7f2",

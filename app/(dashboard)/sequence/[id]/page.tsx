@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { SequenceViewer } from "@/components/sequence/sequence-viewer";
+import { SequenceViewerWithPanel } from "@/components/sequence/sequence-viewer-with-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deleteSequence } from "@/app/actions/sequences";
@@ -70,7 +70,7 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 			{/* Viewer area */}
 			<div className="flex-1 overflow-hidden">
 				{fileUrl ? (
-					<SequenceViewer
+					<SequenceViewerWithPanel
 						fileUrl={fileUrl}
 						name={seq.name}
 						topology={seq.topology}

@@ -273,14 +273,16 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 											onChange={() => toggle(enzyme.name)}
 											style={{ marginRight: "10px", accentColor: "#1a4731", cursor: "pointer", flexShrink: 0 }}
 										/>
-										<span style={{
-											fontFamily: "var(--font-courier)",
-											fontSize: "11px",
-											color: active ? "#1c1a16" : "#5a5648",
-											fontWeight: active ? 700 : 400,
-											flex: 1,
-											letterSpacing: "0.01em",
-										}}>
+										<span
+											title={`${enzyme.recognition} · ${END_TYPE_LABEL[enzyme.endType]}`}
+											style={{
+												fontFamily: "var(--font-courier)",
+												fontSize: "11px",
+												color: active ? "#1c1a16" : "#5a5648",
+												fontWeight: active ? 700 : 400,
+												flex: 1,
+												letterSpacing: "0.01em",
+											}}>
 											{enzyme.name}
 										</span>
 										<span style={{ display: "flex", alignItems: "center", gap: "6px" }}>

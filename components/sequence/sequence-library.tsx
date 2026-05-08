@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { deleteSequence } from "@/app/actions/sequences";
 import type { Sequence } from "@/types/database";
 
 function CircularIcon() {
@@ -70,17 +72,27 @@ type SortKey = "recent" | "name" | "length" | "gc";
 const SORT_LABELS: Record<SortKey, string> = { recent: "Recent", name: "Name", length: "Length", gc: "GC%" };
 
 export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
+	const router = useRouter();
 	const [search, setSearch] = useState("");
 	const [sort, setSort] = useState<SortKey>("recent");
+	const [items, setItems] = useState<Sequence[]>(sequences);
+	const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+
+	async function handleDelete(id: string) {
+		setItems(prev => prev.filter(s => s.id !== id));
+		setPendingDelete(null);
+		await deleteSequence(id);
+		router.refresh();
+	}
 
 	const filtered = useMemo(() => {
 		const q = search.toLowerCase().trim();
 		const list = q
-			? sequences.filter((s) =>
+			? items.filter((s) =>
 				s.name.toLowerCase().includes(q) ||
 				s.description?.toLowerCase().includes(q)
 			)
-			: sequences;
+			: items;
 		return [...list].sort((a, b) => {
 			switch (sort) {
 				case "name": return a.name.localeCompare(b.name);
@@ -89,10 +101,10 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 				default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 			}
 		});
-	}, [sequences, search, sort]);
+	}, [items, search, sort]);
 
-	const totalBp = sequences.reduce((s, r) => s + (r.length ?? 0), 0);
-	const circularCount = sequences.filter((s) => s.topology === "circular").length;
+	const totalBp = items.reduce((s, r) => s + (r.length ?? 0), 0);
+	const circularCount = items.filter((s) => s.topology === "circular").length;
 	const totalFormatted = totalBp >= 1000 ? `${(totalBp / 1000).toFixed(1)} kb` : `${totalBp} bp`;
 
 	return (
@@ -271,6 +283,71 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 						}}>
 							{relativeDate(seq.created_at)}
 						</span>
+
+						{/* Delete */}
+						{pendingDelete === seq.id ? (
+							<span
+								style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}
+								onClick={e => e.preventDefault()}
+							>
+								<button
+									onClick={() => handleDelete(seq.id)}
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "8px",
+										letterSpacing: "0.08em",
+										textTransform: "uppercase",
+										color: "white",
+										background: "#8b3a2a",
+										border: "none",
+										borderRadius: "2px",
+										padding: "3px 8px",
+										cursor: "pointer",
+									}}
+								>
+									Confirm
+								</button>
+								<button
+									onClick={() => setPendingDelete(null)}
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "8px",
+										letterSpacing: "0.08em",
+										textTransform: "uppercase",
+										color: "#5a5648",
+										background: "none",
+										border: "1px solid #ddd8ce",
+										borderRadius: "2px",
+										padding: "3px 8px",
+										cursor: "pointer",
+									}}
+								>
+									Cancel
+								</button>
+							</span>
+						) : (
+							<button
+								onClick={e => { e.preventDefault(); setPendingDelete(seq.id); }}
+								className="sequence-row-delete"
+								style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "9px",
+									letterSpacing: "0.06em",
+									color: "#9a9284",
+									background: "none",
+									border: "none",
+									cursor: "pointer",
+									padding: "0",
+									flexShrink: 0,
+									opacity: 0,
+									transition: "opacity 0.1s, color 0.1s",
+								}}
+								onMouseEnter={e => { (e.target as HTMLButtonElement).style.color = "#8b3a2a"; }}
+								onMouseLeave={e => { (e.target as HTMLButtonElement).style.color = "#9a9284"; }}
+							>
+								×
+							</button>
+						)}
 					</Link>
 				))}
 			</div>

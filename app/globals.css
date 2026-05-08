@@ -143,3 +143,11 @@
 .sequence-row:hover .sequence-row-name {
   color: #1a4731 !important;
 }
+.sequence-row:hover .sequence-row-delete {
+  opacity: 1 !important;
+}
+
+/* Sequence name editable hint */
+.sequence-name-editable:hover {
+  color: #1a4731 !important;
+}

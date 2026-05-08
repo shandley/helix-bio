@@ -1,16 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
-import { login } from "@/app/actions/auth";
-
-const URL_ERROR_MESSAGES: Record<string, string> = {
-	confirmation_failed: "That confirmation link is invalid or has expired. Please sign up again to get a new one.",
-	otp_expired: "That confirmation link has expired. Please sign up again to get a new one.",
-	access_denied: "That confirmation link is no longer valid. Please sign up again.",
-};
+import { updatePassword } from "@/app/actions/auth";
 
 const inputStyle: React.CSSProperties = {
 	width: "100%",
@@ -35,22 +26,25 @@ const labelStyle: React.CSSProperties = {
 	marginBottom: "6px",
 };
 
-function LoginForm() {
-	const searchParams = useSearchParams();
-	const urlError = searchParams.get("error_code") ?? searchParams.get("error") ?? null;
-	const urlErrorMessage = urlError ? (URL_ERROR_MESSAGES[urlError] ?? "Something went wrong. Please try again.") : null;
-
-	const [error, setError] = useState<string | null>(urlErrorMessage);
+export default function ResetPasswordPage() {
 	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	async function handleSubmit(formData: FormData) {
+		const password = formData.get("password") as string;
+		const confirm = formData.get("confirm") as string;
+		if (password !== confirm) {
+			setError("Passwords do not match.");
+			return;
+		}
 		setLoading(true);
 		setError(null);
-		const result = await login(formData);
+		const result = await updatePassword(formData);
 		if (result?.error) {
 			setError(result.error);
 			setLoading(false);
 		}
+		// On success, updatePassword redirects to /dashboard
 	}
 
 	return (
@@ -62,7 +56,6 @@ function LoginForm() {
 			borderRadius: "4px",
 			padding: "40px 36px",
 		}}>
-			{/* Header */}
 			<div style={{ marginBottom: "32px", paddingBottom: "20px", borderBottom: "1px solid #ddd8ce" }}>
 				<h1 style={{
 					fontFamily: "var(--font-playfair)",
@@ -72,26 +65,22 @@ function LoginForm() {
 					letterSpacing: "-0.01em",
 					marginBottom: "6px",
 				}}>
-					Sign in
+					New password
 				</h1>
-				<p style={{
-					fontFamily: "var(--font-karla)",
-					fontSize: "13px",
-					fontWeight: 300,
-					color: "#5a5648",
-				}}>
-					Enter your email and password to continue.
+				<p style={{ fontFamily: "var(--font-karla)", fontSize: "13px", fontWeight: 300, color: "#5a5648" }}>
+					Choose a strong password for your account.
 				</p>
 			</div>
 
 			<form action={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 				<div>
-					<label htmlFor="email" style={labelStyle}>Email</label>
+					<label htmlFor="password" style={labelStyle}>New password</label>
 					<input
-						id="email"
-						name="email"
-						type="email"
-						placeholder="you@lab.edu"
+						id="password"
+						name="password"
+						type="password"
+						placeholder="8+ characters"
+						minLength={8}
 						required
 						style={inputStyle}
 						onFocus={e => { e.target.style.borderColor = "#1a4731"; }}
@@ -99,11 +88,13 @@ function LoginForm() {
 					/>
 				</div>
 				<div>
-					<label htmlFor="password" style={labelStyle}>Password</label>
+					<label htmlFor="confirm" style={labelStyle}>Confirm password</label>
 					<input
-						id="password"
-						name="password"
+						id="confirm"
+						name="confirm"
 						type="password"
+						placeholder="Repeat password"
+						minLength={8}
 						required
 						style={inputStyle}
 						onFocus={e => { e.target.style.borderColor = "#1a4731"; }}
@@ -144,36 +135,9 @@ function LoginForm() {
 						opacity: loading ? 0.75 : 1,
 					}}
 				>
-					{loading ? "Signing in…" : "Sign in"}
+					{loading ? "Saving…" : "Set new password"}
 				</button>
 			</form>
-
-			<div style={{
-				marginTop: "24px",
-				display: "flex",
-				justifyContent: "space-between",
-				fontFamily: "var(--font-karla)",
-				fontSize: "13px",
-				color: "#5a5648",
-			}}>
-				<Link href="/forgot-password" style={{ color: "#9a9284", textDecoration: "none", borderBottom: "1px solid #ddd8ce" }}>
-					Forgot password?
-				</Link>
-				<span>
-					No account?{" "}
-					<Link href="/signup" style={{ color: "#1a4731", textDecoration: "none", borderBottom: "1px solid #1a4731" }}>
-						Sign up
-					</Link>
-				</span>
-			</div>
 		</div>
-	);
-}
-
-export default function LoginPage() {
-	return (
-		<Suspense>
-			<LoginForm />
-		</Suspense>
 	);
 }

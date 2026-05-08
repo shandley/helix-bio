@@ -1,9 +1,18 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { SequenceViewerWithPanel } from "@/components/sequence/sequence-viewer-with-panel";
 import { DeleteSequenceButton } from "@/components/sequence/delete-sequence-button";
+import { SequenceNameEditor } from "@/components/sequence/sequence-name-editor";
 import type { Sequence } from "@/types/database";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+	const { id } = await params;
+	const supabase = await createClient();
+	const { data } = await supabase.from("sequences").select("name").eq("id", id).single();
+	return { title: data?.name ? `${data.name} — Ori` : "Ori" };
+}
 
 function formatLength(bp: number | null) {
 	if (!bp) return "—";
@@ -76,7 +85,6 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 							flexShrink: 0,
 							transition: "color 0.1s",
 						}}
-						onMouseOver={undefined}
 					>
 						Library
 					</Link>
@@ -89,18 +97,7 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 					}}>
 						/
 					</span>
-					<span style={{
-						fontFamily: "var(--font-playfair)",
-						fontSize: "17px",
-						fontWeight: 400,
-						color: "#1c1a16",
-						letterSpacing: "-0.01em",
-						overflow: "hidden",
-						textOverflow: "ellipsis",
-						whiteSpace: "nowrap",
-					}}>
-						{seq.name}
-					</span>
+					<SequenceNameEditor id={seq.id} name={seq.name} />
 				</div>
 
 				{/* Right: metadata + delete */}

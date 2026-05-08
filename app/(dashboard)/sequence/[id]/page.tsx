@@ -1,16 +1,33 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SequenceViewerWithPanel } from "@/components/sequence/sequence-viewer-with-panel";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { deleteSequence } from "@/app/actions/sequences";
+import { DeleteSequenceButton } from "@/components/sequence/delete-sequence-button";
 import type { Sequence } from "@/types/database";
 
 function formatLength(bp: number | null) {
 	if (!bp) return "—";
+	if (bp >= 1_000_000) return `${(bp / 1_000_000).toFixed(2)} Mb`;
 	if (bp >= 1000) return `${(bp / 1000).toFixed(1)} kb`;
 	return `${bp} bp`;
+}
+
+function CircularIcon() {
+	return (
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-label="Circular" style={{ flexShrink: 0 }}>
+			<circle cx="8" cy="8" r="5.5" stroke="#8a8278" strokeWidth="1.5" />
+		</svg>
+	);
+}
+
+function LinearIcon() {
+	return (
+		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-label="Linear" style={{ flexShrink: 0 }}>
+			<line x1="2" y1="8" x2="14" y2="8" stroke="#8a8278" strokeWidth="1.5" />
+			<rect x="1" y="5.5" width="2.5" height="5" rx="0.5" fill="#8a8278" />
+			<rect x="12.5" y="5.5" width="2.5" height="5" rx="0.5" fill="#8a8278" />
+		</svg>
+	);
 }
 
 export default async function SequencePage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,7 +36,6 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 
 	const { data: rawSeq } = await supabase.from("sequences").select("*").eq("id", id).single();
 	const seq = rawSeq as Sequence | null;
-
 	if (!seq) notFound();
 
 	let fileUrl: string | null = null;
@@ -30,45 +46,111 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 		fileUrl = data?.signedUrl ?? null;
 	}
 
-	async function handleDelete() {
-		"use server";
-		await deleteSequence(id);
-		redirect("/dashboard");
-	}
-
 	return (
-		<div className="flex h-full flex-col">
-			{/* Sequence header bar */}
-			<div className="flex shrink-0 items-center justify-between border-b border-border/40 px-4 py-2">
-				<div className="flex items-center gap-3">
-					<Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-						← Dashboard
+		<div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+
+			{/* Header bar */}
+			<div style={{
+				height: "48px",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "space-between",
+				borderBottom: "1px solid #ddd8ce",
+				background: "rgba(245,240,232,0.97)",
+				padding: "0 20px",
+				flexShrink: 0,
+				gap: "16px",
+			}}>
+
+				{/* Left: breadcrumb + name */}
+				<div style={{ display: "flex", alignItems: "center", overflow: "hidden", gap: "0", flex: 1, minWidth: 0 }}>
+					<Link
+						href="/dashboard"
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "10px",
+							letterSpacing: "0.1em",
+							textTransform: "uppercase",
+							color: "#9a9284",
+							textDecoration: "none",
+							flexShrink: 0,
+							transition: "color 0.1s",
+						}}
+						onMouseOver={undefined}
+					>
+						Library
 					</Link>
-					<span className="text-muted-foreground">/</span>
-					<span className="font-medium text-foreground">{seq.name}</span>
+					<span style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "12px",
+						color: "#c8c0b4",
+						margin: "0 10px",
+						flexShrink: 0,
+					}}>
+						/
+					</span>
+					<span style={{
+						fontFamily: "var(--font-playfair)",
+						fontSize: "17px",
+						fontWeight: 400,
+						color: "#1c1a16",
+						letterSpacing: "-0.01em",
+						overflow: "hidden",
+						textOverflow: "ellipsis",
+						whiteSpace: "nowrap",
+					}}>
+						{seq.name}
+					</span>
 				</div>
-				<div className="flex items-center gap-3">
-					<div className="flex items-center gap-2 text-xs text-muted-foreground">
-						<span>{formatLength(seq.length)}</span>
-						{seq.gc_content != null && <span>· {seq.gc_content.toFixed(1)}% GC</span>}
-						<span>·</span>
-						<Badge variant="outline" className="text-xs capitalize">
-							{seq.topology}
-						</Badge>
-						<Badge variant="outline" className="text-xs uppercase">
+
+				{/* Right: metadata + delete */}
+				<div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
+
+					{/* Sequence stats */}
+					<div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+						<span style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "11px",
+							color: "#5a5648",
+						}}>
+							{formatLength(seq.length)}
+						</span>
+
+						{seq.topology === "circular" ? <CircularIcon /> : <LinearIcon />}
+
+						{seq.gc_content != null && (
+							<span style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "11px",
+								color: "#9a9284",
+							}}>
+								{seq.gc_content.toFixed(1)}% GC
+							</span>
+						)}
+
+						<span style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							letterSpacing: "0.1em",
+							textTransform: "uppercase",
+							color: "#9a9284",
+							border: "1px solid #ddd8ce",
+							padding: "2px 7px",
+							borderRadius: "2px",
+						}}>
 							{seq.file_format}
-						</Badge>
+						</span>
 					</div>
-					<form action={handleDelete}>
-						<Button type="submit" variant="ghost" size="sm" className="text-destructive hover:text-destructive text-xs">
-							Delete
-						</Button>
-					</form>
+
+					{/* Divider */}
+					<div style={{ width: "1px", height: "16px", background: "#ddd8ce", flexShrink: 0 }} />
+
+					<DeleteSequenceButton id={seq.id} name={seq.name} />
 				</div>
 			</div>
 
-			{/* Viewer area */}
-			<div className="flex-1 overflow-hidden">
+			{/* Viewer */}
+			<div style={{ flex: 1, overflow: "hidden" }}>
 				{fileUrl ? (
 					<SequenceViewerWithPanel
 						fileUrl={fileUrl}
@@ -77,7 +159,16 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 						fileFormat={seq.file_format}
 					/>
 				) : (
-					<div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+					<div style={{
+						display: "flex",
+						height: "100%",
+						alignItems: "center",
+						justifyContent: "center",
+						fontFamily: "var(--font-courier)",
+						fontSize: "11px",
+						color: "#9a9284",
+						letterSpacing: "0.04em",
+					}}>
 						No sequence file available.
 					</div>
 				)}

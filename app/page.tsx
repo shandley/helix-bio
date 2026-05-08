@@ -156,7 +156,7 @@ export default function LandingPage() {
 									letterSpacing: "0.02em",
 								}}
 							>
-								Begin sequencing
+								Open the workbench
 								<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
 									<path d="M3 8h10M9 4l4 4-4 4"/>
 								</svg>
@@ -385,6 +385,177 @@ export default function LandingPage() {
 					</div>
 				</section>
 			</main>
+
+				{/* DATABASE SECTION */}
+				<section id="database" style={{
+					padding: "80px 56px",
+					borderTop: "2px solid #1c1a16",
+				}}>
+					<div style={{
+						display: "grid",
+						gridTemplateColumns: "1fr 1fr",
+						gap: "80px",
+						alignItems: "start",
+					}}>
+						{/* Left: description */}
+						<div>
+							<div style={{
+								display: "flex",
+								alignItems: "center",
+								gap: "10px",
+								fontFamily: "var(--font-courier)",
+								fontSize: "10px",
+								letterSpacing: "0.16em",
+								textTransform: "uppercase",
+								color: "#1a4731",
+								marginBottom: "20px",
+							}}>
+								<span style={{ display: "inline-block", width: "32px", height: "1px", background: "#1a4731" }} />
+								In active development
+							</div>
+							<h2 style={{
+								fontFamily: "var(--font-playfair)",
+								fontSize: "32px",
+								fontWeight: 400,
+								letterSpacing: "-0.01em",
+								color: "#1c1a16",
+								marginBottom: "20px",
+								lineHeight: 1.15,
+							}}>
+								The annotation<br />database
+							</h2>
+							<p style={{
+								fontFamily: "var(--font-karla)",
+								fontSize: "15px",
+								fontWeight: 300,
+								lineHeight: 1.7,
+								color: "#5a5648",
+								marginBottom: "20px",
+								borderLeft: "3px solid #b8933a",
+								paddingLeft: "20px",
+							}}>
+								SnapGene's defining advantage is a proprietary BLAST feature library built from years of curation. We're building a better one — open, reproducible, and based on profile HMMs instead of raw sequence alignment.
+							</p>
+							<p style={{
+								fontFamily: "var(--font-karla)",
+								fontSize: "14px",
+								fontWeight: 300,
+								lineHeight: 1.7,
+								color: "#5a5648",
+							}}>
+								Every annotated plasmid from major public repositories is processed through a four-stage pipeline: feature extraction → MMseqs2 clustering at 80% identity → MAFFT multiple sequence alignment → HMMER3 profile construction. The result catches codon-optimized variants, truncations, and mutants that BLAST misses at sub-50% identity.
+							</p>
+						</div>
+
+						{/* Right: pipeline + sources */}
+						<div>
+							{/* Pipeline steps */}
+							<div style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.14em",
+								textTransform: "uppercase",
+								color: "#9a9284",
+								marginBottom: "16px",
+								paddingBottom: "10px",
+								borderBottom: "1px solid #ddd8ce",
+							}}>
+								Pipeline
+							</div>
+							{[
+								{ step: "01", label: "Extract features", detail: "From all annotated GenBank records" },
+								{ step: "02", label: "Cluster sequences", detail: "MMseqs2 at 80–90% identity" },
+								{ step: "03", label: "Build alignments", detail: "MAFFT multiple sequence alignment" },
+								{ step: "04", label: "Profile HMMs", detail: "HMMER3 · one profile per cluster" },
+							].map(({ step, label, detail }) => (
+								<div key={step} style={{
+									display: "flex",
+									alignItems: "baseline",
+									gap: "16px",
+									padding: "14px 0",
+									borderBottom: "1px solid rgba(221,216,206,0.5)",
+								}}>
+									<span style={{
+										fontFamily: "var(--font-playfair)",
+										fontSize: "22px",
+										fontWeight: 400,
+										color: "#ddd8ce",
+										flexShrink: 0,
+										width: "32px",
+									}}>
+										{step}
+									</span>
+									<div>
+										<div style={{ fontFamily: "var(--font-karla)", fontSize: "14px", fontWeight: 500, color: "#1c1a16", marginBottom: "2px" }}>
+											{label}
+										</div>
+										<div style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#9a9284", letterSpacing: "0.04em" }}>
+											{detail}
+										</div>
+									</div>
+								</div>
+							))}
+
+							{/* Data sources */}
+							<div style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.14em",
+								textTransform: "uppercase",
+								color: "#9a9284",
+								marginTop: "28px",
+								marginBottom: "16px",
+								paddingBottom: "10px",
+								borderBottom: "1px solid #ddd8ce",
+							}}>
+								Data sources
+							</div>
+							{[
+								{ source: "SnapGene", count: "2,550", status: "done", detail: "Curated reference plasmids" },
+								{ source: "iGEM Registry", count: "—", status: "progress", detail: "Parts & devices in progress" },
+								{ source: "Addgene", count: "200,000+", status: "planned", detail: "Depositor-annotated, highest quality" },
+								{ source: "NCBI RefSeq", count: "—", status: "planned", detail: "Complete plasmid sequences" },
+							].map(({ source, count, status, detail }) => (
+								<div key={source} style={{
+									display: "flex",
+									alignItems: "baseline",
+									justifyContent: "space-between",
+									padding: "11px 0",
+									borderBottom: "1px solid rgba(221,216,206,0.5)",
+									gap: "12px",
+								}}>
+									<div style={{ overflow: "hidden" }}>
+										<div style={{ fontFamily: "var(--font-karla)", fontSize: "13px", fontWeight: 500, color: "#1c1a16" }}>
+											{source}
+										</div>
+										<div style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#9a9284", letterSpacing: "0.02em", marginTop: "1px" }}>
+											{detail}
+										</div>
+									</div>
+									<div style={{ textAlign: "right", flexShrink: 0 }}>
+										<span style={{
+											fontFamily: "var(--font-playfair)",
+											fontSize: "15px",
+											color: status === "done" ? "#1a4731" : "#9a9284",
+										}}>
+											{count}
+										</span>
+										<div style={{
+											fontFamily: "var(--font-courier)",
+											fontSize: "8px",
+											letterSpacing: "0.1em",
+											textTransform: "uppercase",
+											color: status === "done" ? "#1a4731" : status === "progress" ? "#b8933a" : "#b8b0a4",
+											marginTop: "2px",
+										}}>
+											{status === "done" ? "indexed" : status === "progress" ? "in progress" : "planned"}
+										</div>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				</section>
 
 			{/* FOOTER */}
 			<footer style={{

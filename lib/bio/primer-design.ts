@@ -233,8 +233,12 @@ function buildCandidate(
 }
 
 /**
- * Design forward + reverse primers flanking [targetStart, targetEnd] (0-indexed,
- * inclusive). Returns up to `topN` ranked pairs.
+ * Design primers that amplify [targetStart, targetEnd] (0-indexed, inclusive).
+ *
+ * Forward primers start within the first WINDOW bases of targetStart.
+ * Reverse primers bind within the last WINDOW bases ending at targetEnd.
+ * Both searches stay entirely within the target region, so this works even
+ * when targetStart is at position 0 (no upstream flanking sequence needed).
  */
 export function designPrimers(
 	template: string,
@@ -246,8 +250,8 @@ export function designPrimers(
 		minLen = 18,
 		maxLen = 25,
 		tmTarget = 60,
-		gcMin = 0.4,
-		gcMax = 0.65,
+		gcMin = 0.35,   // loose pre-filter; scoring penalises poor GC%
+		gcMax = 0.70,
 		maxPolyN = 4,
 		oligoConc = 250e-9,
 		naConc = 0.05,
@@ -256,39 +260,42 @@ export function designPrimers(
 	const tmOpts: TmOptions = { oligoConc, naConc };
 	const n = template.length;
 	const upper = template.toUpperCase();
+	const targetLen = targetEnd - targetStart + 1;
+
+	// Search window: up to 100 bp (or half the target, whichever is smaller)
+	const WINDOW = Math.min(100, Math.floor(targetLen / 2) - minLen);
+	if (WINDOW < 0) return [];
 
 	const fwdCandidates: PrimerCandidate[] = [];
 	const revCandidates: PrimerCandidate[] = [];
 
-	// Forward primers: 3' end anchored near targetStart (primer ends just at/before target)
-	for (let end3 = targetStart - 3; end3 <= targetStart + 3; end3++) {
+	// Forward primers: 5' end starts at positions [targetStart, targetStart + WINDOW]
+	for (let fStart = targetStart; fStart <= targetStart + WINDOW; fStart++) {
 		for (let L = minLen; L <= maxLen; L++) {
-			const start = end3 - L + 1;
-			if (start < 0 || end3 >= n) continue;
-			const seq = upper.slice(start, end3 + 1);
+			const fEnd = fStart + L - 1;
+			if (fEnd >= n || fEnd > targetEnd - minLen) continue; // leave room for rev
+			const seq = upper.slice(fStart, fEnd + 1);
 			if (/[^ATGC]/.test(seq)) continue;
 			const gc = calcGC(seq);
 			if (gc < gcMin || gc > gcMax) continue;
-			const poly = maxPolyRun(seq);
-			if (poly > maxPolyN + 2) continue;
-			fwdCandidates.push(buildCandidate(seq, start, "fwd", upper, tmTarget, tmOpts));
+			if (maxPolyRun(seq) > maxPolyN + 2) continue;
+			fwdCandidates.push(buildCandidate(seq, fStart, "fwd", upper, tmTarget, tmOpts));
 		}
 	}
 
-	// Reverse primers: binding site on + strand anchored near targetEnd
-	// Reverse primer seq = revComp of template region ending at/near targetEnd
-	for (let end3plus = targetEnd - 3; end3plus <= targetEnd + 3; end3plus++) {
+	// Reverse primers: 3' end of binding site (on + strand) at positions
+	// [targetEnd - WINDOW, targetEnd]
+	for (let rEnd = Math.max(targetEnd - WINDOW, targetStart + minLen); rEnd <= Math.min(targetEnd, n - 1); rEnd++) {
 		for (let L = minLen; L <= maxLen; L++) {
-			const bindStart = end3plus - L + 1;
-			if (bindStart < 0 || end3plus >= n) continue;
-			const plusStrand = upper.slice(bindStart, end3plus + 1);
+			const rStart = rEnd - L + 1;
+			if (rStart < 0 || rStart < targetStart + minLen) continue;
+			const plusStrand = upper.slice(rStart, rEnd + 1);
 			if (/[^ATGC]/.test(plusStrand)) continue;
 			const seq = reverseComplement(plusStrand);
 			const gc = calcGC(seq);
 			if (gc < gcMin || gc > gcMax) continue;
-			const poly = maxPolyRun(seq);
-			if (poly > maxPolyN + 2) continue;
-			revCandidates.push(buildCandidate(seq, bindStart, "rev", upper, tmTarget, tmOpts));
+			if (maxPolyRun(seq) > maxPolyN + 2) continue;
+			revCandidates.push(buildCandidate(seq, rStart, "rev", upper, tmTarget, tmOpts));
 		}
 	}
 
@@ -297,10 +304,10 @@ export function designPrimers(
 	fwdCandidates.sort((a, b) => a.score - b.score);
 	revCandidates.sort((a, b) => a.score - b.score);
 
-	const topFwd = fwdCandidates.slice(0, 5);
-	const topRev = revCandidates.slice(0, 5);
+	const topFwd = fwdCandidates.slice(0, 8);
+	const topRev = revCandidates.slice(0, 8);
 
-	// Build pairs from top candidates, adding pair-dimer penalty
+	// Build pairs from top candidates
 	const pairs: PrimerPair[] = [];
 	for (const fwd of topFwd) {
 		for (const rev of topRev) {

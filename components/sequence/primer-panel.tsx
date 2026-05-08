@@ -181,7 +181,7 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd }: Prime
 			try {
 				const result = designPrimers(seq, s - 1, e - 1);
 				setPairs(result);
-				if (result.length === 0) setError("No valid primer pairs found. Try a larger target region.");
+				if (result.length === 0) setError("No valid primer pairs found. Target region may be too short or have extreme GC content — try ≥ 200 bp.");
 			} catch {
 				setError("Primer design failed. Check your sequence.");
 			}
@@ -260,11 +260,12 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd }: Prime
 				</div>
 
 				{/* Product size preview */}
-				{productSize !== null && (
-					<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", marginBottom: "10px" }}>
-						Product: <span style={{ color: "#5a5648" }}>{formatLen(productSize)}</span>
-					</div>
-				)}
+				<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", marginBottom: "10px" }}>
+					{productSize !== null
+						? <>Product: <span style={{ color: "#5a5648" }}>{formatLen(productSize)}</span> · primers placed within region</>
+						: <span style={{ color: "#b8b0a4" }}>Primers placed within the selected region</span>
+					}
+				</div>
 
 				{error && (
 					<div style={{

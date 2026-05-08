@@ -31,7 +31,8 @@ export function SequenceViewerWithPanel({
 			})
 			.then((text) => {
 				if (fileFormat === "genbank") {
-					setParsed(parseGenBank(text));
+					const p = parseGenBank(text);
+					setParsed({ ...p, name });
 				} else if (fileFormat === "fasta") {
 					const lines = text.split("\n");
 					const seqName = lines[0]?.replace(/^>/, "").split(" ")[0] ?? name;

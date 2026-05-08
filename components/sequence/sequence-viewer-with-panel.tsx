@@ -6,21 +6,31 @@ import { DEFAULT_ENZYMES } from "@/lib/bio/enzymes";
 import { SequenceViewer, type SeqVizSelection } from "./sequence-viewer";
 import { EnzymePanel } from "./enzyme-panel";
 import { PrimerPanel } from "./primer-panel";
+import { AIPanel } from "./ai-panel";
+import type { SequenceContext } from "@/app/api/chat/route";
 
 interface SequenceViewerWithPanelProps {
 	fileUrl: string;
 	name: string;
 	topology: "circular" | "linear";
 	fileFormat: string;
+	gcContent: number | null;
 }
 
-type PanelTab = "enzymes" | "primers";
+type PanelTab = "enzymes" | "primers" | "ai";
+
+const TAB_LABELS: Record<PanelTab, string> = {
+	enzymes: "Enzymes",
+	primers: "Primers",
+	ai: "Ask Ori",
+};
 
 export function SequenceViewerWithPanel({
 	fileUrl,
 	name,
 	topology,
 	fileFormat,
+	gcContent,
 }: SequenceViewerWithPanelProps) {
 	const [parsed, setParsed] = useState<ParsedSequence | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -66,6 +76,21 @@ export function SequenceViewerWithPanel({
 		);
 	}
 
+	const aiContext: SequenceContext = {
+		name,
+		seqLen: parsed.seq.length,
+		topology,
+		gc: gcContent,
+		fileFormat,
+		annotations: parsed.annotations.map((a) => ({
+			name: a.name,
+			start: a.start,
+			end: a.end,
+			direction: a.direction,
+		})),
+		seq: parsed.seq,
+	};
+
 	return (
 		<div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
 			{/* Sequence viewer */}
@@ -95,7 +120,7 @@ export function SequenceViewerWithPanel({
 					flexShrink: 0,
 					background: "#f5f0e8",
 				}}>
-					{(["enzymes", "primers"] as PanelTab[]).map((tab) => (
+					{(Object.keys(TAB_LABELS) as PanelTab[]).map((tab) => (
 						<button
 							key={tab}
 							onClick={() => setActiveTab(tab)}
@@ -103,8 +128,8 @@ export function SequenceViewerWithPanel({
 								flex: 1,
 								padding: "10px 0",
 								fontFamily: "var(--font-courier)",
-								fontSize: "9px",
-								letterSpacing: "0.12em",
+								fontSize: "8px",
+								letterSpacing: "0.1em",
 								textTransform: "uppercase",
 								color: activeTab === tab ? "#1a4731" : "#9a9284",
 								background: "none",
@@ -113,17 +138,18 @@ export function SequenceViewerWithPanel({
 								cursor: "pointer",
 								transition: "color 0.1s",
 								marginBottom: "-1px",
+								position: "relative",
 							}}
 						>
-							{tab}
+							{TAB_LABELS[tab]}
 							{tab === "primers" && selection !== null && (
 								<span style={{
 									display: "inline-block",
-									width: "5px",
-									height: "5px",
+									width: "4px",
+									height: "4px",
 									borderRadius: "50%",
 									background: "#b8933a",
-									marginLeft: "5px",
+									marginLeft: "4px",
 									verticalAlign: "middle",
 									marginBottom: "1px",
 								}} />
@@ -134,20 +160,24 @@ export function SequenceViewerWithPanel({
 
 				{/* Panel content */}
 				<div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-					{activeTab === "enzymes" ? (
+					{activeTab === "enzymes" && (
 						<EnzymePanel
 							seq={parsed.seq}
 							circular={topology === "circular"}
 							selected={selectedEnzymes}
 							onChange={setSelectedEnzymes}
 						/>
-					) : (
+					)}
+					{activeTab === "primers" && (
 						<PrimerPanel
 							seq={parsed.seq}
 							seqLen={parsed.seq.length}
 							selectionStart={selection?.start}
 							selectionEnd={selection?.end}
 						/>
+					)}
+					{activeTab === "ai" && (
+						<AIPanel context={aiContext} />
 					)}
 				</div>
 			</aside>

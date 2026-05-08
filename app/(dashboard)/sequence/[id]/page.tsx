@@ -154,6 +154,7 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 						name={seq.name}
 						topology={seq.topology}
 						fileFormat={seq.file_format}
+						gcContent={seq.gc_content}
 					/>
 				) : (
 					<div style={{

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { populateDemoSequences } from "@/app/actions/seed";
-import { Button } from "@/components/ui/button";
 
 export function LoadExamplesButton() {
 	const router = useRouter();
@@ -14,10 +13,7 @@ export function LoadExamplesButton() {
 		setState("loading");
 		try {
 			const result = await populateDemoSequences();
-			if (result.error) {
-				setState("error");
-				return;
-			}
+			if (result.error) { setState("error"); return; }
 			setCount(result.count ?? 0);
 			setState("done");
 			router.refresh();
@@ -28,23 +24,40 @@ export function LoadExamplesButton() {
 
 	if (state === "done") {
 		return (
-			<p className="text-sm text-emerald-600">
-				{count > 0 ? `Loaded ${count} example sequences.` : "Examples already in your library."}
+			<p style={{ fontFamily: "var(--font-courier)", fontSize: "11px", color: "#1a4731", letterSpacing: "0.02em" }}>
+				{count > 0 ? `${count} examples loaded` : "Already in library"}
 			</p>
 		);
 	}
 
 	if (state === "error") {
 		return (
-			<p className="text-sm text-destructive">
-				Failed to fetch from NCBI. Check your connection and try again.
+			<p style={{ fontFamily: "var(--font-courier)", fontSize: "11px", color: "#8b3a2a", letterSpacing: "0.02em" }}>
+				Failed — check connection
 			</p>
 		);
 	}
 
 	return (
-		<Button variant="outline" size="sm" onClick={handleLoad} disabled={state === "loading"}>
-			{state === "loading" ? "Fetching from NCBI…" : "Load example sequences"}
-		</Button>
+		<button
+			onClick={handleLoad}
+			disabled={state === "loading"}
+			style={{
+				fontFamily: "var(--font-courier)",
+				fontSize: "9px",
+				letterSpacing: "0.1em",
+				textTransform: "uppercase",
+				color: state === "loading" ? "#9a9284" : "#1a4731",
+				background: "none",
+				border: "1px solid",
+				borderColor: state === "loading" ? "#ddd8ce" : "rgba(26,71,49,0.4)",
+				borderRadius: "2px",
+				padding: "6px 12px",
+				cursor: state === "loading" ? "default" : "pointer",
+				transition: "color 0.1s, border-color 0.1s",
+			}}
+		>
+			{state === "loading" ? "Fetching…" : "Load examples"}
+		</button>
 	);
 }

@@ -2,9 +2,17 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 
 const ACCEPTED = [".gb", ".gbk", ".genbank", ".fa", ".fasta", ".fna", ".dna", ".embl"];
+
+function UploadIcon({ color }: { color: string }) {
+	return (
+		<svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
+			<path d="M14 18V8M14 8L9 13M14 8L19 13" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+			<path d="M6 21h16" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+		</svg>
+	);
+}
 
 export function SequenceUploader() {
 	const router = useRouter();
@@ -16,19 +24,15 @@ export function SequenceUploader() {
 		async (file: File) => {
 			setUploading(true);
 			setError(null);
-
 			const form = new FormData();
 			form.append("file", file);
-
 			const res = await fetch("/api/sequences/upload", { method: "POST", body: form });
 			const data = await res.json();
-
 			if (!res.ok) {
 				setError(data.error ?? "Upload failed");
 				setUploading(false);
 				return;
 			}
-
 			router.push(`/sequence/${data.sequence.id}`);
 			router.refresh();
 		},
@@ -45,38 +49,80 @@ export function SequenceUploader() {
 		[upload],
 	);
 
+	const iconColor = dragging ? "#1a4731" : uploading ? "#9a9284" : "#c8c0b4";
+
 	return (
 		<div
-			onDragOver={(e) => {
-				e.preventDefault();
-				setDragging(true);
-			}}
+			onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
 			onDragLeave={() => setDragging(false)}
 			onDrop={onDrop}
-			className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
-				dragging ? "border-emerald-500 bg-emerald-500/5" : "border-border/60 hover:border-border"
-			}`}
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				justifyContent: "center",
+				gap: "10px",
+				padding: "36px 24px",
+				border: `1px ${dragging ? "solid" : "dashed"} ${dragging ? "#1a4731" : "#c8c0b4"}`,
+				borderRadius: "3px",
+				background: dragging ? "rgba(26,71,49,0.03)" : "#faf7f2",
+				transition: "border-color 0.15s, background 0.15s",
+				cursor: uploading ? "default" : "default",
+			}}
 		>
-			<p className="text-sm text-muted-foreground">
-				Drag & drop a sequence file, or{" "}
-				<label className="cursor-pointer text-foreground underline underline-offset-4">
-					browse
-					<input
-						type="file"
-						className="sr-only"
-						accept={ACCEPTED.join(",")}
-						onChange={(e) => {
-							const file = e.target.files?.[0];
-							if (file) upload(file);
-						}}
-					/>
-				</label>
-			</p>
-			<p className="mt-1 text-xs text-muted-foreground">
-				GenBank (.gb, .gbk), FASTA (.fa, .fasta), SnapGene (.dna), EMBL (.embl)
-			</p>
-			{uploading && <p className="mt-3 text-sm text-muted-foreground">Uploading…</p>}
-			{error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+			<UploadIcon color={iconColor} />
+
+			<div style={{ textAlign: "center" }}>
+				{uploading ? (
+					<p style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "12px",
+						color: "#9a9284",
+						letterSpacing: "0.04em",
+					}}>
+						Uploading…
+					</p>
+				) : (
+					<p style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "12px",
+						color: "#5a5648",
+						letterSpacing: "0.02em",
+					}}>
+						Drop a sequence file, or{" "}
+						<label style={{ color: "#1a4731", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+							browse
+							<input
+								type="file"
+								style={{ display: "none" }}
+								accept={ACCEPTED.join(",")}
+								onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }}
+							/>
+						</label>
+					</p>
+				)}
+				<p style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "9px",
+					letterSpacing: "0.08em",
+					color: "#b8b0a4",
+					marginTop: "4px",
+					textTransform: "uppercase",
+				}}>
+					GenBank · FASTA · SnapGene · EMBL
+				</p>
+			</div>
+
+			{error && (
+				<p style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "11px",
+					color: "#8b3a2a",
+					letterSpacing: "0.02em",
+				}}>
+					{error}
+				</p>
+			)}
 		</div>
 	);
 }

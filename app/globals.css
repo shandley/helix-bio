@@ -132,3 +132,14 @@
     letter-spacing: -0.02em;
   }
 }
+
+/* Sequence library row hover */
+.sequence-row {
+  transition: background 0.1s;
+}
+.sequence-row:hover {
+  background: rgba(26, 71, 49, 0.035) !important;
+}
+.sequence-row:hover .sequence-row-name {
+  color: #1a4731 !important;
+}

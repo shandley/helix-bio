@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { parseGenBank, type ParsedSequence } from "@/lib/bio/parse-genbank";
 import { DEFAULT_ENZYMES } from "@/lib/bio/enzymes";
-import { SequenceViewer } from "./sequence-viewer";
+import { SequenceViewer, type SeqVizSelection } from "./sequence-viewer";
 import { EnzymePanel } from "./enzyme-panel";
+import { PrimerPanel } from "./primer-panel";
 
 interface SequenceViewerWithPanelProps {
 	fileUrl: string;
@@ -12,6 +13,8 @@ interface SequenceViewerWithPanelProps {
 	topology: "circular" | "linear";
 	fileFormat: string;
 }
+
+type PanelTab = "enzymes" | "primers";
 
 export function SequenceViewerWithPanel({
 	fileUrl,
@@ -22,6 +25,8 @@ export function SequenceViewerWithPanel({
 	const [parsed, setParsed] = useState<ParsedSequence | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [selectedEnzymes, setSelectedEnzymes] = useState<string[]>(DEFAULT_ENZYMES);
+	const [activeTab, setActiveTab] = useState<PanelTab>("enzymes");
+	const [selection, setSelection] = useState<SeqVizSelection | null>(null);
 
 	useEffect(() => {
 		fetch(fileUrl)
@@ -63,19 +68,89 @@ export function SequenceViewerWithPanel({
 
 	return (
 		<div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
+			{/* Sequence viewer */}
 			<div style={{ flex: 1, overflow: "hidden" }}>
 				<SequenceViewer
 					parsed={parsed}
 					topology={topology}
 					enzymes={selectedEnzymes}
+					onSelection={setSelection}
 				/>
 			</div>
-			<EnzymePanel
-				seq={parsed.seq}
-				circular={topology === "circular"}
-				selected={selectedEnzymes}
-				onChange={setSelectedEnzymes}
-			/>
+
+			{/* Right panel */}
+			<aside style={{
+				width: "244px",
+				flexShrink: 0,
+				borderLeft: "1px solid #ddd8ce",
+				background: "#faf7f2",
+				display: "flex",
+				flexDirection: "column",
+				overflow: "hidden",
+			}}>
+				{/* Tab bar */}
+				<div style={{
+					display: "flex",
+					borderBottom: "1px solid #ddd8ce",
+					flexShrink: 0,
+					background: "#f5f0e8",
+				}}>
+					{(["enzymes", "primers"] as PanelTab[]).map((tab) => (
+						<button
+							key={tab}
+							onClick={() => setActiveTab(tab)}
+							style={{
+								flex: 1,
+								padding: "10px 0",
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.12em",
+								textTransform: "uppercase",
+								color: activeTab === tab ? "#1a4731" : "#9a9284",
+								background: "none",
+								border: "none",
+								borderBottom: activeTab === tab ? "2px solid #1a4731" : "2px solid transparent",
+								cursor: "pointer",
+								transition: "color 0.1s",
+								marginBottom: "-1px",
+							}}
+						>
+							{tab}
+							{tab === "primers" && selection !== null && (
+								<span style={{
+									display: "inline-block",
+									width: "5px",
+									height: "5px",
+									borderRadius: "50%",
+									background: "#b8933a",
+									marginLeft: "5px",
+									verticalAlign: "middle",
+									marginBottom: "1px",
+								}} />
+							)}
+						</button>
+					))}
+				</div>
+
+				{/* Panel content */}
+				<div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+					{activeTab === "enzymes" ? (
+						<EnzymePanel
+							seq={parsed.seq}
+							circular={topology === "circular"}
+							selected={selectedEnzymes}
+							onChange={setSelectedEnzymes}
+						/>
+					) : (
+						<PrimerPanel
+							seq={parsed.seq}
+							seqLen={parsed.seq.length}
+							selectionStart={selection?.start}
+							selectionEnd={selection?.end}
+						/>
+					)}
+				</div>
+			</aside>
 		</div>
 	);
 }

@@ -3,13 +3,21 @@
 import SeqViz from "seqviz";
 import type { ParsedSequence } from "@/lib/bio/parse-genbank";
 
+export interface SeqVizSelection {
+	start: number;
+	end: number;
+	sequence: string;
+	length: number;
+}
+
 interface SequenceViewerProps {
 	parsed: ParsedSequence;
 	topology: "circular" | "linear";
 	enzymes: string[];
+	onSelection?: (sel: SeqVizSelection | null) => void;
 }
 
-export function SequenceViewer({ parsed, topology, enzymes }: SequenceViewerProps) {
+export function SequenceViewer({ parsed, topology, enzymes, onSelection }: SequenceViewerProps) {
 	const seqvizAnnotations = parsed.annotations.map(({ start, end, name, color, direction }) => ({
 		start,
 		end,
@@ -29,6 +37,13 @@ export function SequenceViewer({ parsed, topology, enzymes }: SequenceViewerProp
 				showIndex
 				showComplement
 				enzymes={enzymes}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			onSelection={(sel: any) => {
+				if (onSelection) {
+					const s = sel as SeqVizSelection;
+					onSelection(s.length > 0 ? s : null);
+				}
+			}}
 			/>
 		</div>
 	);

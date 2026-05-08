@@ -1,4 +1,4 @@
-# Helix — SnapGene Alternative
+# Ori — SnapGene Alternative
 
 Open-source, web-based, LLM-powered molecular biology platform.
 

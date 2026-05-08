@@ -30,7 +30,7 @@ export async function signup(formData: FormData) {
 
 	// Derive origin from the incoming request so this works on preview deployments too
 	const headersList = await headers();
-	const origin = headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://helix-bio.vercel.app";
+	const origin = headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.vercel.app";
 
 	const { data, error } = await supabase.auth.signUp({
 		email: formData.get("email") as string,

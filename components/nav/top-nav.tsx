@@ -21,7 +21,7 @@ export function TopNav({ userEmail }: TopNavProps) {
 	return (
 		<header className="flex h-12 shrink-0 items-center justify-between border-b border-border/40 bg-background px-4">
 			<Link href="/dashboard" className="flex items-center gap-2">
-				<span className="font-semibold tracking-tight">Helix</span>
+				<span className="font-semibold tracking-tight">Ori</span>
 				<span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600">
 					beta
 				</span>

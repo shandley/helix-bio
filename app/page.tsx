@@ -8,7 +8,7 @@ export default function LandingPage() {
 			<header className="border-b border-border/40 bg-background/95 backdrop-blur">
 				<div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
 					<div className="flex items-center gap-2">
-						<span className="text-lg font-semibold tracking-tight">Helix</span>
+						<span className="text-lg font-semibold tracking-tight">Ori</span>
 						<span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600">
 							beta
 						</span>
@@ -77,7 +77,7 @@ export default function LandingPage() {
 			</main>
 
 			<footer className="border-t border-border/40 py-6 text-center text-sm text-muted-foreground">
-				Helix is open source. Built with Next.js, Supabase, and SeqViz.
+				Ori is open source. Built with Next.js, Supabase, and SeqViz.
 			</footer>
 		</div>
 	);

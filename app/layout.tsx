@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Helix — Molecular Biology Workbench",
+	title: "Ori — Molecular Biology Workbench",
 	description:
 		"Open-source, AI-powered molecular biology workbench. Visualize plasmids, simulate cloning, design primers.",
 };

@@ -2,6 +2,7 @@
 
 import SeqViz from "seqviz";
 import type { ParsedSequence } from "@/lib/bio/parse-genbank";
+import type { PrimerPair } from "primd";
 import { AccessibilityTrack } from "./accessibility-track";
 
 export interface SeqVizSelection {
@@ -17,9 +18,10 @@ interface SequenceViewerProps {
 	enzymes: string[];
 	selection?: SeqVizSelection | null;
 	onSelection?: (sel: SeqVizSelection | null) => void;
+	primerPair?: PrimerPair | null;
 }
 
-export function SequenceViewer({ parsed, topology, enzymes, selection, onSelection }: SequenceViewerProps) {
+export function SequenceViewer({ parsed, topology, enzymes, selection, onSelection, primerPair }: SequenceViewerProps) {
 	const seqvizAnnotations = parsed.annotations.map(({ start, end, name, color, direction }) => ({
 		start,
 		end,
@@ -55,6 +57,7 @@ export function SequenceViewer({ parsed, topology, enzymes, selection, onSelecti
 			<AccessibilityTrack
 				seq={parsed.seq}
 				selection={selection}
+				primerPair={primerPair}
 			/>
 		</div>
 	);

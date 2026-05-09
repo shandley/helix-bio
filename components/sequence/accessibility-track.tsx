@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { calcAccessibilityProfile } from "primd";
+import type { PrimerPair } from "primd";
 
 const BAR_HEIGHT = 28;
 
@@ -29,11 +30,15 @@ function interpretScore(score: number): { label: string; color: string } {
 	return                    { label: "Structured",  color: "#a02828" };
 }
 
+// Primer band height in CSS pixels — drawn at top (fwd) and bottom (rev) of the track
+const PRIMER_BAND = 5;
+
 function renderCanvas(
 	canvas: HTMLCanvasElement,
 	profile: Float32Array,
 	seqLen: number,
 	selection: { start: number; end: number } | null | undefined,
+	primerPair: PrimerPair | null | undefined,
 ) {
 	const dpr = window.devicePixelRatio ?? 1;
 	const w = canvas.offsetWidth;
@@ -66,10 +71,34 @@ function renderCanvas(
 	}
 	ctx.putImageData(img, 0, 0);
 
-	// Selection highlight in CSS-px coordinates (scale context first)
+	ctx.save();
+	ctx.scale(dpr, dpr);
+
+	// Primer binding sites — fwd at top, rev at bottom, drawn before selection
+	if (primerPair) {
+		const { fwd, rev } = primerPair;
+
+		// Forward primer — top PRIMER_BAND px, sky-blue
+		const fx1 = (fwd.start / seqLen) * w;
+		const fx2 = (fwd.end / seqLen) * w;
+		ctx.fillStyle = "rgba(59,130,246,0.65)";
+		ctx.fillRect(fx1, 0, Math.max(fx2 - fx1, 2), PRIMER_BAND);
+		// 5′ end marker (left edge, since fwd reads left→right)
+		ctx.fillStyle = "rgba(59,130,246,0.95)";
+		ctx.fillRect(fx1, 0, 2, PRIMER_BAND);
+
+		// Reverse primer — bottom PRIMER_BAND px, violet
+		const rx1 = (rev.start / seqLen) * w;
+		const rx2 = (rev.end / seqLen) * w;
+		ctx.fillStyle = "rgba(168,85,247,0.65)";
+		ctx.fillRect(rx1, BAR_HEIGHT - PRIMER_BAND, Math.max(rx2 - rx1, 2), PRIMER_BAND);
+		// 5′ end marker (right edge, since rev reads right→left on the template)
+		ctx.fillStyle = "rgba(168,85,247,0.95)";
+		ctx.fillRect(Math.max(rx2 - 2, rx1), BAR_HEIGHT - PRIMER_BAND, 2, PRIMER_BAND);
+	}
+
+	// Selection highlight — drawn on top of primer bands
 	if (selection && selection.end > selection.start) {
-		ctx.save();
-		ctx.scale(dpr, dpr);
 		const x1 = (selection.start / seqLen) * w;
 		const x2 = (selection.end / seqLen) * w;
 		ctx.fillStyle = "rgba(255,255,255,0.28)";
@@ -80,20 +109,23 @@ function renderCanvas(
 		ctx.moveTo(x1, 0); ctx.lineTo(x1, BAR_HEIGHT);
 		ctx.moveTo(x2, 0); ctx.lineTo(x2, BAR_HEIGHT);
 		ctx.stroke();
-		ctx.restore();
 	}
+
+	ctx.restore();
 }
 
 export interface AccessibilityTrackProps {
 	seq: string;
 	annealTempC?: number;
 	selection?: { start: number; end: number } | null;
+	primerPair?: PrimerPair | null;
 }
 
 export function AccessibilityTrack({
 	seq,
 	annealTempC = 55,
 	selection,
+	primerPair,
 }: AccessibilityTrackProps) {
 	const canvasRef   = useRef<HTMLCanvasElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -127,8 +159,8 @@ export function AccessibilityTrack({
 		const canvas = canvasRef.current;
 		const profile = profileRef.current;
 		if (!canvas || !profile) return;
-		renderCanvas(canvas, profile, seq.length, selection);
-	}, [seq.length, selection]);
+		renderCanvas(canvas, profile, seq.length, selection, primerPair);
+	}, [seq.length, selection, primerPair]);
 
 	useEffect(() => {
 		if (ready) draw();
@@ -205,6 +237,27 @@ export function AccessibilityTrack({
 							</div>
 						);
 					})}
+					{primerPair && (
+						<>
+							<span style={{ color: "#ddd8ce", fontSize: "9px" }}>·</span>
+							{([["→F", "rgba(59,130,246,0.8)"], ["←R", "rgba(168,85,247,0.8)"]] as const).map(([lbl, c]) => (
+								<div key={lbl} style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+									<div style={{
+										width: "14px", height: "5px",
+										background: c, borderRadius: "1px",
+									}} />
+									<span style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "7.5px",
+										letterSpacing: "0.04em",
+										color: "#9a9284",
+									}}>
+										{lbl}
+									</span>
+								</div>
+							))}
+						</>
+					)}
 				</div>
 			</div>
 

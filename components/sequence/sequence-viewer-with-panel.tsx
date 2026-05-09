@@ -13,6 +13,7 @@ import { SearchPanel } from "./search-panel";
 import { CloningModal } from "@/components/cloning/cloning-modal";
 import type { SequenceContext } from "@/app/api/chat/route";
 import type { SearchMatch } from "@/lib/bio/search";
+import type { PrimerPair } from "primd";
 
 interface SequenceViewerWithPanelProps {
 	fileUrl: string;
@@ -46,6 +47,7 @@ export function SequenceViewerWithPanel({
 	const [activeTab, setActiveTab] = useState<PanelTab>("enzymes");
 	const [selection, setSelection] = useState<SeqVizSelection | null>(null);
 	const [searchMatches, setSearchMatches] = useState<SearchMatch[]>([]);
+	const [bestPair, setBestPair] = useState<PrimerPair | null>(null);
 
 	const handleSearchMatches = useCallback((matches: SearchMatch[]) => {
 		setSearchMatches(matches);
@@ -130,6 +132,7 @@ export function SequenceViewerWithPanel({
 					enzymes={selectedEnzymes}
 					selection={selection}
 					onSelection={setSelection}
+					primerPair={bestPair}
 				/>
 			</div>
 
@@ -227,6 +230,7 @@ export function SequenceViewerWithPanel({
 							seqLen={parsed.seq.length}
 							selectionStart={selection?.start}
 							selectionEnd={selection?.end}
+							onPrimersDesigned={setBestPair}
 						/>
 					)}
 					{activeTab === "digest" && (

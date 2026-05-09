@@ -9,6 +9,7 @@ interface PrimerPanelProps {
 	seqLen: number;
 	selectionStart?: number;
 	selectionEnd?: number;
+	onPrimersDesigned?: (pair: PrimerPair | null) => void;
 }
 
 function Badge({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
@@ -146,12 +147,16 @@ function formatLen(bp: number): string {
 	return `${bp} bp`;
 }
 
-export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd }: PrimerPanelProps) {
+export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrimersDesigned }: PrimerPanelProps) {
 	const [start, setStart] = useState<string>(
-		selectionStart !== undefined ? String(selectionStart + 1) : "1",
+		selectionStart !== undefined
+			? String(selectionStart + 1)
+			: String(Math.floor(seqLen / 3) + 1),
 	);
 	const [end, setEnd] = useState<string>(
-		selectionEnd !== undefined ? String(selectionEnd + 1) : String(Math.min(seqLen, 500)),
+		selectionEnd !== undefined
+			? String(selectionEnd + 1)
+			: String(Math.floor(seqLen * 2 / 3) + 1),
 	);
 	const [pairs, setPairs] = useState<PrimerPair[] | null>(null);
 	const [warning, setWarning] = useState<string | null>(null);
@@ -175,20 +180,23 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd }: Prime
 		setError(null);
 		setWarning(null);
 		setRunning(true);
+		onPrimersDesigned?.(null);
 
 		setTimeout(() => {
 			try {
-				// Convert 1-indexed UI coords to 0-indexed half-open: [s-1, e)
-				// designPCR places fwd primers left of regionStart, rev primers right of regionEnd.
-				// productSizeRange is derived from the region so large ORFs don't silently fail.
+				// 1-indexed UI → 0-indexed half-open [s-1, e) for designPCR.
+				// fwd primers are placed left of regionStart; rev primers right of regionEnd.
+				// productSizeRange is region-derived so large ORFs don't silently return empty.
 				const regionLen = e - s;
 				const result = designPCR(seq, s - 1, e, {
 					productSizeRange: [regionLen + 36, regionLen + 500],
 				});
 				setPairs(result.pairs);
+				onPrimersDesigned?.(result.pairs[0] ?? null);
 				if (result.warning) setWarning(result.warning);
 			} catch {
 				setError("Primer design failed. Check your sequence.");
+				onPrimersDesigned?.(null);
 			}
 			setRunning(false);
 		}, 0);

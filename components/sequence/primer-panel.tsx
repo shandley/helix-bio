@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { designPCR } from "primd";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { PrimerCandidate, PrimerPair } from "primd";
+import type { PrimerWorkerResponse } from "./primer-design.worker";
 
 interface PrimerPanelProps {
 	seq: string;
@@ -162,6 +162,7 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 	const [warning, setWarning] = useState<string | null>(null);
 	const [running, setRunning] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const workerRef = useRef<Worker | null>(null);
 
 	useEffect(() => {
 		if (selectionStart !== undefined) setStart(String(selectionStart + 1));
@@ -169,6 +170,9 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 	useEffect(() => {
 		if (selectionEnd !== undefined) setEnd(String(selectionEnd + 1));
 	}, [selectionEnd]);
+
+	// Terminate any in-flight worker on unmount
+	useEffect(() => () => { workerRef.current?.terminate(); }, []);
 
 	const design = useCallback(() => {
 		const s = parseInt(start, 10);
@@ -182,25 +186,48 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 		setRunning(true);
 		onPrimersDesigned?.(null);
 
-		setTimeout(() => {
-			try {
-				// 1-indexed UI → 0-indexed half-open [s-1, e) for designPCR.
-				// fwd primers are placed left of regionStart; rev primers right of regionEnd.
-				// productSizeRange is region-derived so large ORFs don't silently return empty.
-				const regionLen = e - s;
-				const result = designPCR(seq, s - 1, e, {
-					productSizeRange: [regionLen + 36, regionLen + 500],
-				});
-				setPairs(result.pairs);
-				onPrimersDesigned?.(result.pairs[0] ?? null);
-				if (result.warning) setWarning(result.warning);
-			} catch {
+		// Terminate any previous run
+		workerRef.current?.terminate();
+
+		// Off-thread: designPCR blocks for ~1-3 s on typical plasmids
+		const worker = new Worker(
+			new URL("./primer-design.worker.ts", import.meta.url),
+		);
+		workerRef.current = worker;
+
+		// 1-indexed UI → 0-indexed half-open [s-1, e) for designPCR.
+		// productSizeRange is region-derived so large ORFs don't silently return empty.
+		const regionLen = e - s;
+		worker.postMessage({
+			seq,
+			regionStart: s - 1,
+			regionEnd: e,
+			opts: { productSizeRange: [regionLen + 36, regionLen + 500] },
+		});
+
+		worker.onmessage = (ev: MessageEvent<PrimerWorkerResponse>) => {
+			worker.terminate();
+			workerRef.current = null;
+			const msg = ev.data;
+			if (msg.type === "success") {
+				setPairs(msg.result.pairs);
+				onPrimersDesigned?.(msg.result.pairs[0] ?? null);
+				if (msg.result.warning) setWarning(msg.result.warning);
+			} else {
 				setError("Primer design failed. Check your sequence.");
 				onPrimersDesigned?.(null);
 			}
 			setRunning(false);
-		}, 0);
-	}, [start, end, seq, seqLen]);
+		};
+
+		worker.onerror = () => {
+			worker.terminate();
+			workerRef.current = null;
+			setError("Primer design failed. Check your sequence.");
+			onPrimersDesigned?.(null);
+			setRunning(false);
+		};
+	}, [start, end, seq, seqLen, onPrimersDesigned]);
 
 	const s = parseInt(start, 10);
 	const e = parseInt(end, 10);

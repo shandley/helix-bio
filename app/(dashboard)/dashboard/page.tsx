@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SequenceUploader } from "@/components/upload/sequence-uploader";
 import { LoadExamplesButton } from "@/components/upload/load-examples-button";
@@ -6,10 +7,19 @@ import type { Sequence } from "@/types/database";
 
 export default async function DashboardPage() {
 	const supabase = await createClient();
-	const { data: rawSequences } = await supabase
-		.from("sequences")
-		.select("*")
-		.order("created_at", { ascending: false });
+
+	const [{ data: rawSequences }, { count: trashCount }] = await Promise.all([
+		supabase
+			.from("sequences")
+			.select("*")
+			.is("deleted_at", null)
+			.order("created_at", { ascending: false }),
+		supabase
+			.from("sequences")
+			.select("*", { count: "exact", head: true })
+			.not("deleted_at", "is", null),
+	]);
+
 	const sequences = (rawSequences as Sequence[] | null) ?? [];
 
 	return (
@@ -38,7 +48,25 @@ export default async function DashboardPage() {
 						Upload and explore plasmids, vectors, and linear constructs
 					</p>
 				</div>
-				<div style={{ paddingTop: "4px", flexShrink: 0 }}>
+				<div style={{ display: "flex", alignItems: "center", gap: "12px", paddingTop: "4px", flexShrink: 0 }}>
+					{(trashCount ?? 0) > 0 && (
+						<Link
+							href="/trash"
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.08em",
+								textTransform: "uppercase",
+								color: "#9a9284",
+								textDecoration: "none",
+								border: "1px solid #ddd8ce",
+								padding: "4px 9px",
+								borderRadius: "2px",
+							}}
+						>
+							Trash ({trashCount})
+						</Link>
+					)}
 					<LoadExamplesButton />
 				</div>
 			</div>

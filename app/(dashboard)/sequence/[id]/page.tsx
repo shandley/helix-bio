@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { SequenceViewerWithPanel } from "@/components/sequence/sequence-viewer-with-panel";
 import { DeleteSequenceButton } from "@/components/sequence/delete-sequence-button";
 import { SequenceNameEditor } from "@/components/sequence/sequence-name-editor";
+import { SequenceDescriptionEditor } from "@/components/sequence/sequence-description-editor";
+import { TopologyToggle } from "@/components/sequence/topology-toggle";
 import type { Sequence } from "@/types/database";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -28,29 +30,16 @@ function formatLength(bp: number | null) {
 	return `${bp} bp`;
 }
 
-function CircularIcon() {
-	return (
-		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-label="Circular" style={{ flexShrink: 0 }}>
-			<circle cx="8" cy="8" r="5.5" stroke="#8a8278" strokeWidth="1.5" />
-		</svg>
-	);
-}
-
-function LinearIcon() {
-	return (
-		<svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-label="Linear" style={{ flexShrink: 0 }}>
-			<line x1="2" y1="8" x2="14" y2="8" stroke="#8a8278" strokeWidth="1.5" />
-			<rect x="1" y="5.5" width="2.5" height="5" rx="0.5" fill="#8a8278" />
-			<rect x="12.5" y="5.5" width="2.5" height="5" rx="0.5" fill="#8a8278" />
-		</svg>
-	);
-}
-
 export default async function SequencePage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	const supabase = await createClient();
 
-	const { data: rawSeq } = await supabase.from("sequences").select("*").eq("id", id).single();
+	const { data: rawSeq } = await supabase
+		.from("sequences")
+		.select("*")
+		.eq("id", id)
+		.is("deleted_at", null)
+		.single();
 	const seq = rawSeq as Sequence | null;
 	if (!seq) notFound();
 
@@ -65,9 +54,8 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 	return (
 		<div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
-			{/* Header bar */}
+			{/* Header bar — two-line */}
 			<div style={{
-				height: "48px",
 				display: "flex",
 				alignItems: "center",
 				justifyContent: "space-between",
@@ -76,9 +64,10 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 				padding: "0 20px",
 				flexShrink: 0,
 				gap: "16px",
+				minHeight: "56px",
 			}}>
 
-				{/* Left: breadcrumb + name */}
+				{/* Left: breadcrumb, name, description */}
 				<div style={{ display: "flex", alignItems: "center", overflow: "hidden", gap: "0", flex: 1, minWidth: 0 }}>
 					<Link
 						href="/dashboard"
@@ -104,30 +93,25 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 					}}>
 						/
 					</span>
-					<SequenceNameEditor id={seq.id} name={seq.name} />
+					<div style={{ overflow: "hidden", minWidth: 0 }}>
+						<SequenceNameEditor id={seq.id} name={seq.name} />
+						<div style={{ marginTop: "2px" }}>
+							<SequenceDescriptionEditor id={seq.id} description={seq.description} />
+						</div>
+					</div>
 				</div>
 
-				{/* Right: metadata + delete */}
+				{/* Right: stats + actions */}
 				<div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
-
-					{/* Sequence stats */}
 					<div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-						<span style={{
-							fontFamily: "var(--font-courier)",
-							fontSize: "11px",
-							color: "#5a5648",
-						}}>
+						<span style={{ fontFamily: "var(--font-courier)", fontSize: "11px", color: "#5a5648" }}>
 							{formatLength(seq.length)}
 						</span>
 
-						{seq.topology === "circular" ? <CircularIcon /> : <LinearIcon />}
+						<TopologyToggle id={seq.id} topology={seq.topology} />
 
 						{seq.gc_content != null && (
-							<span style={{
-								fontFamily: "var(--font-courier)",
-								fontSize: "11px",
-								color: "#9a9284",
-							}}>
+							<span style={{ fontFamily: "var(--font-courier)", fontSize: "11px", color: "#9a9284" }}>
 								{seq.gc_content.toFixed(1)}% GC
 							</span>
 						)}
@@ -146,10 +130,8 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 						</span>
 					</div>
 
-					{/* Divider */}
 					<div style={{ width: "1px", height: "16px", background: "#ddd8ce", flexShrink: 0 }} />
 
-					{/* Download */}
 					{fileUrl && (
 						<a
 							href={fileUrl}
@@ -171,7 +153,6 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 						</a>
 					)}
 
-					{/* Divider */}
 					<div style={{ width: "1px", height: "16px", background: "#ddd8ce", flexShrink: 0 }} />
 
 					<DeleteSequenceButton id={seq.id} name={seq.name} />

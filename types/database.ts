@@ -16,6 +16,7 @@ export interface Database {
 					file_format: "genbank" | "fasta" | "dna" | "embl";
 					created_at: string;
 					updated_at: string;
+					deleted_at: string | null;
 				};
 				Insert: {
 					id?: string;
@@ -41,6 +42,7 @@ export interface Database {
 					file_path?: string | null;
 					file_format?: "genbank" | "fasta" | "dna" | "embl";
 					updated_at?: string;
+					deleted_at?: string | null;
 				};
 				Relationships: [];
 			};

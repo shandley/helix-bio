@@ -151,11 +151,18 @@ export function AIPanel({ context }: AIPanelProps) {
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const abortRef = useRef<AbortController | null>(null);
 	const initialized = useRef(false);
-
-	const apiContext: SequenceContext = {
+	const mountedRef = useRef(false);
+	// Always reflects the latest context without causing sendMessage to recreate
+	const contextRef = useRef<SequenceContext>(context);
+	contextRef.current = {
 		...context,
 		seq: context.seq && context.seq.length <= MAX_SEQ_LEN ? context.seq : null,
 	};
+
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => { mountedRef.current = false; };
+	}, []);
 
 	const sendMessage = useCallback(async (userText: string, history: ChatMessage[]) => {
 		const newHistory: ChatMessage[] = [...history, { role: "user", content: userText }];
@@ -169,7 +176,7 @@ export function AIPanel({ context }: AIPanelProps) {
 			const res = await fetch("/api/chat", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ messages: newHistory, context: apiContext }),
+				body: JSON.stringify({ messages: newHistory, context: contextRef.current }),
 				signal: abortRef.current.signal,
 			});
 
@@ -187,21 +194,25 @@ export function AIPanel({ context }: AIPanelProps) {
 				if (done) break;
 				assistantContent += decoder.decode(value, { stream: true });
 				const captured = assistantContent;
-				setMessages([...newHistory, { role: "assistant", content: captured }]);
+				if (mountedRef.current) {
+					setMessages([...newHistory, { role: "assistant", content: captured }]);
+				}
 			}
 		} catch (e) {
 			if ((e as Error).name === "AbortError") return;
 			const msg = (e as Error).message;
-			setError(
-				msg.includes("401") || msg.includes("key")
-					? "API key not configured — set ANTHROPIC_API_KEY in your Vercel environment."
-					: "Something went wrong. Please try again."
-			);
-			setMessages(newHistory); // remove the empty assistant placeholder
+			if (mountedRef.current) {
+				setError(
+					msg.includes("401") || msg.includes("key")
+						? "API key not configured — set ANTHROPIC_API_KEY in your Vercel environment."
+						: "Something went wrong. Please try again."
+				);
+				setMessages(newHistory);
+			}
 		} finally {
-			setStreaming(false);
+			if (mountedRef.current) setStreaming(false);
 		}
-	}, [apiContext]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
 	// Opening analysis: triggered once on mount
 	useEffect(() => {

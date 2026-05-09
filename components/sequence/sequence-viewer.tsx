@@ -10,6 +10,10 @@ export interface SeqVizSelection {
 	end: number;
 	sequence: string;
 	length: number;
+	/** Annotation name — present when an annotation was clicked, not when dragging sequence */
+	name?: string;
+	/** "ANNOTATION" when an annotation was clicked, "SEQ" for a sequence drag */
+	type?: string;
 }
 
 interface SequenceViewerProps {

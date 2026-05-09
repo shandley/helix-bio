@@ -48,9 +48,21 @@ export function SequenceViewerWithPanel({
 	const [selection, setSelection] = useState<SeqVizSelection | null>(null);
 	const [searchMatches, setSearchMatches] = useState<SearchMatch[]>([]);
 	const [bestPair, setBestPair] = useState<PrimerPair | null>(null);
+	const [annotationName, setAnnotationName] = useState<string | null>(null);
 
 	const handleSearchMatches = useCallback((matches: SearchMatch[]) => {
 		setSearchMatches(matches);
+	}, []);
+
+	const handleSelection = useCallback((sel: SeqVizSelection | null) => {
+		setSelection(sel);
+		if (sel?.type === "ANNOTATION" && sel.name) {
+			// Annotation clicked — jump to Primers tab and pass the name for auto-design
+			setActiveTab("primers");
+			setAnnotationName(sel.name);
+		} else {
+			setAnnotationName(null);
+		}
 	}, []);
 
 	useEffect(() => {
@@ -131,7 +143,7 @@ export function SequenceViewerWithPanel({
 					topology={topology}
 					enzymes={selectedEnzymes}
 					selection={selection}
-					onSelection={setSelection}
+					onSelection={handleSelection}
 					primerPair={bestPair}
 				/>
 			</div>
@@ -231,6 +243,7 @@ export function SequenceViewerWithPanel({
 							selectionStart={selection?.start}
 							selectionEnd={selection?.end}
 							onPrimersDesigned={setBestPair}
+							annotationName={annotationName}
 						/>
 					)}
 					{activeTab === "digest" && (

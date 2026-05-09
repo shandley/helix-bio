@@ -10,6 +10,8 @@ interface PrimerPanelProps {
 	selectionStart?: number;
 	selectionEnd?: number;
 	onPrimersDesigned?: (pair: PrimerPair | null) => void;
+	/** Set when an annotation was clicked — triggers auto-design and shows the name */
+	annotationName?: string | null;
 }
 
 function Badge({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
@@ -147,7 +149,7 @@ function formatLen(bp: number): string {
 	return `${bp} bp`;
 }
 
-export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrimersDesigned }: PrimerPanelProps) {
+export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrimersDesigned, annotationName }: PrimerPanelProps) {
 	const [start, setStart] = useState<string>(
 		selectionStart !== undefined
 			? String(selectionStart + 1)
@@ -182,9 +184,9 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 	// Terminate any in-flight worker on unmount
 	useEffect(() => () => { workerRef.current?.terminate(); }, []);
 
-	const design = useCallback(() => {
-		const s = parseInt(start, 10);
-		const e = parseInt(end, 10);
+	// Core worker launch — accepts explicit 1-indexed coords so annotation auto-run
+	// can bypass state (which may not yet reflect the latest selectionStart/End props).
+	const runDesign = useCallback((s: number, e: number) => {
 		if (isNaN(s) || isNaN(e) || s < 1 || e > seqLen || s >= e) {
 			setError("Enter a valid start/end range (1-indexed).");
 			return;
@@ -194,17 +196,13 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 		setRunning(true);
 		onPrimersDesigned?.(null);
 
-		// Terminate any previous run
 		workerRef.current?.terminate();
 
-		// Off-thread: designPCR blocks for ~1-3 s on typical plasmids
 		const worker = new Worker(
 			new URL("./primer-design.worker.ts", import.meta.url),
 		);
 		workerRef.current = worker;
 
-		// 1-indexed UI → 0-indexed half-open [s-1, e) for designPCR.
-		// productSizeRange is region-derived so large ORFs don't silently return empty.
 		const regionLen = e - s;
 		worker.postMessage({
 			seq,
@@ -240,7 +238,26 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 			onPrimersDesigned?.(null);
 			setRunning(false);
 		};
-	}, [start, end, seq, seqLen, onPrimersDesigned, tmTarget, minLen, maxLen, gcMin, gcMax]);
+	}, [seq, seqLen, onPrimersDesigned, tmTarget, minLen, maxLen, gcMin, gcMax]);
+
+	// Stable ref so the annotation effect always calls the latest runDesign
+	const runDesignRef = useRef(runDesign);
+	runDesignRef.current = runDesign;
+
+	const design = useCallback(() => {
+		const s = parseInt(start, 10);
+		const e = parseInt(end, 10);
+		runDesign(s, e);
+	}, [start, end, runDesign]);
+
+	// Auto-design when an annotation is clicked — use prop coords directly to avoid
+	// the timing gap between selectionStart/End props updating and start/end state settling.
+	useEffect(() => {
+		if (!annotationName || selectionStart === undefined || selectionEnd === undefined) return;
+		// selectionStart/End are 0-indexed from SeqViz; runDesign expects 1-indexed
+		runDesignRef.current(selectionStart + 1, selectionEnd + 1);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [annotationName, selectionStart, selectionEnd]);
 
 	const s = parseInt(start, 10);
 	const e = parseInt(end, 10);
@@ -259,11 +276,24 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 					}}>
 						Primers
 					</span>
-					{selectionStart !== undefined && (
+					{annotationName ? (
+						<span style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							color: "#1a4731",
+							background: "rgba(26,71,49,0.07)",
+							border: "1px solid rgba(26,71,49,0.2)",
+							borderRadius: "2px",
+							padding: "1px 6px",
+							letterSpacing: "0.04em",
+						}}>
+							{annotationName}
+						</span>
+					) : selectionStart !== undefined ? (
 						<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}>
 							from selection
 						</span>
-					)}
+					) : null}
 				</div>
 
 				<div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>

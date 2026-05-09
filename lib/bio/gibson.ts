@@ -1,4 +1,4 @@
-import { reverseComplement } from "./primer-design";
+import { reverseComplement } from "primd";
 
 export interface GibsonFragment {
 	name: string;

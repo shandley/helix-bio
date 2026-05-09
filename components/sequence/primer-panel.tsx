@@ -64,7 +64,7 @@ function AccessBadge({ score }: { score: number }) {
 	);
 }
 
-function PrimerCard({ primer, rank, highlight }: { primer: PrimerCandidate; rank: number; highlight: boolean }) {
+function PrimerCard({ primer, rank, highlight, tmTarget }: { primer: PrimerCandidate; rank: number; highlight: boolean; tmTarget: number }) {
 	const [copied, setCopied] = useState(false);
 
 	function copy() {
@@ -74,7 +74,7 @@ function PrimerCard({ primer, rank, highlight }: { primer: PrimerCandidate; rank
 		});
 	}
 
-	const tmWarn = Math.abs(primer.tm - 60) > 4;
+	const tmWarn = Math.abs(primer.tm - tmTarget) > 4;
 	const gcWarn = primer.gc < 0.42 || primer.gc > 0.62;
 	// Warn if hairpin / self-dimer are within 50% of the hard filter threshold
 	// (primers that passed but are borderline). Bad tier omitted — filtered primers never appear.
@@ -164,6 +164,14 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 	const [error, setError] = useState<string | null>(null);
 	const workerRef = useRef<Worker | null>(null);
 
+	// Design parameters — shown in collapsible Options section
+	const [optionsOpen, setOptionsOpen] = useState(false);
+	const [tmTarget, setTmTarget] = useState(60);
+	const [minLen, setMinLen] = useState(18);
+	const [maxLen, setMaxLen] = useState(27);
+	const [gcMin, setGcMin] = useState(40);
+	const [gcMax, setGcMax] = useState(65);
+
 	useEffect(() => {
 		if (selectionStart !== undefined) setStart(String(selectionStart + 1));
 	}, [selectionStart]);
@@ -202,7 +210,12 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 			seq,
 			regionStart: s - 1,
 			regionEnd: e,
-			opts: { productSizeRange: [regionLen + 36, regionLen + 500] },
+			opts: {
+				productSizeRange: [regionLen + 36, regionLen + 500] as [number, number],
+				tmTarget,
+				primerLenRange: [minLen, maxLen] as [number, number],
+				gcRange: [gcMin / 100, gcMax / 100] as [number, number],
+			},
 		});
 
 		worker.onmessage = (ev: MessageEvent<PrimerWorkerResponse>) => {
@@ -227,7 +240,7 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 			onPrimersDesigned?.(null);
 			setRunning(false);
 		};
-	}, [start, end, seq, seqLen, onPrimersDesigned]);
+	}, [start, end, seq, seqLen, onPrimersDesigned, tmTarget, minLen, maxLen, gcMin, gcMax]);
 
 	const s = parseInt(start, 10);
 	const e = parseInt(end, 10);
@@ -281,11 +294,99 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 					))}
 				</div>
 
-				<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", marginBottom: "10px" }}>
+				<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", marginBottom: "8px" }}>
 					{regionLen !== null
 						? <>Region: <span style={{ color: "#5a5648" }}>{formatLen(regionLen)}</span> · primers flank selection</>
 						: <span style={{ color: "#b8b0a4" }}>Primers will be placed flanking the selected region</span>
 					}
+				</div>
+
+				{/* Collapsible options */}
+				<div style={{ marginBottom: "8px" }}>
+					<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+						<button
+							onClick={() => setOptionsOpen(o => !o)}
+							style={{
+								display: "flex", alignItems: "center", gap: "4px",
+								background: "none", border: "none", cursor: "pointer",
+								fontFamily: "var(--font-courier)", fontSize: "8px",
+								letterSpacing: "0.1em", textTransform: "uppercase",
+								color: optionsOpen ? "#5a5648" : "#9a9284",
+								padding: "2px 0",
+							}}
+						>
+							<span style={{ fontSize: "7px", transition: "transform 0.15s", display: "inline-block", transform: optionsOpen ? "rotate(90deg)" : "rotate(0deg)" }}>▶</span>
+							Options
+						</button>
+						{optionsOpen && (
+							<button
+								onClick={() => { setTmTarget(60); setMinLen(18); setMaxLen(27); setGcMin(40); setGcMax(65); }}
+								style={{
+									background: "none", border: "none", cursor: "pointer",
+									fontFamily: "var(--font-courier)", fontSize: "8px",
+									color: "#9a9284", letterSpacing: "0.04em", padding: "2px 0",
+								}}
+							>
+								reset
+							</button>
+						)}
+					</div>
+
+					{optionsOpen && (() => {
+						const numStyle: React.CSSProperties = {
+							width: "44px", padding: "3px 5px",
+							fontFamily: "var(--font-courier)", fontSize: "11px",
+							color: "#1c1a16", background: "#f5f0e8",
+							border: "1px solid #ddd8ce", borderRadius: "3px", outline: "none",
+							textAlign: "center",
+						};
+						const labelStyle: React.CSSProperties = {
+							fontFamily: "var(--font-courier)", fontSize: "8px",
+							letterSpacing: "0.06em", color: "#9a9284", minWidth: "52px",
+						};
+						const unitStyle: React.CSSProperties = {
+							fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8b0a4",
+						};
+						const rowStyle: React.CSSProperties = {
+							display: "flex", alignItems: "center", gap: "6px", marginTop: "6px",
+						};
+						return (
+							<div style={{ paddingTop: "2px" }}>
+								{/* Tm target */}
+								<div style={rowStyle}>
+									<span style={labelStyle}>Tm target</span>
+									<input type="number" value={tmTarget} min={50} max={72} step={1}
+										onChange={e => setTmTarget(Math.max(50, Math.min(72, parseInt(e.target.value, 10) || 60)))}
+										style={numStyle} />
+									<span style={unitStyle}>°C</span>
+								</div>
+								{/* Primer length */}
+								<div style={rowStyle}>
+									<span style={labelStyle}>Length</span>
+									<input type="number" value={minLen} min={15} max={35} step={1}
+										onChange={e => setMinLen(Math.max(15, Math.min(parseInt(e.target.value, 10) || 18, maxLen)))}
+										style={numStyle} />
+									<span style={unitStyle}>–</span>
+									<input type="number" value={maxLen} min={15} max={35} step={1}
+										onChange={e => setMaxLen(Math.min(35, Math.max(parseInt(e.target.value, 10) || 27, minLen)))}
+										style={numStyle} />
+									<span style={unitStyle}>bp</span>
+								</div>
+								{/* GC range */}
+								<div style={rowStyle}>
+									<span style={labelStyle}>GC %</span>
+									<input type="number" value={gcMin} min={10} max={90} step={5}
+										onChange={e => setGcMin(Math.max(10, Math.min(parseInt(e.target.value, 10) || 40, gcMax - 5)))}
+										style={numStyle} />
+									<span style={unitStyle}>–</span>
+									<input type="number" value={gcMax} min={10} max={90} step={5}
+										onChange={e => setGcMax(Math.min(90, Math.max(parseInt(e.target.value, 10) || 65, gcMin + 5)))}
+										style={numStyle} />
+									<span style={unitStyle}>%</span>
+								</div>
+							</div>
+						);
+					})()}
 				</div>
 
 				{error && (
@@ -402,7 +503,7 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 								</span>
 							</div>
 							{fwdList.map((p, i) => (
-								<PrimerCard key={p.seq} primer={p} rank={i + 1} highlight={p.seq === bestFwd} />
+								<PrimerCard key={p.seq} primer={p} rank={i + 1} highlight={p.seq === bestFwd} tmTarget={tmTarget} />
 							))}
 
 							<div style={{
@@ -421,7 +522,7 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 								</span>
 							</div>
 							{revList.map((p, i) => (
-								<PrimerCard key={p.seq} primer={p} rank={i + 1} highlight={p.seq === bestRev} />
+								<PrimerCard key={p.seq} primer={p} rank={i + 1} highlight={p.seq === bestRev} tmTarget={tmTarget} />
 							))}
 
 							<div style={{

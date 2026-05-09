@@ -151,3 +151,19 @@
 .sequence-name-editable:hover {
   color: #1a4731 !important;
 }
+
+/* Accessibility track loading shimmer */
+@keyframes access-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.access-shimmer {
+  background: linear-gradient(
+    90deg,
+    #e2dcd4 0%,
+    #ede8de 40%,
+    #e2dcd4 100%
+  );
+  background-size: 200% 100%;
+  animation: access-shimmer 1.8s ease-in-out infinite;
+}

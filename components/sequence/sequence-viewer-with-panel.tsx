@@ -128,6 +128,7 @@ export function SequenceViewerWithPanel({
 					parsed={parsedWithSearch}
 					topology={topology}
 					enzymes={selectedEnzymes}
+					selection={selection}
 					onSelection={setSelection}
 				/>
 			</div>

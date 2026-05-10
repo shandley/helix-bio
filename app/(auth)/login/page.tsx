@@ -21,6 +21,8 @@ const URL_ERROR_MESSAGES: Record<string, string> = {
 		"That confirmation link is invalid or has expired. Please sign up again to get a new one.",
 	otp_expired: "That confirmation link has expired. Please sign up again to get a new one.",
 	access_denied: "That confirmation link is no longer valid. Please sign up again.",
+	oauth_failed:
+		"Google sign-in failed. If you're on a university VPN, try disconnecting — some network filters block the authentication redirect.",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -246,6 +248,23 @@ function LoginForm() {
 					</Link>
 				</span>
 			</div>
+
+			{/* VPN hint */}
+			<p style={{
+				marginTop: "20px",
+				paddingTop: "16px",
+				borderTop: "1px solid #ece6d8",
+				fontFamily: "var(--font-karla)",
+				fontSize: "11px",
+				color: "#b8b0a4",
+				lineHeight: 1.6,
+				textAlign: "center",
+			}}>
+				On a university VPN and seeing connection errors?{" "}
+				<br />
+				Try disconnecting your VPN, or ask IT to whitelist{" "}
+				<span style={{ fontFamily: "var(--font-courier)", fontSize: "10px" }}>ori-bio.app</span>.
+			</p>
 		</div>
 	);
 }

@@ -304,6 +304,23 @@ export default function SignupPage() {
 					Sign in
 				</Link>
 			</p>
+
+			{/* VPN hint */}
+			<p style={{
+				marginTop: "20px",
+				paddingTop: "16px",
+				borderTop: "1px solid #ece6d8",
+				fontFamily: "var(--font-karla)",
+				fontSize: "11px",
+				color: "#b8b0a4",
+				lineHeight: 1.6,
+				textAlign: "center",
+			}}>
+				On a university VPN and seeing connection errors?{" "}
+				<br />
+				Try disconnecting your VPN, or ask IT to whitelist{" "}
+				<span style={{ fontFamily: "var(--font-courier)", fontSize: "10px" }}>ori-bio.app</span>.
+			</p>
 		</div>
 	);
 }

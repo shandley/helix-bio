@@ -30,8 +30,21 @@ export function TopNav({ userEmail }: TopNavProps) {
 				backdropFilter: "blur(8px)",
 				padding: "0 24px",
 				flexShrink: 0,
+				position: "relative",
 			}}
 		>
+			{/* Thin accent line at top edge */}
+			<div
+				style={{
+					position: "absolute",
+					top: 0,
+					left: 0,
+					right: 0,
+					height: "2px",
+					background: "linear-gradient(90deg, #1a4731 0%, #2d7a54 50%, transparent 100%)",
+					opacity: 0.6,
+				}}
+			/>
 			<Link
 				href="/dashboard"
 				style={{ textDecoration: "none", display: "flex", alignItems: "baseline", gap: "10px" }}

@@ -33,28 +33,25 @@ export default function LandingPage() {
 					</span>
 				</div>
 				<nav className="flex items-center gap-8">
-					<Link
-						href="#features"
-						style={{
-							fontFamily: "var(--font-karla)",
-							fontSize: "13px",
-							color: "#5a5648",
-							textDecoration: "none",
-						}}
-					>
-						Features
-					</Link>
-					<Link
-						href="#database"
-						style={{
-							fontFamily: "var(--font-karla)",
-							fontSize: "13px",
-							color: "#5a5648",
-							textDecoration: "none",
-						}}
-					>
-						Database
-					</Link>
+					{[
+						["#features", "Features"],
+						["#database", "Database"],
+						["https://github.com/shandley/ori-bio", "GitHub"],
+					].map(([href, label]) => (
+						<Link
+							key={label}
+							href={href}
+							className="landing-nav-link"
+							style={{
+								fontFamily: "var(--font-karla)",
+								fontSize: "13px",
+								color: "#5a5648",
+								textDecoration: "none",
+							}}
+						>
+							{label}
+						</Link>
+					))}
 				</nav>
 				<div className="flex items-center gap-4">
 					<Link
@@ -177,6 +174,8 @@ export default function LandingPage() {
 								textTransform: "uppercase",
 								color: "#1a4731",
 								marginBottom: "20px",
+								animation: "fade-in 0.6s ease both",
+								animationDelay: "0.1s",
 							}}
 						>
 							<span
@@ -199,6 +198,8 @@ export default function LandingPage() {
 								letterSpacing: "-0.025em",
 								color: "#1c1a16",
 								marginBottom: "24px",
+								animation: "fade-up 0.7s ease both",
+								animationDelay: "0.2s",
 							}}
 						>
 							The open
@@ -219,6 +220,8 @@ export default function LandingPage() {
 								marginBottom: "36px",
 								borderLeft: "3px solid #b8933a",
 								paddingLeft: "20px",
+								animation: "fade-up 0.7s ease both",
+								animationDelay: "0.35s",
 							}}
 						>
 							Visualize plasmids with richly annotated maps. Detect features with profile HMMs that
@@ -227,7 +230,14 @@ export default function LandingPage() {
 						</p>
 
 						<div
-							style={{ display: "flex", alignItems: "center", gap: "24px", marginBottom: "48px" }}
+							style={{
+								display: "flex",
+								alignItems: "center",
+								gap: "24px",
+								marginBottom: "48px",
+								animation: "fade-up 0.7s ease both",
+								animationDelay: "0.5s",
+							}}
 						>
 							<Link
 								href="/signup"
@@ -244,6 +254,7 @@ export default function LandingPage() {
 									borderRadius: "4px",
 									textDecoration: "none",
 									letterSpacing: "0.02em",
+									transition: "background 0.15s",
 								}}
 							>
 								Open the workbench
@@ -255,14 +266,13 @@ export default function LandingPage() {
 									stroke="currentColor"
 									strokeWidth="2"
 									strokeLinecap="round"
+									aria-hidden
 								>
 									<path d="M3 8h10M9 4l4 4-4 4" />
 								</svg>
 							</Link>
-							<a
-								href="https://github.com/shandley/ori-bio"
-								target="_blank"
-								rel="noreferrer"
+							<Link
+								href="/login"
 								style={{
 									fontFamily: "var(--font-karla)",
 									fontSize: "13px",
@@ -273,8 +283,8 @@ export default function LandingPage() {
 									letterSpacing: "0.02em",
 								}}
 							>
-								GitHub repository →
-							</a>
+								Sign in →
+							</Link>
 						</div>
 
 						<div
@@ -289,9 +299,11 @@ export default function LandingPage() {
 								color: "#9a9284",
 								letterSpacing: "0.06em",
 								flexWrap: "wrap",
+								animation: "fade-in 0.6s ease both",
+								animationDelay: "0.7s",
 							}}
 						>
-							{["Next.js 15", "Supabase", "HMMER3", "SeqViz", "Open source · MIT"].map(
+							{["Next.js 16", "Supabase", "HMMER3", "SeqViz", "Open source · MIT"].map(
 								(item, i) => (
 									<span key={item} style={{ display: "flex", alignItems: "center", gap: "16px" }}>
 										{i > 0 && <span style={{ color: "#b8b0a4" }}>·</span>}
@@ -556,6 +568,60 @@ export default function LandingPage() {
 							</div>
 						))}
 					</div>
+
+					{/* Secondary feature grid — also includes */}
+					<div
+						style={{
+							marginTop: "48px",
+							paddingTop: "28px",
+							borderTop: "1px solid #ddd8ce",
+						}}
+					>
+						<span
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.14em",
+								textTransform: "uppercase",
+								color: "#9a9284",
+								display: "block",
+								marginBottom: "16px",
+							}}
+						>
+							Also includes
+						</span>
+						<div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+							{[
+								"Primer design · Owczarzy 2008 thermodynamics",
+								"Web Worker — non-blocking computation",
+								"Restriction enzyme panel · 250+ enzymes",
+								"In-silico digest",
+								"6-frame ORF finder",
+								"Sequence search · IUPAC ambiguity codes",
+								"Gibson Assembly simulation",
+								"RE cloning simulation",
+								"Gateway recombination",
+								"Soft delete · trash & restore",
+								"Google OAuth",
+								"Template accessibility heat map",
+							].map((feat) => (
+								<span
+									key={feat}
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "10px",
+										letterSpacing: "0.04em",
+										color: "#5a5648",
+										background: "#ece6d8",
+										padding: "4px 10px",
+										borderRadius: "2px",
+									}}
+								>
+									{feat}
+								</span>
+							))}
+						</div>
+					</div>
 				</section>
 			</main>
 
@@ -752,9 +818,9 @@ export default function LandingPage() {
 							},
 							{
 								source: "iGEM Registry",
-								count: "—",
-								status: "progress",
-								detail: "Parts & devices in progress",
+								count: "15,673",
+								status: "done",
+								detail: "Parts & devices with sequences",
 							},
 							{
 								source: "Addgene",
@@ -841,11 +907,154 @@ export default function LandingPage() {
 				</div>
 			</section>
 
+			{/* CTA */}
+			<section
+				style={{
+					padding: "80px 56px",
+					borderTop: "2px solid #1c1a16",
+					display: "grid",
+					gridTemplateColumns: "1fr 1fr",
+					gap: "80px",
+					alignItems: "center",
+				}}
+			>
+				<div>
+					<div
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "10px",
+							letterSpacing: "0.16em",
+							textTransform: "uppercase",
+							color: "#1a4731",
+							marginBottom: "16px",
+							display: "flex",
+							alignItems: "center",
+							gap: "10px",
+						}}
+					>
+						<span
+							style={{
+								display: "inline-block",
+								width: "32px",
+								height: "1px",
+								background: "#1a4731",
+							}}
+						/>
+						Free · Open source · MIT
+					</div>
+					<h2
+						style={{
+							fontFamily: "var(--font-playfair)",
+							fontSize: "clamp(32px, 3.5vw, 52px)",
+							fontWeight: 400,
+							lineHeight: 1.08,
+							letterSpacing: "-0.02em",
+							color: "#1c1a16",
+							marginBottom: "20px",
+						}}
+					>
+						Ready to open
+						<br />
+						the workbench?
+					</h2>
+					<p
+						style={{
+							fontFamily: "var(--font-karla)",
+							fontSize: "15px",
+							fontWeight: 300,
+							lineHeight: 1.7,
+							color: "#5a5648",
+							maxWidth: "400px",
+						}}
+					>
+						No installation. No subscription. Sign in with your institutional Google account and
+						start analyzing sequences in seconds.
+					</p>
+				</div>
+				<div style={{ display: "flex", flexDirection: "column", gap: "16px", maxWidth: "320px" }}>
+					<Link
+						href="/signup"
+						style={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between",
+							background: "#1a4731",
+							color: "white",
+							fontFamily: "var(--font-karla)",
+							fontSize: "15px",
+							fontWeight: 500,
+							padding: "16px 28px",
+							borderRadius: "4px",
+							textDecoration: "none",
+							letterSpacing: "0.02em",
+						}}
+					>
+						Create free account
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 16 16"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							aria-hidden
+						>
+							<path d="M3 8h10M9 4l4 4-4 4" />
+						</svg>
+					</Link>
+					<Link
+						href="/login"
+						style={{
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "space-between",
+							background: "transparent",
+							color: "#1c1a16",
+							fontFamily: "var(--font-karla)",
+							fontSize: "15px",
+							fontWeight: 400,
+							padding: "16px 28px",
+							borderRadius: "4px",
+							textDecoration: "none",
+							border: "1px solid #ddd8ce",
+							letterSpacing: "0.02em",
+						}}
+					>
+						Sign in to existing account
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 16 16"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+							strokeLinecap="round"
+							aria-hidden
+						>
+							<path d="M3 8h10M9 4l4 4-4 4" />
+						</svg>
+					</Link>
+					<p
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "10px",
+							color: "#9a9284",
+							letterSpacing: "0.04em",
+							paddingTop: "8px",
+							borderTop: "1px solid #ddd8ce",
+						}}
+					>
+						Google OAuth · Email/password · University VPN compatible
+					</p>
+				</div>
+			</section>
+
 			{/* FOOTER */}
 			<footer
 				style={{
 					padding: "24px 56px",
-					borderTop: "2px solid #1c1a16",
+					borderTop: "1px solid #ddd8ce",
 					display: "flex",
 					alignItems: "center",
 					justifyContent: "space-between",
@@ -862,8 +1071,24 @@ export default function LandingPage() {
 						letterSpacing: "0.06em",
 					}}
 				>
-					Open-source molecular workbench · MIT License · Next.js · Supabase · SeqViz
+					Open-source molecular workbench · MIT License · ori-bio.app
 				</span>
+				<a
+					href="https://github.com/shandley/ori-bio"
+					target="_blank"
+					rel="noreferrer"
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "10px",
+						color: "#5a5648",
+						letterSpacing: "0.04em",
+						textDecoration: "none",
+						borderBottom: "1px solid #ddd8ce",
+						paddingBottom: "1px",
+					}}
+				>
+					GitHub →
+				</a>
 			</footer>
 		</div>
 	);

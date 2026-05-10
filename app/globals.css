@@ -54,6 +54,20 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
+
+  /* Hero entrance animations */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes rule-grow {
+    from { transform: scaleX(0); transform-origin: left; }
+    to   { transform: scaleX(1); transform-origin: left; }
+  }
 }
 
 :root {
@@ -136,6 +150,26 @@
 		letter-spacing: -0.02em;
 	}
 }
+
+/* Landing page nav link hover */
+.landing-nav-link {
+  position: relative;
+  transition: color 0.15s;
+}
+.landing-nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #1a4731;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s ease;
+}
+.landing-nav-link:hover::after { transform: scaleX(1); }
+.landing-nav-link:hover { color: #1c1a16 !important; }
 
 /* Sequence library row hover */
 .sequence-row {

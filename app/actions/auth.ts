@@ -37,7 +37,7 @@ export async function signup(formData: FormData) {
 	// Derive origin from the incoming request so this works on preview deployments too
 	const headersList = await headers();
 	const origin =
-		headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.vercel.app";
+		headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.app";
 
 	const { data, error } = await supabase.auth.signUp({
 		email: formData.get("email") as string,
@@ -78,7 +78,7 @@ export async function requestPasswordReset(formData: FormData) {
 	const supabase = await createClient();
 	const headersList = await headers();
 	const origin =
-		headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.vercel.app";
+		headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.app";
 	const email = formData.get("email") as string;
 
 	const { error } = await supabase.auth.resetPasswordForEmail(email, {

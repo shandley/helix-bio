@@ -4,7 +4,7 @@
 
 Ori is a browser-based alternative to SnapGene — a plasmid editor and analysis tool with AI-assisted primer design, restriction enzyme mapping, cloning simulation, and a natural language co-pilot.
 
-**Live:** [ori-bio.vercel.app](https://ori-bio.vercel.app)
+**Live:** [ori-bio.app](https://ori-bio.app)
 
 ---
 

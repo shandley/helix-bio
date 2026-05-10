@@ -11,7 +11,8 @@ Open-source, web-based, LLM-powered molecular biology platform.
 - `supabase/migrations/` — Database schema
 
 ## primd — local primer design library
-`primd` lives at `../primd` (sibling directory). Linked via `file:../primd` in package.json.
+Published on npm as **`@shandley/primd`** (unscoped `primd` rejected by npm — too similar to `prisma`).
+Lives at `../primd` (sibling directory). Linked locally via `file:../primd` in package.json as `@shandley/primd`.
 - **Use `file:` not `link:`** — `link:` creates a symlink outside the project root which Turbopack rejects. `file:` copies dist into `.pnpm/` store within the project tree.
 - After changing primd source: `cd ../primd && npx tsc --project tsconfig.build.json && cd ../snapgene-alternative && pnpm install`
 - Exports: `designPCR`, `designLAMP`, `calcAccessibilityProfile`, `calcTm`, `reverseComplement`, and thermodynamic utilities
@@ -59,6 +60,12 @@ supabase projects list
 - **Email**: `demo@ori.bio` | **Password**: `plasmids2025`
 - Pre-seeded with pUC19, pBR322, pACYC184, pGEX-4T-1, pEGFP-N1
 - Re-seed: `SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/seed-demo.ts`
+
+### Google OAuth
+- Provider enabled in Supabase dashboard
+- Client ID: `647892611155-m1sip2fi0vhded9aige08i9bj9vrhntn.apps.googleusercontent.com`
+- Google Cloud project: `ori-bio` — currently in Testing mode (no 100-user cap with basic scopes)
+- To publish: Google Cloud Console → Google Auth Platform → Audience → Publish App (instant)
 
 ## HPC (HTCF @ WashU)
 Login: `ssh shandley@login.htcf.wustl.edu`

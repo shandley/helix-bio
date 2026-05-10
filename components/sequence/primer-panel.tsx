@@ -7,6 +7,7 @@ import type { PrimerWorkerResponse } from "./primer-design.worker";
 interface PrimerPanelProps {
 	seq: string;
 	seqLen: number;
+	topology?: "circular" | "linear";
 	selectionStart?: number;
 	selectionEnd?: number;
 	onPrimersDesigned?: (pair: PrimerPair | null) => void;
@@ -358,6 +359,7 @@ function formatLen(bp: number): string {
 export function PrimerPanel({
 	seq,
 	seqLen,
+	topology = "linear",
 	selectionStart,
 	selectionEnd,
 	onPrimersDesigned,
@@ -403,9 +405,12 @@ export function PrimerPanel({
 
 	// Core worker launch — accepts explicit 1-indexed coords so annotation auto-run
 	// can bypass state (which may not yet reflect the latest selectionStart/End props).
+	// Handles circular origin-spanning selections by rotating the sequence.
 	const runDesign = useCallback(
 		(s: number, e: number) => {
-			if (Number.isNaN(s) || Number.isNaN(e) || s < 1 || e > seqLen || s >= e) {
+			// Allow s > e on circular plasmids (selection wraps the origin)
+			const isWrapping = topology === "circular" && s > e && s >= 1 && e >= 1;
+			if (Number.isNaN(s) || Number.isNaN(e) || s < 1 || e > seqLen || (s >= e && !isWrapping)) {
 				setError("Enter a valid start/end range (1-indexed).");
 				return;
 			}
@@ -416,14 +421,37 @@ export function PrimerPanel({
 
 			workerRef.current?.terminate();
 
+			// Rotation for circular origin-spanning selections:
+			// Rotate the sequence so the wrapped region becomes contiguous,
+			// then un-rotate primer positions in the onmessage handler.
+			let workSeq = seq;
+			let workRegionStart = s - 1; // 0-indexed
+			let workRegionEnd = e;        // 0-indexed half-open
+			let regionLen = e - s;
+			let rotPoint = 0;
+
+			if (isWrapping) {
+				// Region: [s-1 .. seqLen-1] ++ [0 .. e-1]
+				regionLen = (seqLen - (s - 1)) + e;
+				// Rotate so there's ~500 bp of flanking before the region start
+				const flank = Math.min(500, Math.floor((seqLen - regionLen) / 2));
+				rotPoint = (((s - 1) - flank) + seqLen) % seqLen;
+				workSeq = seq.slice(rotPoint) + seq.slice(0, rotPoint);
+				workRegionStart = flank;
+				workRegionEnd = flank + regionLen;
+			}
+
+			// Capture rotation info in closure for un-rotation in onmessage
+			const capturedRotPoint = rotPoint;
+			const capturedSeqLen = seqLen;
+
 			const worker = new Worker(new URL("./primer-design.worker.ts", import.meta.url));
 			workerRef.current = worker;
 
-			const regionLen = e - s;
 			worker.postMessage({
-				seq,
-				regionStart: s - 1,
-				regionEnd: e,
+				seq: workSeq,
+				regionStart: workRegionStart,
+				regionEnd: workRegionEnd,
 				opts: {
 					productSizeRange: [regionLen + 36, regionLen + 500] as [number, number],
 					tmTarget,
@@ -437,8 +465,18 @@ export function PrimerPanel({
 				workerRef.current = null;
 				const msg = ev.data;
 				if (msg.type === "success") {
-					setPairs(msg.result.pairs);
-					onPrimersDesigned?.(msg.result.pairs[0] ?? null);
+					// Un-rotate primer positions back to original coordinate space
+					let resultPairs = msg.result.pairs;
+					if (capturedRotPoint !== 0) {
+						const unrotate = (pos: number) => (pos + capturedRotPoint) % capturedSeqLen;
+						resultPairs = resultPairs.map((pair) => ({
+							...pair,
+							fwd: { ...pair.fwd, start: unrotate(pair.fwd.start), end: unrotate(pair.fwd.end) },
+							rev: { ...pair.rev, start: unrotate(pair.rev.start), end: unrotate(pair.rev.end) },
+						}));
+					}
+					setPairs(resultPairs);
+					onPrimersDesigned?.(resultPairs[0] ?? null);
 					if (msg.result.warning) setWarning(msg.result.warning);
 				} else {
 					setError("Primer design failed. Check your sequence.");
@@ -455,7 +493,7 @@ export function PrimerPanel({
 				setRunning(false);
 			};
 		},
-		[seq, seqLen, onPrimersDesigned, tmTarget, minLen, maxLen, gcMin, gcMax],
+		[seq, seqLen, topology, onPrimersDesigned, tmTarget, minLen, maxLen, gcMin, gcMax],
 	);
 
 	// Stable ref so the annotation effect always calls the latest runDesign
@@ -479,7 +517,12 @@ export function PrimerPanel({
 
 	const s = parseInt(start, 10);
 	const e = parseInt(end, 10);
-	const regionLen = !Number.isNaN(s) && !Number.isNaN(e) && e > s ? e - s + 1 : null;
+	const isWrapping = topology === "circular" && !Number.isNaN(s) && !Number.isNaN(e) && s > e && s >= 1 && e >= 1;
+	const regionLen = !Number.isNaN(s) && !Number.isNaN(e)
+		? isWrapping
+			? (seqLen - (s - 1)) + e   // wrapping: [s..seqLen] + [1..e]
+			: e > s ? e - s + 1 : null
+		: null;
 
 	return (
 		<div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -575,8 +618,16 @@ export function PrimerPanel({
 				>
 					{regionLen !== null ? (
 						<>
-							Region: <span style={{ color: "#5a5648" }}>{formatLen(regionLen)}</span> · primers
-							flank selection
+							Region: <span style={{ color: "#5a5648" }}>{formatLen(regionLen)}</span>
+							{isWrapping && (
+								<span
+									title="This selection crosses position 0 on the circular plasmid. The sequence will be rotated internally so primers can be placed correctly."
+									style={{ color: "#b8933a", cursor: "help" }}
+								>
+									{" "}· wraps origin ↻
+								</span>
+							)}
+							{!isWrapping && " · primers flank selection"}
 						</>
 					) : (
 						<span style={{ color: "#b8b0a4" }}>

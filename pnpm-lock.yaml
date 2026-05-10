@@ -18,8 +18,8 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@shandley/primd':
-        specifier: ^0.2.1
-        version: 0.2.1
+        specifier: ^0.3.0
+        version: 0.3.0
       '@supabase/ssr':
         specifier: ^0.10.2
         version: 0.10.2(@supabase/supabase-js@2.105.3)
@@ -774,8 +774,8 @@ packages:
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
 
-  '@shandley/primd@0.2.1':
-    resolution: {integrity: sha512-+hqi4PTOMWEiR/WrH5yBVqgFDa5RmAh4iOxALmur8mgutaxAP4kUln8aRlPbxtkDolBxavXNm5aLa8PUitm1/g==}
+  '@shandley/primd@0.3.0':
+    resolution: {integrity: sha512-h3Zyu2gnqvvAzHp08vsnU2NlbORlpelyrLh4d8fMl86kF5WlTlFa8U7JdlEoxMhpQwxrtAoEr8JFYuI3B+qTNQ==}
 
   '@sindresorhus/merge-streams@4.0.0':
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
@@ -3929,7 +3929,7 @@ snapshots:
 
   '@sec-ant/readable-stream@0.4.1': {}
 
-  '@shandley/primd@0.2.1': {}
+  '@shandley/primd@0.3.0': {}
 
   '@sindresorhus/merge-streams@4.0.0': {}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { PrimerCandidate, PrimerPair } from "@shandley/primd";
+import type { AssemblyPrimerPair, PrimerCandidate, PrimerPair } from "@shandley/primd";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PrimerWorkerRequest, PrimerWorkerResponse } from "./primer-design.worker";
 
@@ -412,6 +412,176 @@ function formatLen(bp: number): string {
 	return `${bp} bp`;
 }
 
+// Assembly pair card — shows tail + annealing sequence with visual distinction
+function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: number }) {
+	const [copiedFwd, setCopiedFwd] = useState(false);
+	const [copiedRev, setCopiedRev] = useState(false);
+	const [copiedAll, setCopiedAll] = useState(false);
+
+	function copyFwd() {
+		void navigator.clipboard.writeText(pair.fwd.fullSeq).then(() => {
+			setCopiedFwd(true);
+			setTimeout(() => setCopiedFwd(false), 1200);
+		});
+	}
+	function copyRev() {
+		void navigator.clipboard.writeText(pair.rev.fullSeq).then(() => {
+			setCopiedRev(true);
+			setTimeout(() => setCopiedRev(false), 1200);
+		});
+	}
+	function copyBoth() {
+		const text = `Fwd (${pair.fwd.fullSeq.length}bp total, ann Tm ${pair.fwd.tm.toFixed(1)}°C): ${pair.fwd.fullSeq}\nRev (${pair.rev.fullSeq.length}bp total, ann Tm ${pair.rev.tm.toFixed(1)}°C): ${pair.rev.fullSeq}`;
+		void navigator.clipboard.writeText(text).then(() => {
+			setCopiedAll(true);
+			setTimeout(() => setCopiedAll(false), 1500);
+		});
+	}
+
+	const isBest = rank === 1;
+
+	function AssemblySeqLine({
+		dir,
+		tail,
+		annealing,
+		tm,
+		copied,
+		onCopy,
+	}: {
+		dir: "→" | "←";
+		tail: string;
+		annealing: string;
+		tm: number;
+		copied: boolean;
+		onCopy: () => void;
+	}) {
+		return (
+			<div
+				onClick={onCopy}
+				title={`Click to copy full primer · ${tail}${annealing}`}
+				style={{
+					display: "flex",
+					alignItems: "center",
+					gap: "5px",
+					cursor: "pointer",
+					padding: "2px 0",
+				}}
+			>
+				<span
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "8px",
+						color: "#9a9284",
+						width: "9px",
+						flexShrink: 0,
+					}}
+				>
+					{dir}
+				</span>
+				<span
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "10px",
+						letterSpacing: "0.04em",
+						flex: 1,
+						overflow: "hidden",
+						whiteSpace: "nowrap",
+						textOverflow: "ellipsis",
+					}}
+				>
+					<span style={{ color: copied ? "#1a4731" : "#b8b0a4" }}>{tail}</span>
+					<span style={{ color: copied ? "#1a4731" : "#1c1a16" }}>{annealing}</span>
+				</span>
+				<span
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "8px",
+						color: "#9a9284",
+						flexShrink: 0,
+					}}
+				>
+					{tm.toFixed(1)}°
+				</span>
+			</div>
+		);
+	}
+
+	return (
+		<div
+			style={{
+				padding: "10px 12px",
+				borderBottom: "1px solid rgba(221,216,206,0.5)",
+				background: isBest ? "rgba(26,71,49,0.04)" : "transparent",
+			}}
+		>
+			<div
+				style={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "space-between",
+					marginBottom: "6px",
+				}}
+			>
+				<div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							letterSpacing: "0.1em",
+							color: isBest ? "#1a4731" : "#9a9284",
+							fontWeight: isBest ? 700 : 400,
+						}}
+					>
+						#{rank}
+					</span>
+					<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#5a5648" }}>
+						{formatLen(pair.productSize)}
+					</span>
+					<span style={{ color: "#ddd8ce" }}>·</span>
+					<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}>
+						ann {pair.annealingTm.toFixed(1)}°
+					</span>
+					<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8b0a4" }}>
+						{pair.fwd.tail.length}bp overlap
+					</span>
+				</div>
+				<button
+					type="button"
+					onClick={copyBoth}
+					style={{
+						background: "none",
+						border: "none",
+						cursor: "pointer",
+						padding: "0 2px",
+						fontFamily: "var(--font-courier)",
+						fontSize: "9px",
+						color: copiedAll ? "#1a4731" : "#9a9284",
+						transition: "color 0.15s",
+					}}
+				>
+					{copiedAll ? "copied" : "copy"}
+				</button>
+			</div>
+			<AssemblySeqLine
+				dir="→"
+				tail={pair.fwd.tail}
+				annealing={pair.fwd.seq}
+				tm={pair.fwd.tm}
+				copied={copiedFwd}
+				onCopy={copyFwd}
+			/>
+			<AssemblySeqLine
+				dir="←"
+				tail={pair.rev.tail}
+				annealing={pair.rev.seq}
+				tm={pair.rev.tm}
+				copied={copiedRev}
+				onCopy={copyRev}
+			/>
+		</div>
+	);
+}
+
 export function PrimerPanel({
 	seq,
 	seqLen,
@@ -429,8 +599,9 @@ export function PrimerPanel({
 			? String(selectionEnd + 1)
 			: String(Math.floor((seqLen * 2) / 3) + 1),
 	);
-	const [mode, setMode] = useState<"pcr" | "qpcr">("pcr");
+	const [mode, setMode] = useState<"pcr" | "qpcr" | "assembly">("pcr");
 	const [pairs, setPairs] = useState<DesignPair[] | null>(null);
+	const [assemblyPairs, setAssemblyPairs] = useState<AssemblyPrimerPair[] | null>(null);
 	const [warning, setWarning] = useState<string | null>(null);
 	const [running, setRunning] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -518,6 +689,14 @@ export function PrimerPanel({
 					primerLenRange: [minLen, maxLen] as [number, number],
 					gcRange: [gcMin / 100, gcMax / 100] as [number, number],
 				},
+				...(mode === "assembly"
+					? {
+							assemblyOpts: {
+								method: "gibson" as const,
+								annealingLenRange: [minLen, maxLen] as [number, number],
+							},
+						}
+					: {}),
 			};
 			worker.postMessage(req);
 
@@ -526,18 +705,29 @@ export function PrimerPanel({
 				workerRef.current = null;
 				const msg = ev.data;
 				if (msg.type === "success") {
-					// Un-rotate primer positions back to original coordinate space
-					let resultPairs = msg.result.pairs as DesignPair[];
-					if (capturedRotPoint !== 0) {
-						const unrotate = (pos: number) => (pos + capturedRotPoint) % capturedSeqLen;
-						resultPairs = resultPairs.map((pair) => ({
-							...pair,
-							fwd: { ...pair.fwd, start: unrotate(pair.fwd.start), end: unrotate(pair.fwd.end) },
-							rev: { ...pair.rev, start: unrotate(pair.rev.start), end: unrotate(pair.rev.end) },
-						}));
+					if (msg.mode === "assembly") {
+						// Assembly results — no position un-rotation needed (tails don't affect coords)
+						const asmPairs = msg.result.pairs as AssemblyPrimerPair[];
+						setAssemblyPairs(asmPairs);
+						onPrimersDesigned?.(
+							asmPairs[0]
+								? { ...asmPairs[0].fwd, ...asmPairs[0], heteroDimerDG: 0, tmDiff: 0, penalty: 0 }
+								: null,
+						);
+					} else {
+						// PCR / qPCR — un-rotate primer positions back to original coordinate space
+						let resultPairs = msg.result.pairs as DesignPair[];
+						if (capturedRotPoint !== 0) {
+							const unrotate = (pos: number) => (pos + capturedRotPoint) % capturedSeqLen;
+							resultPairs = resultPairs.map((pair) => ({
+								...pair,
+								fwd: { ...pair.fwd, start: unrotate(pair.fwd.start), end: unrotate(pair.fwd.end) },
+								rev: { ...pair.rev, start: unrotate(pair.rev.start), end: unrotate(pair.rev.end) },
+							}));
+						}
+						setPairs(resultPairs);
+						onPrimersDesigned?.(resultPairs[0] ?? null);
 					}
-					setPairs(resultPairs);
-					onPrimersDesigned?.(resultPairs[0] ?? null);
 					if (msg.result.warning) setWarning(msg.result.warning);
 				} else {
 					setError("Primer design failed. Check your sequence.");
@@ -633,15 +823,16 @@ export function PrimerPanel({
 					) : null}
 				</div>
 
-				{/* Mode toggle: PCR / qPCR */}
+				{/* Mode toggle: PCR / qPCR / Assembly */}
 				<div style={{ display: "flex", gap: "3px", marginBottom: "10px" }}>
-					{(["pcr", "qpcr"] as const).map((m) => (
+					{(["pcr", "qpcr", "assembly"] as const).map((m) => (
 						<button
 							key={m}
 							type="button"
 							onClick={() => {
 								setMode(m);
 								setPairs(null);
+								setAssemblyPairs(null);
 								setWarning(null);
 							}}
 							style={{
@@ -658,7 +849,7 @@ export function PrimerPanel({
 								transition: "background 0.12s, color 0.12s",
 							}}
 						>
-							{m === "qpcr" ? "qPCR" : "PCR"}
+							{m === "qpcr" ? "qPCR" : m === "assembly" ? "Assembly" : "PCR"}
 						</button>
 					))}
 					{mode === "qpcr" && (
@@ -671,7 +862,20 @@ export function PrimerPanel({
 								marginLeft: "4px",
 							}}
 						>
-							70–200 bp amplicon
+							70–200 bp
+						</span>
+					)}
+					{mode === "assembly" && (
+						<span
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "8px",
+								color: "#9a9284",
+								alignSelf: "center",
+								marginLeft: "4px",
+							}}
+						>
+							Gibson · 20 bp overlap
 						</span>
 					)}
 				</div>
@@ -960,13 +1164,54 @@ export function PrimerPanel({
 						transition: "opacity 0.15s",
 					}}
 				>
-					{running ? "Designing…" : mode === "qpcr" ? "Design qPCR Primers" : "Design Primers"}
+					{running
+						? "Designing…"
+						: mode === "qpcr"
+							? "Design qPCR Primers"
+							: mode === "assembly"
+								? "Design Assembly Primers"
+								: "Design Primers"}
 				</button>
 			</div>
 
 			{/* Results */}
 			<div style={{ flex: 1, overflowY: "auto" }}>
-				{pairs === null && !running && (
+				{assemblyPairs !== null && assemblyPairs.length > 0 && (
+					<>
+						<div
+							style={{
+								padding: "6px 12px 4px",
+								background: "#f5f0e8",
+								borderBottom: "1px solid #ddd8ce",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "space-between",
+							}}
+						>
+							<span
+								style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "8px",
+									letterSpacing: "0.12em",
+									textTransform: "uppercase",
+									color: "#5a5648",
+								}}
+							>
+								Pairs
+							</span>
+							<span
+								style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284" }}
+							>
+								{assemblyPairs.length} · muted = overlap tail
+							</span>
+						</div>
+						{assemblyPairs.map((pair, i) => (
+							<AssemblyPairCard key={i} pair={pair} rank={i + 1} />
+						))}
+					</>
+				)}
+
+				{pairs === null && assemblyPairs === null && !running && (
 					<div
 						style={{
 							padding: "28px 16px",

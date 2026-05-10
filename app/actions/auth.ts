@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 export async function signInWithGoogle() {
 	const supabase = await createClient();
@@ -86,6 +87,41 @@ export async function logout() {
 	const supabase = await createClient();
 	await supabase.auth.signOut();
 	redirect("/login");
+}
+
+export async function deleteAccount(): Promise<{ error: string } | never> {
+	const supabase = await createClient();
+
+	const { data: { user } } = await supabase.auth.getUser();
+	if (!user) return { error: "Not authenticated." };
+
+	// 1. Collect all storage files owned by this user
+	const { data: files } = await supabase.storage
+		.from("sequences")
+		.list(user.id, { limit: 1000 });
+
+	if (files && files.length > 0) {
+		const paths = files.map((f) => `${user.id}/${f.name}`);
+		await supabase.storage.from("sequences").remove(paths);
+	}
+
+	// 2. Hard-delete all sequence rows (including soft-deleted)
+	await supabase.from("sequences").delete().eq("user_id", user.id);
+
+	// 3. Delete the auth user — requires service role key
+	const adminUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+	const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+	if (!serviceKey) return { error: "Server configuration error. Contact support." };
+
+	const admin = createAdminClient(adminUrl, serviceKey, {
+		auth: { autoRefreshToken: false, persistSession: false },
+	});
+	const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
+	if (deleteError) return { error: deleteError.message };
+
+	// 4. Sign out locally and redirect home
+	await supabase.auth.signOut();
+	redirect("/");
 }
 
 export async function requestPasswordReset(formData: FormData) {

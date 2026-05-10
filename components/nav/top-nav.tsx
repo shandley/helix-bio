@@ -97,6 +97,9 @@ export function TopNav({ userEmail }: TopNavProps) {
 					<DropdownMenuItem onClick={() => router.push("/dashboard")}>
 						My sequences
 					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => router.push("/account")}>
+						Account settings
+					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem variant="destructive" onClick={() => logout()}>
 						Sign out

@@ -48,8 +48,13 @@ function AccessBadge({ score }: { score: number }) {
 	const color = warn ? "#b8933a" : "#a02828";
 	const bg = warn ? "rgba(184,147,58,0.08)" : "rgba(160,40,40,0.07)";
 	const border = warn ? "rgba(184,147,58,0.25)" : "rgba(160,40,40,0.25)";
+	const pct = Math.round(score * 100);
+	const tooltip = warn
+		? `Binding site ${pct}% likely single-stranded at the annealing temperature. Some secondary structure present — primer may have reduced efficiency. See the heat map strip below the sequence.`
+		: `Binding site only ${pct}% likely single-stranded — the template is significantly structured here. Primers in structured regions have notably lower efficiency. Consider shifting the binding position or raising the annealing temperature. See the heat map strip below.`;
 	return (
 		<span
+			title={tooltip}
 			style={{
 				display: "inline-flex",
 				alignItems: "center",
@@ -62,6 +67,7 @@ function AccessBadge({ score }: { score: number }) {
 				border: `1px solid ${border}`,
 				borderRadius: "2px",
 				padding: "1px 5px",
+				cursor: "help",
 			}}
 		>
 			<span style={{ opacity: 0.6 }}>access</span>

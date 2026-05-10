@@ -66,29 +66,105 @@ function AccessBadge({ score }: { score: number }) {
 	);
 }
 
-function PrimerCard({ primer, rank, highlight, tmTarget }: { primer: PrimerCandidate; rank: number; highlight: boolean; tmTarget: number }) {
+// Compact single-line sequence row used inside PairCard
+function SeqLine({ dir, primer, tmTarget }: { dir: "→" | "←"; primer: PrimerCandidate; tmTarget: number }) {
 	const [copied, setCopied] = useState(false);
-
 	function copy() {
 		void navigator.clipboard.writeText(primer.seq).then(() => {
-			setCopied(true);
-			setTimeout(() => setCopied(false), 1500);
+			setCopied(true); setTimeout(() => setCopied(false), 1200);
 		});
 	}
+	const tmWarn = Math.abs(primer.tm - tmTarget) > 4;
+	const accessBad = primer.templateAccessibility < 0.40;
+	const accessWarn = !accessBad && primer.templateAccessibility < 0.75;
+	return (
+		<div onClick={copy} title={`Click to copy · ${primer.seq}`}
+			style={{ display: "flex", alignItems: "center", gap: "5px", cursor: "pointer", padding: "2px 0" }}>
+			<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284", width: "9px", flexShrink: 0 }}>{dir}</span>
+			<span style={{
+				fontFamily: "var(--font-courier)", fontSize: "10px", letterSpacing: "0.04em",
+				color: copied ? "#1a4731" : "#1c1a16",
+				flex: 1, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
+				transition: "color 0.15s",
+			}}>
+				{primer.seq}
+			</span>
+			<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: tmWarn ? "#b8933a" : "#9a9284", flexShrink: 0 }}>
+				{primer.tm.toFixed(1)}°
+			</span>
+			{accessBad  && <span title="Binding site in secondary structure" style={{ fontSize: "9px", color: "#a02828", lineHeight: 1 }}>⚠</span>}
+			{accessWarn && <span title="Binding site partially structured"   style={{ fontSize: "9px", color: "#b8933a", lineHeight: 1 }}>~</span>}
+		</div>
+	);
+}
 
+// Ranked pair card — primary result view
+function PairCard({ pair, rank, tmTarget }: { pair: PrimerPair; rank: number; tmTarget: number }) {
+	const [copied, setCopied] = useState(false);
+	function copyPair() {
+		const text = `Fwd (${pair.fwd.len}bp, Tm ${pair.fwd.tm.toFixed(1)}°C): ${pair.fwd.seq}\nRev (${pair.rev.len}bp, Tm ${pair.rev.tm.toFixed(1)}°C): ${pair.rev.seq}`;
+		void navigator.clipboard.writeText(text).then(() => {
+			setCopied(true); setTimeout(() => setCopied(false), 1500);
+		});
+	}
+	const dimerWarn = pair.heteroDimerDG < -3.0;
+	const tmDiffWarn = pair.tmDiff > 2;
+	const isBest = rank === 1;
+	return (
+		<div style={{
+			padding: "10px 12px",
+			borderBottom: "1px solid rgba(221,216,206,0.5)",
+			background: isBest ? "rgba(26,71,49,0.04)" : "transparent",
+		}}>
+			{/* Metrics row */}
+			<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+				<div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+					<span style={{
+						fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.1em",
+						color: isBest ? "#1a4731" : "#9a9284", fontWeight: isBest ? 700 : 400,
+					}}>#{rank}</span>
+					<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#5a5648" }}>
+						{formatLen(pair.productSize)}
+					</span>
+					<span style={{ color: "#ddd8ce" }}>·</span>
+					<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: tmDiffWarn ? "#b8933a" : "#9a9284" }}>
+						ΔTm {pair.tmDiff.toFixed(1)}°
+					</span>
+					{dimerWarn && <Badge label="dimer" value={`${pair.heteroDimerDG.toFixed(1)}`} warn />}
+				</div>
+				<button onClick={copyPair} title="Copy pair (Fwd + Rev sequences)"
+					style={{
+						background: "none", border: "none", cursor: "pointer", padding: "0 2px",
+						fontFamily: "var(--font-courier)", fontSize: "9px",
+						color: copied ? "#1a4731" : "#9a9284",
+						transition: "color 0.15s",
+					}}>
+					{copied ? "copied" : "copy"}
+				</button>
+			</div>
+			{/* Sequences */}
+			<SeqLine dir="→" primer={pair.fwd} tmTarget={tmTarget} />
+			<SeqLine dir="←" primer={pair.rev} tmTarget={tmTarget} />
+		</div>
+	);
+}
+
+// Detailed individual primer card — shown in the collapsible section
+function PrimerCard({ primer, rank, highlight, tmTarget }: { primer: PrimerCandidate; rank: number; highlight: boolean; tmTarget: number }) {
+	const [copied, setCopied] = useState(false);
+	function copy() {
+		void navigator.clipboard.writeText(primer.seq).then(() => {
+			setCopied(true); setTimeout(() => setCopied(false), 1500);
+		});
+	}
 	const tmWarn = Math.abs(primer.tm - tmTarget) > 4;
 	const gcWarn = primer.gc < 0.42 || primer.gc > 0.62;
-	// Warn if hairpin / self-dimer are within 50% of the hard filter threshold
-	// (primers that passed but are borderline). Bad tier omitted — filtered primers never appear.
 	const hairpinWarn = primer.hairpinDG < -1.0;
 	const selfDimerWarn = primer.selfDimerDG < -3.0;
-
 	return (
-		<div
-			onClick={copy}
-			title="Click to copy sequence"
+		<div onClick={copy} title="Click to copy sequence"
 			style={{
-				padding: "10px 12px",
+				padding: "8px 12px",
 				borderBottom: "1px solid rgba(221,216,206,0.5)",
 				cursor: "pointer",
 				background: highlight ? "rgba(26,71,49,0.04)" : "transparent",
@@ -97,40 +173,19 @@ function PrimerCard({ primer, rank, highlight, tmTarget }: { primer: PrimerCandi
 			onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "rgba(26,71,49,0.07)"; }}
 			onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = highlight ? "rgba(26,71,49,0.04)" : "transparent"; }}
 		>
-			<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
-				<span style={{
-					fontFamily: "var(--font-courier)",
-					fontSize: "9px",
-					letterSpacing: "0.1em",
-					color: highlight ? "#1a4731" : "#9a9284",
-					fontWeight: highlight ? 700 : 400,
-				}}>
+			<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+				<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", letterSpacing: "0.1em", color: highlight ? "#1a4731" : "#9a9284", fontWeight: highlight ? 700 : 400 }}>
 					#{rank}
 				</span>
-				<span style={{
-					fontFamily: "var(--font-courier)",
-					fontSize: "9px",
-					color: "#9a9284",
-					opacity: copied ? 1 : 0,
-					transition: "opacity 0.2s",
-				}}>
+				<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284", opacity: copied ? 1 : 0, transition: "opacity 0.2s" }}>
 					copied
 				</span>
 			</div>
-
-			<div style={{
-				fontFamily: "var(--font-courier)",
-				fontSize: "11px",
-				color: "#1c1a16",
-				letterSpacing: "0.08em",
-				wordBreak: "break-all",
-				marginBottom: "7px",
-				lineHeight: 1.5,
-			}}>
+			{/* Sequence — smaller font so 22-char primers fit on one line */}
+			<div style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#1c1a16", letterSpacing: "0.04em", marginBottom: "5px", wordBreak: "break-all", lineHeight: 1.4 }}>
 				{primer.seq}
 			</div>
-
-			<div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+			<div style={{ display: "flex", flexWrap: "wrap", gap: "3px" }}>
 				<Badge label="Tm" value={`${primer.tm.toFixed(1)}°`} warn={tmWarn} />
 				<Badge label="GC" value={`${(primer.gc * 100).toFixed(0)}%`} warn={gcWarn} />
 				<Badge label={`${primer.len}bp`} value="" />
@@ -168,6 +223,7 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 
 	// Design parameters — shown in collapsible Options section
 	const [optionsOpen, setOptionsOpen] = useState(false);
+	const [indivOpen, setIndivOpen] = useState(false);
 	const [tmTarget, setTmTarget] = useState(60);
 	const [minLen, setMinLen] = useState(18);
 	const [maxLen, setMaxLen] = useState(27);
@@ -488,89 +544,64 @@ export function PrimerPanel({ seq, seqLen, selectionStart, selectionEnd, onPrime
 				)}
 
 				{pairs !== null && pairs.length > 0 && (() => {
-					const seenFwd = new Set<string>();
-					const seenRev = new Set<string>();
-					const fwdList: PrimerCandidate[] = [];
-					const revList: PrimerCandidate[] = [];
+					// Collect unique fwd/rev for the individual view
+					const seenFwd = new Set<string>(), seenRev = new Set<string>();
+					const fwdList: PrimerCandidate[] = [], revList: PrimerCandidate[] = [];
 					for (const pair of pairs) {
 						if (!seenFwd.has(pair.fwd.seq)) { seenFwd.add(pair.fwd.seq); fwdList.push(pair.fwd); }
 						if (!seenRev.has(pair.rev.seq)) { seenRev.add(pair.rev.seq); revList.push(pair.rev); }
 					}
-					const bestFwd = pairs[0].fwd.seq;
-					const bestRev = pairs[0].rev.seq;
-					const best = pairs[0];
-
+					const bestFwd = pairs[0].fwd.seq, bestRev = pairs[0].rev.seq;
 					return (
 						<>
-							{best.heteroDimerDG < -3.0 && (
-								<div style={{
-									margin: "10px 12px 0",
-									padding: "6px 10px",
-									background: "rgba(184,147,58,0.08)",
-									border: "1px solid rgba(184,147,58,0.25)",
-									borderRadius: "3px",
-									fontFamily: "var(--font-courier)",
-									fontSize: "9px",
-									color: "#b8933a",
-								}}>
-									Best pair has 3′ heterodimer ΔG {best.heteroDimerDG.toFixed(1)} kcal/mol — consider alternatives
-								</div>
+							{/* ── Pairs section (primary) ── */}
+							<div style={{ padding: "6px 12px 4px", background: "#f5f0e8", borderBottom: "1px solid #ddd8ce", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#5a5648" }}>
+									Pairs
+								</span>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284" }}>
+									{pairs.length} ranked · click seq to copy
+								</span>
+							</div>
+							{pairs.map((pair, i) => (
+								<PairCard key={i} pair={pair} rank={i + 1} tmTarget={tmTarget} />
+							))}
+
+							{/* ── Individual primers (collapsible) ── */}
+							<button
+								onClick={() => setIndivOpen(o => !o)}
+								style={{
+									width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
+									padding: "7px 12px", background: "#f5f0e8", border: "none", borderTop: "1px solid #ddd8ce",
+									borderBottom: indivOpen ? "1px solid #ddd8ce" : "none",
+									cursor: "pointer",
+								}}
+							>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#5a5648" }}>
+									<span style={{ marginRight: "5px", display: "inline-block", transition: "transform 0.15s", transform: indivOpen ? "rotate(90deg)" : "rotate(0)" }}>▶</span>
+									Individual primers
+								</span>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284" }}>
+									{fwdList.length}F · {revList.length}R
+								</span>
+							</button>
+
+							{indivOpen && (
+								<>
+									<div style={{ padding: "5px 12px 2px", background: "#f5f0e8", borderBottom: "1px solid rgba(221,216,206,0.5)" }}>
+										<span style={{ fontFamily: "var(--font-courier)", fontSize: "7.5px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#9a9284" }}>→ Forward</span>
+									</div>
+									{fwdList.map((p, i) => (
+										<PrimerCard key={p.seq} primer={p} rank={i + 1} highlight={p.seq === bestFwd} tmTarget={tmTarget} />
+									))}
+									<div style={{ padding: "5px 12px 2px", background: "#f5f0e8", borderBottom: "1px solid rgba(221,216,206,0.5)", borderTop: "1px solid #ddd8ce" }}>
+										<span style={{ fontFamily: "var(--font-courier)", fontSize: "7.5px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#9a9284" }}>← Reverse</span>
+									</div>
+									{revList.map((p, i) => (
+										<PrimerCard key={p.seq} primer={p} rank={i + 1} highlight={p.seq === bestRev} tmTarget={tmTarget} />
+									))}
+								</>
 							)}
-
-							<div style={{
-								padding: "8px 12px 4px",
-								background: "#f5f0e8",
-								borderBottom: "1px solid #ddd8ce",
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "space-between",
-							}}>
-								<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#5a5648" }}>
-									→ Forward
-								</span>
-								<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284" }}>
-									{fwdList.length} candidates
-								</span>
-							</div>
-							{fwdList.map((p, i) => (
-								<PrimerCard key={p.seq} primer={p} rank={i + 1} highlight={p.seq === bestFwd} tmTarget={tmTarget} />
-							))}
-
-							<div style={{
-								padding: "8px 12px 4px",
-								background: "#f5f0e8",
-								borderBottom: "1px solid #ddd8ce",
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "space-between",
-							}}>
-								<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", letterSpacing: "0.12em", textTransform: "uppercase", color: "#5a5648" }}>
-									← Reverse
-								</span>
-								<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284" }}>
-									{revList.length} candidates
-								</span>
-							</div>
-							{revList.map((p, i) => (
-								<PrimerCard key={p.seq} primer={p} rank={i + 1} highlight={p.seq === bestRev} tmTarget={tmTarget} />
-							))}
-
-							<div style={{
-								padding: "10px 12px",
-								background: "#f5f0e8",
-								borderTop: "1px solid #ddd8ce",
-							}}>
-								<div style={{ fontFamily: "var(--font-courier)", fontSize: "8px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#9a9284", marginBottom: "6px" }}>
-									Best pair · {formatLen(best.productSize)} amplicon
-								</div>
-								<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#5a5648", lineHeight: 1.7 }}>
-									<span style={{ color: "#9a9284" }}>Tm avg </span>
-									{((best.fwd.tm + best.rev.tm) / 2).toFixed(1)}°C
-									<span style={{ margin: "0 6px", color: "#ddd8ce" }}>·</span>
-									<span style={{ color: "#9a9284" }}>ΔTm </span>
-									{best.tmDiff.toFixed(1)}°C
-								</div>
-							</div>
 						</>
 					);
 				})()}

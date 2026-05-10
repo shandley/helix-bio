@@ -26,13 +26,21 @@ interface SequenceViewerProps {
 }
 
 export function SequenceViewer({ parsed, topology, enzymes, selection, onSelection, primerPair }: SequenceViewerProps) {
-	const seqvizAnnotations = parsed.annotations.map(({ start, end, name, color, direction }) => ({
-		start,
-		end,
-		name,
-		color,
-		direction,
-	}));
+	const seqvizAnnotations = [
+		...parsed.annotations.map(({ start, end, name, color, direction }) => ({
+			start,
+			end,
+			name,
+			color,
+			direction,
+		})),
+		...(primerPair
+			? [
+					{ start: primerPair.fwd.start, end: primerPair.fwd.end, name: "→ Fwd", color: "#3b82f6", direction: 1 as const },
+					{ start: primerPair.rev.start, end: primerPair.rev.end, name: "← Rev", color: "#a855f7", direction: -1 as const },
+				]
+			: []),
+	];
 
 	return (
 		<div style={{ height: "100%", width: "100%", display: "flex", flexDirection: "column" }}>

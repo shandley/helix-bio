@@ -2,7 +2,14 @@
 
 import type { PrimerCandidate, PrimerPair } from "@shandley/primd";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { PrimerWorkerResponse } from "./primer-design.worker";
+import type { PrimerWorkerRequest, PrimerWorkerResponse } from "./primer-design.worker";
+
+// PCR pair augmented with optional qPCR-specific fields
+type DesignPair = PrimerPair & {
+	ampliconTm?: number;
+	ampliconDG?: number;
+	efficiencyScore?: number;
+};
 
 interface PrimerPanelProps {
 	seq: string;
@@ -166,7 +173,7 @@ function SeqLine({
 }
 
 // Ranked pair card — primary result view
-function PairCard({ pair, rank, tmTarget }: { pair: PrimerPair; rank: number; tmTarget: number }) {
+function PairCard({ pair, rank, tmTarget }: { pair: DesignPair; rank: number; tmTarget: number }) {
 	const [copied, setCopied] = useState(false);
 	function copyPair() {
 		const text = `Fwd (${pair.fwd.len}bp, Tm ${pair.fwd.tm.toFixed(1)}°C): ${pair.fwd.seq}\nRev (${pair.rev.len}bp, Tm ${pair.rev.tm.toFixed(1)}°C): ${pair.rev.seq}`;
@@ -177,6 +184,49 @@ function PairCard({ pair, rank, tmTarget }: { pair: PrimerPair; rank: number; tm
 	}
 	const dimerWarn = pair.heteroDimerDG < -3.0;
 	const tmDiffWarn = pair.tmDiff > 2;
+
+	// qPCR efficiency badge
+	const eff = pair.efficiencyScore;
+	const effBadge =
+		eff !== undefined
+			? (() => {
+					const color = eff >= 0.8 ? "#1a4731" : eff >= 0.6 ? "#b8933a" : "#a02828";
+					const bg =
+						eff >= 0.8
+							? "rgba(26,71,49,0.08)"
+							: eff >= 0.6
+								? "rgba(184,147,58,0.08)"
+								: "rgba(160,40,40,0.07)";
+					const border =
+						eff >= 0.8
+							? "rgba(26,71,49,0.2)"
+							: eff >= 0.6
+								? "rgba(184,147,58,0.25)"
+								: "rgba(160,40,40,0.25)";
+					return (
+						<span
+							title={`qPCR efficiency score ${(eff * 100).toFixed(0)}% — composite of amplicon size, GC%, and secondary structure`}
+							style={{
+								display: "inline-flex",
+								alignItems: "center",
+								gap: "3px",
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.04em",
+								color,
+								background: bg,
+								border: `1px solid ${border}`,
+								borderRadius: "2px",
+								padding: "1px 5px",
+								cursor: "help",
+							}}
+						>
+							<span style={{ opacity: 0.6 }}>eff</span>
+							<span style={{ fontWeight: 700 }}>{(eff * 100).toFixed(0)}%</span>
+						</span>
+					);
+				})()
+			: null;
 	const isBest = rank === 1;
 	return (
 		<div
@@ -221,6 +271,12 @@ function PairCard({ pair, rank, tmTarget }: { pair: PrimerPair; rank: number; tm
 						ΔTm {pair.tmDiff.toFixed(1)}°
 					</span>
 					{dimerWarn && <Badge label="dimer" value={`${pair.heteroDimerDG.toFixed(1)}`} warn />}
+					{effBadge}
+					{pair.ampliconTm !== undefined && (
+						<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}>
+							amp {pair.ampliconTm.toFixed(0)}°
+						</span>
+					)}
 				</div>
 				<button
 					type="button"
@@ -373,7 +429,8 @@ export function PrimerPanel({
 			? String(selectionEnd + 1)
 			: String(Math.floor((seqLen * 2) / 3) + 1),
 	);
-	const [pairs, setPairs] = useState<PrimerPair[] | null>(null);
+	const [mode, setMode] = useState<"pcr" | "qpcr">("pcr");
+	const [pairs, setPairs] = useState<DesignPair[] | null>(null);
 	const [warning, setWarning] = useState<string | null>(null);
 	const [running, setRunning] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -426,16 +483,16 @@ export function PrimerPanel({
 			// then un-rotate primer positions in the onmessage handler.
 			let workSeq = seq;
 			let workRegionStart = s - 1; // 0-indexed
-			let workRegionEnd = e;        // 0-indexed half-open
+			let workRegionEnd = e; // 0-indexed half-open
 			let regionLen = e - s;
 			let rotPoint = 0;
 
 			if (isWrapping) {
 				// Region: [s-1 .. seqLen-1] ++ [0 .. e-1]
-				regionLen = (seqLen - (s - 1)) + e;
+				regionLen = seqLen - (s - 1) + e;
 				// Rotate so there's ~500 bp of flanking before the region start
 				const flank = Math.min(500, Math.floor((seqLen - regionLen) / 2));
-				rotPoint = (((s - 1) - flank) + seqLen) % seqLen;
+				rotPoint = (s - 1 - flank + seqLen) % seqLen;
 				workSeq = seq.slice(rotPoint) + seq.slice(0, rotPoint);
 				workRegionStart = flank;
 				workRegionEnd = flank + regionLen;
@@ -448,17 +505,21 @@ export function PrimerPanel({
 			const worker = new Worker(new URL("./primer-design.worker.ts", import.meta.url));
 			workerRef.current = worker;
 
-			worker.postMessage({
+			const req: PrimerWorkerRequest = {
 				seq: workSeq,
 				regionStart: workRegionStart,
 				regionEnd: workRegionEnd,
+				mode,
 				opts: {
-					productSizeRange: [regionLen + 36, regionLen + 500] as [number, number],
+					...(mode === "pcr"
+						? { productSizeRange: [regionLen + 36, regionLen + 500] as [number, number] }
+						: {}),
 					tmTarget,
 					primerLenRange: [minLen, maxLen] as [number, number],
 					gcRange: [gcMin / 100, gcMax / 100] as [number, number],
 				},
-			});
+			};
+			worker.postMessage(req);
 
 			worker.onmessage = (ev: MessageEvent<PrimerWorkerResponse>) => {
 				worker.terminate();
@@ -466,7 +527,7 @@ export function PrimerPanel({
 				const msg = ev.data;
 				if (msg.type === "success") {
 					// Un-rotate primer positions back to original coordinate space
-					let resultPairs = msg.result.pairs;
+					let resultPairs = msg.result.pairs as DesignPair[];
 					if (capturedRotPoint !== 0) {
 						const unrotate = (pos: number) => (pos + capturedRotPoint) % capturedSeqLen;
 						resultPairs = resultPairs.map((pair) => ({
@@ -493,7 +554,7 @@ export function PrimerPanel({
 				setRunning(false);
 			};
 		},
-		[seq, seqLen, topology, onPrimersDesigned, tmTarget, minLen, maxLen, gcMin, gcMax],
+		[seq, seqLen, topology, mode, onPrimersDesigned, tmTarget, minLen, maxLen, gcMin, gcMax],
 	);
 
 	// Stable ref so the annotation effect always calls the latest runDesign
@@ -517,12 +578,16 @@ export function PrimerPanel({
 
 	const s = parseInt(start, 10);
 	const e = parseInt(end, 10);
-	const isWrapping = topology === "circular" && !Number.isNaN(s) && !Number.isNaN(e) && s > e && s >= 1 && e >= 1;
-	const regionLen = !Number.isNaN(s) && !Number.isNaN(e)
-		? isWrapping
-			? (seqLen - (s - 1)) + e   // wrapping: [s..seqLen] + [1..e]
-			: e > s ? e - s + 1 : null
-		: null;
+	const isWrapping =
+		topology === "circular" && !Number.isNaN(s) && !Number.isNaN(e) && s > e && s >= 1 && e >= 1;
+	const regionLen =
+		!Number.isNaN(s) && !Number.isNaN(e)
+			? isWrapping
+				? seqLen - (s - 1) + e // wrapping: [s..seqLen] + [1..e]
+				: e > s
+					? e - s + 1
+					: null
+			: null;
 
 	return (
 		<div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -566,6 +631,49 @@ export function PrimerPanel({
 							from selection
 						</span>
 					) : null}
+				</div>
+
+				{/* Mode toggle: PCR / qPCR */}
+				<div style={{ display: "flex", gap: "3px", marginBottom: "10px" }}>
+					{(["pcr", "qpcr"] as const).map((m) => (
+						<button
+							key={m}
+							type="button"
+							onClick={() => {
+								setMode(m);
+								setPairs(null);
+								setWarning(null);
+							}}
+							style={{
+								padding: "3px 10px",
+								fontFamily: "var(--font-courier)",
+								fontSize: "8px",
+								letterSpacing: "0.1em",
+								textTransform: "uppercase",
+								background: mode === m ? "#1a4731" : "transparent",
+								color: mode === m ? "white" : "#9a9284",
+								border: `1px solid ${mode === m ? "#1a4731" : "#ddd8ce"}`,
+								borderRadius: "2px",
+								cursor: "pointer",
+								transition: "background 0.12s, color 0.12s",
+							}}
+						>
+							{m === "qpcr" ? "qPCR" : "PCR"}
+						</button>
+					))}
+					{mode === "qpcr" && (
+						<span
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "8px",
+								color: "#9a9284",
+								alignSelf: "center",
+								marginLeft: "4px",
+							}}
+						>
+							70–200 bp amplicon
+						</span>
+					)}
 				</div>
 
 				<div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
@@ -624,7 +732,8 @@ export function PrimerPanel({
 									title="This selection crosses position 0 on the circular plasmid. The sequence will be rotated internally so primers can be placed correctly."
 									style={{ color: "#b8933a", cursor: "help" }}
 								>
-									{" "}· wraps origin ↻
+									{" "}
+									· wraps origin ↻
 								</span>
 							)}
 							{!isWrapping && " · primers flank selection"}
@@ -851,7 +960,7 @@ export function PrimerPanel({
 						transition: "opacity 0.15s",
 					}}
 				>
-					{running ? "Designing…" : "Design Primers"}
+					{running ? "Designing…" : mode === "qpcr" ? "Design qPCR Primers" : "Design Primers"}
 				</button>
 			</div>
 
@@ -940,7 +1049,8 @@ export function PrimerPanel({
 									<span
 										style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284" }}
 									>
-										{pairs.length} ranked · click seq to copy
+										{pairs.length} ranked ·{" "}
+										{mode === "qpcr" ? "by efficiency" : "click seq to copy"}
 									</span>
 								</div>
 								{pairs.map((pair, i) => (

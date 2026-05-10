@@ -34,24 +34,25 @@ function findOverlapLen(a: string, b: string, maxLen = 60): number {
  * The insert may already carry homology arms; if not, missingOverlaps
  * will report the primer tails needed to add them.
  */
-export function simulateGibson(
-	vector: string,
-	vectorCutPos: number,
-	insert: string,
-): GibsonResult {
+export function simulateGibson(vector: string, vectorCutPos: number, insert: string): GibsonResult {
 	const warnings: string[] = [];
 	const missingOverlaps: GibsonResult["missingOverlaps"] = [];
 
 	const vec = vector.toUpperCase();
 	const ins = insert.toUpperCase().replace(/[^ATGCN]/g, "");
 
-	if (!ins) return { error: "Insert sequence is empty or contains only invalid characters." } as GibsonResult;
+	if (!ins)
+		return {
+			error: "Insert sequence is empty or contains only invalid characters.",
+		} as GibsonResult;
 	if (vectorCutPos < 0 || vectorCutPos > vec.length)
-		return { error: `Cut position ${vectorCutPos} is out of range (0–${vec.length}).` } as GibsonResult;
+		return {
+			error: `Cut position ${vectorCutPos} is out of range (0–${vec.length}).`,
+		} as GibsonResult;
 
 	// Linearize vector at cut site
-	const leftArm = vec.slice(0, vectorCutPos);   // sequence to the left of cut
-	const rightArm = vec.slice(vectorCutPos);      // sequence to the right of cut
+	const leftArm = vec.slice(0, vectorCutPos); // sequence to the left of cut
+	const rightArm = vec.slice(vectorCutPos); // sequence to the right of cut
 
 	// Detect overlaps: left arm ∩ insert left end, insert right end ∩ right arm
 	const leftOverlapLen = findOverlapLen(leftArm, ins);
@@ -74,9 +75,13 @@ export function simulateGibson(
 	}
 
 	if (leftOverlapLen > 0 && leftOverlapLen < MIN_OVERLAP)
-		warnings.push(`Left overlap is only ${leftOverlapLen} bp — Gibson efficiency may be low (recommend ≥ ${MIN_OVERLAP} bp).`);
+		warnings.push(
+			`Left overlap is only ${leftOverlapLen} bp — Gibson efficiency may be low (recommend ≥ ${MIN_OVERLAP} bp).`,
+		);
 	if (rightOverlapLen > 0 && rightOverlapLen < MIN_OVERLAP)
-		warnings.push(`Right overlap is only ${rightOverlapLen} bp — Gibson efficiency may be low (recommend ≥ ${MIN_OVERLAP} bp).`);
+		warnings.push(
+			`Right overlap is only ${rightOverlapLen} bp — Gibson efficiency may be low (recommend ≥ ${MIN_OVERLAP} bp).`,
+		);
 
 	// Assemble: left vector arm + insert core (strip overlap from both ends) + right vector arm
 	const insertCore = ins.slice(leftOverlapLen || 0, ins.length - (rightOverlapLen || 0));
@@ -86,7 +91,12 @@ export function simulateGibson(
 		resultSeq,
 		productSize: resultSeq.length,
 		fragments: [
-			{ name: "vector backbone", size: vec.length, leftOverlapLen: rightOverlapLen, rightOverlapLen: leftOverlapLen },
+			{
+				name: "vector backbone",
+				size: vec.length,
+				leftOverlapLen: rightOverlapLen,
+				rightOverlapLen: leftOverlapLen,
+			},
 			{ name: "insert", size: ins.length, leftOverlapLen, rightOverlapLen },
 		],
 		warnings,
@@ -103,10 +113,8 @@ export function simulateGibsonMulti(
 	vectorCutPos: number,
 	fragments: GibsonFragment[],
 ): GibsonResult {
-	if (fragments.length === 0)
-		return { error: "No insert fragments provided." } as GibsonResult;
-	if (fragments.length === 1)
-		return simulateGibson(vector, vectorCutPos, fragments[0].seq);
+	if (fragments.length === 0) return { error: "No insert fragments provided." } as GibsonResult;
+	if (fragments.length === 1) return simulateGibson(vector, vectorCutPos, fragments[0].seq);
 
 	const warnings: string[] = [];
 	const missingOverlaps: GibsonResult["missingOverlaps"] = [];
@@ -142,9 +150,13 @@ export function simulateGibsonMulti(
 				side: isRight ? "right" : "left",
 				tail,
 			});
-			warnings.push(`No overlap between "${names[i]}" and "${names[i + 1]}". Add a ${TARGET_OVERLAP}bp homology arm.`);
+			warnings.push(
+				`No overlap between "${names[i]}" and "${names[i + 1]}". Add a ${TARGET_OVERLAP}bp homology arm.`,
+			);
 		} else if (olen < MIN_OVERLAP) {
-			warnings.push(`Overlap between "${names[i]}" and "${names[i + 1]}" is only ${olen} bp — recommend ≥ ${MIN_OVERLAP} bp.`);
+			warnings.push(
+				`Overlap between "${names[i]}" and "${names[i + 1]}" is only ${olen} bp — recommend ≥ ${MIN_OVERLAP} bp.`,
+			);
 		}
 	}
 

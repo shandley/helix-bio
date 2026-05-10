@@ -1,8 +1,8 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 
 export async function login(formData: FormData) {
 	const supabase = await createClient();
@@ -13,11 +13,17 @@ export async function login(formData: FormData) {
 	});
 
 	if (error) {
-		if (error.message.toLowerCase().includes("invalid login") || error.message.toLowerCase().includes("invalid credentials")) {
+		if (
+			error.message.toLowerCase().includes("invalid login") ||
+			error.message.toLowerCase().includes("invalid credentials")
+		) {
 			return { error: "Incorrect email or password." };
 		}
 		if (error.message.toLowerCase().includes("email not confirmed")) {
-			return { error: "Please confirm your email before signing in. Check your inbox for the confirmation link." };
+			return {
+				error:
+					"Please confirm your email before signing in. Check your inbox for the confirmation link.",
+			};
 		}
 		return { error: error.message };
 	}
@@ -30,7 +36,8 @@ export async function signup(formData: FormData) {
 
 	// Derive origin from the incoming request so this works on preview deployments too
 	const headersList = await headers();
-	const origin = headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.vercel.app";
+	const origin =
+		headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.vercel.app";
 
 	const { data, error } = await supabase.auth.signUp({
 		email: formData.get("email") as string,
@@ -41,7 +48,10 @@ export async function signup(formData: FormData) {
 	});
 
 	if (error) {
-		if (error.message.toLowerCase().includes("15 seconds") || error.message.toLowerCase().includes("security")) {
+		if (
+			error.message.toLowerCase().includes("15 seconds") ||
+			error.message.toLowerCase().includes("security")
+		) {
 			return { error: "Please wait a moment before trying again." };
 		}
 		if (error.message.toLowerCase().includes("already registered")) {
@@ -67,7 +77,8 @@ export async function logout() {
 export async function requestPasswordReset(formData: FormData) {
 	const supabase = await createClient();
 	const headersList = await headers();
-	const origin = headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.vercel.app";
+	const origin =
+		headersList.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.vercel.app";
 	const email = formData.get("email") as string;
 
 	const { error } = await supabase.auth.resetPasswordForEmail(email, {

@@ -2,18 +2,32 @@ export default function DashboardLoading() {
 	return (
 		<div style={{ padding: "32px 40px" }}>
 			{/* Header skeleton */}
-			<div style={{
-				display: "flex",
-				justifyContent: "space-between",
-				alignItems: "center",
-				marginBottom: "28px",
-			}}>
-				<div style={{ width: "120px", height: "14px", background: "#ece6d8", borderRadius: "2px" }} />
-				<div style={{ width: "90px", height: "28px", background: "#ece6d8", borderRadius: "3px" }} />
+			<div
+				style={{
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+					marginBottom: "28px",
+				}}
+			>
+				<div
+					style={{ width: "120px", height: "14px", background: "#ece6d8", borderRadius: "2px" }}
+				/>
+				<div
+					style={{ width: "90px", height: "28px", background: "#ece6d8", borderRadius: "3px" }}
+				/>
 			</div>
 
 			{/* Search bar skeleton */}
-			<div style={{ width: "260px", height: "30px", background: "#ece6d8", borderRadius: "3px", marginBottom: "20px" }} />
+			<div
+				style={{
+					width: "260px",
+					height: "30px",
+					background: "#ece6d8",
+					borderRadius: "3px",
+					marginBottom: "20px",
+				}}
+			/>
 
 			{/* Row skeletons */}
 			{Array.from({ length: 5 }).map((_, i) => (
@@ -28,10 +42,24 @@ export default function DashboardLoading() {
 						opacity: 1 - i * 0.15,
 					}}
 				>
-					<div style={{ width: "200px", height: "12px", background: "#ece6d8", borderRadius: "2px" }} />
-					<div style={{ width: "60px", height: "12px", background: "#ece6d8", borderRadius: "2px", marginLeft: "auto" }} />
-					<div style={{ width: "50px", height: "12px", background: "#ece6d8", borderRadius: "2px" }} />
-					<div style={{ width: "40px", height: "12px", background: "#ece6d8", borderRadius: "2px" }} />
+					<div
+						style={{ width: "200px", height: "12px", background: "#ece6d8", borderRadius: "2px" }}
+					/>
+					<div
+						style={{
+							width: "60px",
+							height: "12px",
+							background: "#ece6d8",
+							borderRadius: "2px",
+							marginLeft: "auto",
+						}}
+					/>
+					<div
+						style={{ width: "50px", height: "12px", background: "#ece6d8", borderRadius: "2px" }}
+					/>
+					<div
+						style={{ width: "40px", height: "12px", background: "#ece6d8", borderRadius: "2px" }}
+					/>
 				</div>
 			))}
 		</div>

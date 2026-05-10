@@ -15,14 +15,14 @@
 // attB1/attL1/attP1/attR1 all contain the type-1 core.
 // attB2/attL2/attP2/attR2 all contain the type-2 core.
 const CORE_1 = "CAAGTTTGTACAAAAAAGCAGGCT"; // 24 bp, inside all att*1 sites
-const CORE_2 = "CACTTTGTACAAGAAAGCTGGGT";  // 23 bp, inside all att*2 sites
+const CORE_2 = "CACTTTGTACAAGAAAGCTGGGT"; // 23 bp, inside all att*2 sites
 
 // The 7 bp overlap sequence preserved in recombination products
-const OVERLAP_1 = "GTTTGTACAAAAAAGCAGGCT".slice(-7); // "CAGGCTT" — actually let me use exact
+const _OVERLAP_1 = "GTTTGTACAAAAAAGCAGGCT".slice(-7); // "CAGGCTT" — actually let me use exact
 // Per Invitrogen documentation:
 // attB1 overlap (O): GTACAAAAAAGCAGGCT  — central 7 bp: ACAAAAA
-const OVERLAP_SEQ_1 = "ACAAAAA";
-const OVERLAP_SEQ_2 = "ACAAAGT";
+const _OVERLAP_SEQ_1 = "ACAAAAA";
+const _OVERLAP_SEQ_2 = "ACAAAGT";
 
 // attB sequences as they appear in Invitrogen primers (25 bp each)
 export const ATT_SEQUENCES = {
@@ -30,7 +30,7 @@ export const ATT_SEQUENCES = {
 	attB2: "ACCACTTTGTACAAGAAAGCTGGGT",
 	attL1: "ACAAGTTTGTACAAAAAAGCAGGCT", // same overlap core as attB1
 	attL2: "ACCACTTTGTACAAGAAAGCTGGGT",
-	attR1: "ACAAGTTTGTACAAAAAAGCAGGCTTC",  // attR has extra flanking
+	attR1: "ACAAGTTTGTACAAAAAAGCAGGCTTC", // attR has extra flanking
 	attR2: "ACCACTTTGTACAAGAAAGCTGGGTC",
 	attP1: "ACAAGTTTGTACAAAAAAGCAGGCT",
 	attP2: "ACCACTTTGTACAAGAAAGCTGGGT",
@@ -49,7 +49,7 @@ export interface GatewayResult {
 	resultSeq: string;
 	productSize: number;
 	goiSize: number;
-	leftAttSite: string;  // att site flanking GOI on left in product
+	leftAttSite: string; // att site flanking GOI on left in product
 	rightAttSite: string;
 	reaction: GatewayReaction;
 	warnings: string[];
@@ -67,10 +67,7 @@ function findCore(seq: string, core: string): number {
  * destVector contains attR1…ccdB…attR2.
  * Product: attB1…GOI…attB2 flanked by rest of destination vector backbone.
  */
-export function simulateGatewayLR(
-	entryClone: string,
-	destVector: string,
-): GatewayResult {
+export function simulateGatewayLR(entryClone: string, destVector: string): GatewayResult {
 	const warnings: string[] = [];
 	const entry = entryClone.toUpperCase().replace(/[^ATGCN]/g, "");
 	const dest = destVector.toUpperCase().replace(/[^ATGCN]/g, "");
@@ -83,9 +80,13 @@ export function simulateGatewayLR(
 	const attL2Pos = findCore(entry, CORE_2);
 
 	if (attL1Pos === -1)
-		return { error: "No attL1 site found in entry clone. Expected core sequence: " + CORE_1 } as GatewayResult;
+		return {
+			error: `No attL1 site found in entry clone. Expected core sequence: ${CORE_1}`,
+		} as GatewayResult;
 	if (attL2Pos === -1)
-		return { error: "No attL2 site found in entry clone. Expected core sequence: " + CORE_2 } as GatewayResult;
+		return {
+			error: `No attL2 site found in entry clone. Expected core sequence: ${CORE_2}`,
+		} as GatewayResult;
 	if (attL1Pos >= attL2Pos)
 		return { error: "attL1 must appear before attL2 in the entry clone." } as GatewayResult;
 
@@ -94,9 +95,13 @@ export function simulateGatewayLR(
 	const attR2Pos = findCore(dest, CORE_2);
 
 	if (attR1Pos === -1)
-		return { error: "No attR1 site found in destination vector. Expected core sequence: " + CORE_1 } as GatewayResult;
+		return {
+			error: `No attR1 site found in destination vector. Expected core sequence: ${CORE_1}`,
+		} as GatewayResult;
 	if (attR2Pos === -1)
-		return { error: "No attR2 site found in destination vector. Expected core sequence: " + CORE_2 } as GatewayResult;
+		return {
+			error: `No attR2 site found in destination vector. Expected core sequence: ${CORE_2}`,
+		} as GatewayResult;
 	if (attR1Pos >= attR2Pos)
 		return { error: "attR1 must appear before attR2 in the destination vector." } as GatewayResult;
 
@@ -106,17 +111,18 @@ export function simulateGatewayLR(
 	const goi = entry.slice(goiStart, goiEnd);
 
 	if (goi.length < 1)
-		return { error: "No sequence found between attL1 and attL2 — GOI appears to be empty." } as GatewayResult;
+		return {
+			error: "No sequence found between attL1 and attL2 — GOI appears to be empty.",
+		} as GatewayResult;
 
 	// Backbone = destination vector outside the attR sites (ccdB replaced)
-	const destLeft = dest.slice(0, attR1Pos);          // everything before attR1
+	const destLeft = dest.slice(0, attR1Pos); // everything before attR1
 	const destRight = dest.slice(attR2Pos + CORE_2.length); // everything after attR2
 
 	// Product: destLeft + attB1 + GOI + attB2 + destRight
 	const resultSeq = destLeft + ATT_SEQUENCES.attB1 + goi + ATT_SEQUENCES.attB2 + destRight;
 
-	if (goi.length < 100)
-		warnings.push("GOI is very short — verify att site positions are correct.");
+	if (goi.length < 100) warnings.push("GOI is very short — verify att site positions are correct.");
 
 	return {
 		resultSeq,
@@ -135,10 +141,7 @@ export function simulateGatewayLR(
  * donorVector contains attP1…ccdB…attP2.
  * Product (entry clone): attL1…GOI…attL2 in donor backbone.
  */
-export function simulateGatewayBP(
-	attBPCR: string,
-	donorVector: string,
-): GatewayResult {
+export function simulateGatewayBP(attBPCR: string, donorVector: string): GatewayResult {
 	const warnings: string[] = [];
 	const pcr = attBPCR.toUpperCase().replace(/[^ATGCN]/g, "");
 	const donor = donorVector.toUpperCase().replace(/[^ATGCN]/g, "");
@@ -151,9 +154,13 @@ export function simulateGatewayBP(
 	const attB2Pos = findCore(pcr, CORE_2);
 
 	if (attB1Pos === -1)
-		return { error: "No attB1 site found in PCR product. Expected core sequence: " + CORE_1 } as GatewayResult;
+		return {
+			error: `No attB1 site found in PCR product. Expected core sequence: ${CORE_1}`,
+		} as GatewayResult;
 	if (attB2Pos === -1)
-		return { error: "No attB2 site found in PCR product. Expected core sequence: " + CORE_2 } as GatewayResult;
+		return {
+			error: `No attB2 site found in PCR product. Expected core sequence: ${CORE_2}`,
+		} as GatewayResult;
 	if (attB1Pos >= attB2Pos)
 		return { error: "attB1 must appear before attB2 in the PCR product." } as GatewayResult;
 
@@ -162,9 +169,13 @@ export function simulateGatewayBP(
 	const attP2Pos = findCore(donor, CORE_2);
 
 	if (attP1Pos === -1)
-		return { error: "No attP1 site found in donor vector. Expected core sequence: " + CORE_1 } as GatewayResult;
+		return {
+			error: `No attP1 site found in donor vector. Expected core sequence: ${CORE_1}`,
+		} as GatewayResult;
 	if (attP2Pos === -1)
-		return { error: "No attP2 site found in donor vector. Expected core sequence: " + CORE_2 } as GatewayResult;
+		return {
+			error: `No attP2 site found in donor vector. Expected core sequence: ${CORE_2}`,
+		} as GatewayResult;
 	if (attP1Pos >= attP2Pos)
 		return { error: "attP1 must appear before attP2 in the donor vector." } as GatewayResult;
 
@@ -183,8 +194,7 @@ export function simulateGatewayBP(
 	// Entry clone: donorLeft + attL1 + GOI + attL2 + donorRight
 	const resultSeq = donorLeft + ATT_SEQUENCES.attL1 + goi + ATT_SEQUENCES.attL2 + donorRight;
 
-	if (goi.length < 100)
-		warnings.push("GOI is very short — verify att site positions are correct.");
+	if (goi.length < 100) warnings.push("GOI is very short — verify att site positions are correct.");
 
 	return {
 		resultSeq,

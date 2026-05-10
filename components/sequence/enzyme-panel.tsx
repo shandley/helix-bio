@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
-	RESTRICTION_ENZYMES,
-	DEFAULT_ENZYMES,
-	GROUP_LABELS,
-	END_TYPE_LABEL,
 	countCutSites,
+	DEFAULT_ENZYMES,
+	END_TYPE_LABEL,
+	GROUP_LABELS,
+	RESTRICTION_ENZYMES,
 	type RestrictionEnzyme,
 } from "@/lib/bio/enzymes";
 
@@ -41,20 +41,14 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 	}, [seq, circular]);
 
 	function toggle(name: string) {
-		onChange(
-			selected.includes(name)
-				? selected.filter((n) => n !== name)
-				: [...selected, name],
-		);
+		onChange(selected.includes(name) ? selected.filter((n) => n !== name) : [...selected, name]);
 	}
 
-	function toggleGroup(group: RestrictionEnzyme["group"], enzymesInGroup: RestrictionEnzyme[]) {
+	function toggleGroup(_group: RestrictionEnzyme["group"], enzymesInGroup: RestrictionEnzyme[]) {
 		const names = enzymesInGroup.map((e) => e.name);
 		const allOn = names.every((n) => selected.includes(n));
 		onChange(
-			allOn
-				? selected.filter((n) => !names.includes(n))
-				: [...new Set([...selected, ...names])],
+			allOn ? selected.filter((n) => !names.includes(n)) : [...new Set([...selected, ...names])],
 		);
 	}
 
@@ -69,9 +63,7 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 
 	const filtered = useMemo(() => {
 		const q = search.toLowerCase().trim();
-		return q
-			? UNIQUE_ENZYMES.filter((e) => e.name.toLowerCase().includes(q))
-			: UNIQUE_ENZYMES;
+		return q ? UNIQUE_ENZYMES.filter((e) => e.name.toLowerCase().includes(q)) : UNIQUE_ENZYMES;
 	}, [search]);
 
 	const enzymesByGroup = useMemo(() => {
@@ -86,38 +78,53 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 	const selectedCount = selected.length;
 
 	return (
-		<aside style={{
-			width: "244px",
-			flexShrink: 0,
-			borderLeft: "1px solid #ddd8ce",
-			background: "#faf7f2",
-			display: "flex",
-			flexDirection: "column",
-			overflow: "hidden",
-		}}>
-			{/* Panel header */}
-			<div style={{
-				padding: "14px 16px 12px",
-				borderBottom: "1px solid #ddd8ce",
+		<aside
+			style={{
+				width: "244px",
 				flexShrink: 0,
-			}}>
-				<div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: "10px" }}>
-					<span style={{
-						fontFamily: "var(--font-playfair)",
-						fontSize: "15px",
-						fontWeight: 400,
-						color: "#1c1a16",
-						letterSpacing: "-0.01em",
-					}}>
+				borderLeft: "1px solid #ddd8ce",
+				background: "#faf7f2",
+				display: "flex",
+				flexDirection: "column",
+				overflow: "hidden",
+			}}
+		>
+			{/* Panel header */}
+			<div
+				style={{
+					padding: "14px 16px 12px",
+					borderBottom: "1px solid #ddd8ce",
+					flexShrink: 0,
+				}}
+			>
+				<div
+					style={{
+						display: "flex",
+						alignItems: "baseline",
+						justifyContent: "space-between",
+						marginBottom: "10px",
+					}}
+				>
+					<span
+						style={{
+							fontFamily: "var(--font-playfair)",
+							fontSize: "15px",
+							fontWeight: 400,
+							color: "#1c1a16",
+							letterSpacing: "-0.01em",
+						}}
+					>
 						Enzymes
 					</span>
-					<span style={{
-						fontFamily: "var(--font-courier)",
-						fontSize: "9px",
-						letterSpacing: "0.1em",
-						textTransform: "uppercase",
-						color: selectedCount > 0 ? "#1a4731" : "#9a9284",
-					}}>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							letterSpacing: "0.1em",
+							textTransform: "uppercase",
+							color: selectedCount > 0 ? "#1a4731" : "#9a9284",
+						}}
+					>
 						{selectedCount} active
 					</span>
 				</div>
@@ -144,6 +151,7 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 				{/* Quick actions */}
 				<div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
 					<button
+						type="button"
 						onClick={() => onChange(DEFAULT_ENZYMES)}
 						style={{
 							fontFamily: "var(--font-courier)",
@@ -161,6 +169,7 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 					</button>
 					<span style={{ color: "#ddd8ce" }}>·</span>
 					<button
+						type="button"
 						onClick={() => onChange([])}
 						style={{
 							fontFamily: "var(--font-courier)",
@@ -205,6 +214,7 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 							>
 								{/* Collapse toggle */}
 								<button
+									type="button"
 									onClick={() => toggleCollapse(group)}
 									style={{
 										background: "none",
@@ -223,9 +233,16 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 								<input
 									type="checkbox"
 									checked={allSelected}
-									ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
+									ref={(el) => {
+										if (el) el.indeterminate = someSelected && !allSelected;
+									}}
 									onChange={() => toggleGroup(group, enzymes)}
-									style={{ marginRight: "8px", accentColor: "#1a4731", flexShrink: 0, cursor: "pointer" }}
+									style={{
+										marginRight: "8px",
+										accentColor: "#1a4731",
+										flexShrink: 0,
+										cursor: "pointer",
+									}}
 								/>
 
 								<span
@@ -241,91 +258,125 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 								>
 									{GROUP_LABELS[group]}
 								</span>
-								<span style={{
-									fontFamily: "var(--font-courier)",
-									fontSize: "9px",
-									color: "#9a9284",
-								}}>
+								<span
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "9px",
+										color: "#9a9284",
+									}}
+								>
 									{enzymes.length}
 								</span>
 							</div>
 
 							{/* Enzyme rows */}
-							{!collapsed && enzymes.map((enzyme) => {
-								const cuts = cutCounts.get(enzyme.name) ?? 0;
-								const active = selected.includes(enzyme.name);
-								return (
-									<label
-										key={enzyme.name}
-										style={{
-											display: "flex",
-											alignItems: "center",
-											padding: "7px 16px",
-											borderBottom: "1px solid rgba(221,216,206,0.5)",
-											cursor: "pointer",
-											background: active ? "rgba(26,71,49,0.04)" : "transparent",
-											transition: "background 0.1s",
-										}}
-									>
-										<input
-											type="checkbox"
-											checked={active}
-											onChange={() => toggle(enzyme.name)}
-											style={{ marginRight: "10px", accentColor: "#1a4731", cursor: "pointer", flexShrink: 0 }}
-										/>
-										<span
-											title={`${enzyme.recognition} · ${END_TYPE_LABEL[enzyme.endType]}`}
+							{!collapsed &&
+								enzymes.map((enzyme) => {
+									const cuts = cutCounts.get(enzyme.name) ?? 0;
+									const active = selected.includes(enzyme.name);
+									return (
+										<label
+											key={enzyme.name}
 											style={{
-												fontFamily: "var(--font-courier)",
-												fontSize: "11px",
-												color: active ? "#1c1a16" : "#5a5648",
-												fontWeight: active ? 700 : 400,
-												flex: 1,
-												letterSpacing: "0.01em",
-											}}>
-											{enzyme.name}
-										</span>
-										<span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-											{/* End type pip */}
-											<span
-												title={END_TYPE_LABEL[enzyme.endType]}
+												display: "flex",
+												alignItems: "center",
+												padding: "7px 16px",
+												borderBottom: "1px solid rgba(221,216,206,0.5)",
+												cursor: "pointer",
+												background: active ? "rgba(26,71,49,0.04)" : "transparent",
+												transition: "background 0.1s",
+											}}
+										>
+											<input
+												type="checkbox"
+												checked={active}
+												onChange={() => toggle(enzyme.name)}
 												style={{
-													width: "6px",
-													height: "6px",
-													borderRadius: enzyme.endType === "blunt" ? "1px" : "50%",
-													background: enzyme.endType === "5p" ? "#1a4731" : enzyme.endType === "3p" ? "#b8933a" : "#9a9284",
+													marginRight: "10px",
+													accentColor: "#1a4731",
+													cursor: "pointer",
 													flexShrink: 0,
 												}}
 											/>
-											{/* Cut count */}
-											<span style={{
-												fontFamily: "var(--font-courier)",
-												fontSize: "10px",
-												color: cuts === 0 ? "#b8b0a4" : cuts === 1 ? "#1a4731" : cuts <= 3 ? "#b8933a" : "#8b3a2a",
-												minWidth: "16px",
-												textAlign: "right",
-											}}>
-												{cuts}
+											<span
+												title={`${enzyme.recognition} · ${END_TYPE_LABEL[enzyme.endType]}`}
+												style={{
+													fontFamily: "var(--font-courier)",
+													fontSize: "11px",
+													color: active ? "#1c1a16" : "#5a5648",
+													fontWeight: active ? 700 : 400,
+													flex: 1,
+													letterSpacing: "0.01em",
+												}}
+											>
+												{enzyme.name}
 											</span>
-										</span>
-									</label>
-								);
-							})}
+											<span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+												{/* End type pip */}
+												<span
+													title={END_TYPE_LABEL[enzyme.endType]}
+													style={{
+														width: "6px",
+														height: "6px",
+														borderRadius: enzyme.endType === "blunt" ? "1px" : "50%",
+														background:
+															enzyme.endType === "5p"
+																? "#1a4731"
+																: enzyme.endType === "3p"
+																	? "#b8933a"
+																	: "#9a9284",
+														flexShrink: 0,
+													}}
+												/>
+												{/* Cut count */}
+												<span
+													style={{
+														fontFamily: "var(--font-courier)",
+														fontSize: "10px",
+														color:
+															cuts === 0
+																? "#b8b0a4"
+																: cuts === 1
+																	? "#1a4731"
+																	: cuts <= 3
+																		? "#b8933a"
+																		: "#8b3a2a",
+														minWidth: "16px",
+														textAlign: "right",
+													}}
+												>
+													{cuts}
+												</span>
+											</span>
+										</label>
+									);
+								})}
 						</div>
 					);
 				})}
 			</div>
 
 			{/* Legend */}
-			<div style={{
-				padding: "10px 16px",
-				borderTop: "1px solid #ddd8ce",
-				flexShrink: 0,
-				display: "flex",
-				flexDirection: "column",
-				gap: "5px",
-			}}>
-				<div style={{ fontFamily: "var(--font-courier)", fontSize: "8px", letterSpacing: "0.1em", textTransform: "uppercase", color: "#9a9284", marginBottom: "4px" }}>
+			<div
+				style={{
+					padding: "10px 16px",
+					borderTop: "1px solid #ddd8ce",
+					flexShrink: 0,
+					display: "flex",
+					flexDirection: "column",
+					gap: "5px",
+				}}
+			>
+				<div
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "8px",
+						letterSpacing: "0.1em",
+						textTransform: "uppercase",
+						color: "#9a9284",
+						marginBottom: "4px",
+					}}
+				>
 					Legend
 				</div>
 				{[
@@ -334,11 +385,15 @@ export function EnzymePanel({ seq, circular, selected, onChange }: EnzymePanelPr
 					{ color: "#9a9284", shape: "square", label: "Blunt" },
 				].map(({ color, shape, label }) => (
 					<div key={label} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-						<span style={{
-							width: "6px", height: "6px", flexShrink: 0,
-							borderRadius: shape === "circle" ? "50%" : "1px",
-							background: color,
-						}} />
+						<span
+							style={{
+								width: "6px",
+								height: "6px",
+								flexShrink: 0,
+								borderRadius: shape === "circle" ? "50%" : "1px",
+								background: color,
+							}}
+						/>
 						<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#5a5648" }}>
 							{label}
 						</span>

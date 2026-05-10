@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"ignore": [".next", "node_modules"]
+		"includes": ["**", "!app/globals.css"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -19,7 +19,22 @@
 		"rules": {
 			"recommended": true,
 			"suspicious": {
-				"noExplicitAny": "warn"
+				"noExplicitAny": "warn",
+				"noArrayIndexKey": "warn",
+				"useIterableCallbackReturn": "warn",
+				"noEmptyBlock": "warn"
+			},
+			"a11y": {
+				"noSvgWithoutTitle": "warn",
+				"noStaticElementInteractions": "warn",
+				"useKeyWithClickEvents": "warn",
+				"noLabelWithoutControl": "warn"
+			},
+			"style": {
+				"noNonNullAssertion": "warn"
+			},
+			"correctness": {
+				"noUnusedFunctionParameters": "warn"
 			}
 		}
 	},

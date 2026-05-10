@@ -27,11 +27,11 @@ function buildSystemPrompt(ctx: SequenceContext): string {
 	const featuresBlock =
 		annotations.length > 0
 			? annotations
-				.map(
-					(a) =>
-						`  • ${a.name}: ${a.start + 1}–${a.end + 1} bp, ${a.direction === 1 ? "forward" : "reverse"} strand`,
-				)
-				.join("\n")
+					.map(
+						(a) =>
+							`  • ${a.name}: ${a.start + 1}–${a.end + 1} bp, ${a.direction === 1 ? "forward" : "reverse"} strand`,
+					)
+					.join("\n")
 			: "  (no annotated features)";
 
 	const seqBlock = seq
@@ -44,7 +44,7 @@ function buildSystemPrompt(ctx: SequenceContext): string {
 Name: ${name}
 Length: ${seqLen.toLocaleString()} bp
 Topology: ${topology}
-GC content: ${gc !== null ? gc.toFixed(1) + "%" : "unknown"}
+GC content: ${gc !== null ? `${gc.toFixed(1)}%` : "unknown"}
 Format: ${fileFormat}
 
 Annotated Features (${annotations.length} total):
@@ -62,7 +62,9 @@ ${seqBlock}
 
 export async function POST(req: NextRequest) {
 	const supabase = await createClient();
-	const { data: { user } } = await supabase.auth.getUser();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
 	if (!user) {
 		return new Response(JSON.stringify({ error: "Unauthorized" }), {
 			status: 401,

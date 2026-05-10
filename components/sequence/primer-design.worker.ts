@@ -1,5 +1,5 @@
-import { designPCR } from "@shandley/primd";
 import type { PCROptions, PCRResult } from "@shandley/primd";
+import { designPCR } from "@shandley/primd";
 
 export interface PrimerWorkerRequest {
 	seq: string;

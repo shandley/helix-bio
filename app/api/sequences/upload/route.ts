@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 function detectFormat(filename: string): "genbank" | "fasta" | "dna" | "embl" {
 	const ext = filename.split(".").pop()?.toLowerCase() ?? "";

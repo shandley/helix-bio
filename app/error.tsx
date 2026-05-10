@@ -14,28 +14,39 @@ export default function GlobalError({
 	}, [error]);
 
 	return (
-		<div style={{
-			display: "flex",
-			flexDirection: "column",
-			alignItems: "center",
-			justifyContent: "center",
-			minHeight: "100vh",
-			gap: "20px",
-			fontFamily: "var(--font-courier)",
-			background: "#f5f0e8",
-			padding: "48px 24px",
-			textAlign: "center",
-		}}>
-			<span style={{
-				fontFamily: "var(--font-playfair)",
-				fontSize: "64px",
-				lineHeight: 1,
-				color: "#ddd8ce",
-			}}>
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				justifyContent: "center",
+				minHeight: "100vh",
+				gap: "20px",
+				fontFamily: "var(--font-courier)",
+				background: "#f5f0e8",
+				padding: "48px 24px",
+				textAlign: "center",
+			}}
+		>
+			<span
+				style={{
+					fontFamily: "var(--font-playfair)",
+					fontSize: "64px",
+					lineHeight: 1,
+					color: "#ddd8ce",
+				}}
+			>
 				!
 			</span>
 			<div>
-				<p style={{ fontSize: "13px", color: "#1c1a16", letterSpacing: "0.04em", marginBottom: "6px" }}>
+				<p
+					style={{
+						fontSize: "13px",
+						color: "#1c1a16",
+						letterSpacing: "0.04em",
+						marginBottom: "6px",
+					}}
+				>
 					Something went wrong
 				</p>
 				{error.digest && (
@@ -45,6 +56,7 @@ export default function GlobalError({
 				)}
 			</div>
 			<button
+				type="button"
 				onClick={reset}
 				style={{
 					fontFamily: "var(--font-courier)",

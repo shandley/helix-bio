@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { calcAccessibilityProfile } from "@shandley/primd";
 import type { PrimerPair } from "@shandley/primd";
+import { calcAccessibilityProfile } from "@shandley/primd";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const BAR_HEIGHT = 28;
 
@@ -11,23 +11,23 @@ function scoreToRGB(score: number): [number, number, number] {
 	if (score <= 0.5) {
 		const t = score * 2; // 0 → 1
 		return [
-			Math.round(175 + 9 * t),   // 175 → 184
-			Math.round(42 + 105 * t),  // 42 → 147
-			Math.round(42 + 16 * t),   // 42 → 58
+			Math.round(175 + 9 * t), // 175 → 184
+			Math.round(42 + 105 * t), // 42 → 147
+			Math.round(42 + 16 * t), // 42 → 58
 		];
 	}
 	const t = (score - 0.5) * 2; // 0 → 1
 	return [
-		Math.round(184 - 158 * t),    // 184 → 26
-		Math.round(147 - 76 * t),     // 147 → 71
-		Math.round(58 - 9 * t),       // 58 → 49
+		Math.round(184 - 158 * t), // 184 → 26
+		Math.round(147 - 76 * t), // 147 → 71
+		Math.round(58 - 9 * t), // 58 → 49
 	];
 }
 
 function interpretScore(score: number): { label: string; color: string } {
-	if (score >= 0.75) return { label: "Accessible",  color: "#1a4731" };
-	if (score >= 0.4)  return { label: "Marginal",    color: "#b8933a" };
-	return                    { label: "Structured",  color: "#a02828" };
+	if (score >= 0.75) return { label: "Accessible", color: "#1a4731" };
+	if (score >= 0.4) return { label: "Marginal", color: "#b8933a" };
+	return { label: "Structured", color: "#a02828" };
 }
 
 // Primer band height in CSS pixels — drawn at top (fwd) and bottom (rev) of the track
@@ -63,7 +63,7 @@ function renderCanvas(
 		const [r, g, b] = scoreToRGB(score);
 		for (let py = 0; py < ph; py++) {
 			const i = (py * pw + px) * 4;
-			img.data[i]     = r;
+			img.data[i] = r;
 			img.data[i + 1] = g;
 			img.data[i + 2] = b;
 			img.data[i + 3] = 255;
@@ -106,8 +106,10 @@ function renderCanvas(
 		ctx.strokeStyle = "rgba(255,255,255,0.65)";
 		ctx.lineWidth = 1;
 		ctx.beginPath();
-		ctx.moveTo(x1, 0); ctx.lineTo(x1, BAR_HEIGHT);
-		ctx.moveTo(x2, 0); ctx.lineTo(x2, BAR_HEIGHT);
+		ctx.moveTo(x1, 0);
+		ctx.lineTo(x1, BAR_HEIGHT);
+		ctx.moveTo(x2, 0);
+		ctx.lineTo(x2, BAR_HEIGHT);
 		ctx.stroke();
 	}
 
@@ -127,12 +129,15 @@ export function AccessibilityTrack({
 	selection,
 	primerPair,
 }: AccessibilityTrackProps) {
-	const canvasRef   = useRef<HTMLCanvasElement>(null);
+	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
-	const profileRef  = useRef<Float32Array | null>(null);
+	const profileRef = useRef<Float32Array | null>(null);
 	const [ready, setReady] = useState(false);
 	const [tooltip, setTooltip] = useState<{
-		cx: number; cy: number; pos: number; score: number;
+		cx: number;
+		cy: number;
+		pos: number;
+		score: number;
 	} | null>(null);
 
 	// Compute profile asynchronously so the loading shimmer has time to paint
@@ -151,7 +156,10 @@ export function AccessibilityTrack({
 			}
 		}, 0);
 
-		return () => { cancelled = true; clearTimeout(id); };
+		return () => {
+			cancelled = true;
+			clearTimeout(id);
+		};
 	}, [seq, annealTempC]);
 
 	// Redraw whenever profile is ready, selection changes, or container resizes
@@ -175,63 +183,71 @@ export function AccessibilityTrack({
 		return () => ro.disconnect();
 	}, [draw]);
 
-	const handleMouseMove = useCallback(
-		(e: React.MouseEvent<HTMLCanvasElement>) => {
-			const profile = profileRef.current;
-			if (!profile) return;
-			const rect = e.currentTarget.getBoundingClientRect();
-			const x    = e.clientX - rect.left;
-			const pos  = Math.round((x / rect.width) * (profile.length - 1));
-			const score = profile[Math.max(0, Math.min(pos, profile.length - 1))] ?? 1;
-			setTooltip({ cx: e.clientX, cy: e.clientY, pos, score });
-		},
-		[],
-	);
+	const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+		const profile = profileRef.current;
+		if (!profile) return;
+		const rect = e.currentTarget.getBoundingClientRect();
+		const x = e.clientX - rect.left;
+		const pos = Math.round((x / rect.width) * (profile.length - 1));
+		const score = profile[Math.max(0, Math.min(pos, profile.length - 1))] ?? 1;
+		setTooltip({ cx: e.clientX, cy: e.clientY, pos, score });
+	}, []);
 
 	const tip = tooltip ? interpretScore(tooltip.score) : null;
 
 	return (
-		<div style={{
-			flexShrink: 0,
-			borderTop: "1px solid #ddd8ce",
-			padding: "7px 12px 9px",
-			background: "#f5f0e8",
-		}}>
+		<div
+			style={{
+				flexShrink: 0,
+				borderTop: "1px solid #ddd8ce",
+				padding: "7px 12px 9px",
+				background: "#f5f0e8",
+			}}
+		>
 			{/* Header row */}
-			<div style={{
-				display: "flex",
-				alignItems: "center",
-				justifyContent: "space-between",
-				marginBottom: "5px",
-			}}>
-				<span style={{
-					fontFamily: "var(--font-courier)",
-					fontSize: "8.5px",
-					letterSpacing: "0.1em",
-					textTransform: "uppercase",
-					color: "#9a9284",
-				}}>
+			<div
+				style={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "space-between",
+					marginBottom: "5px",
+				}}
+			>
+				<span
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "8.5px",
+						letterSpacing: "0.1em",
+						textTransform: "uppercase",
+						color: "#9a9284",
+					}}
+				>
 					Template Accessibility · {annealTempC}°C
 				</span>
 
 				{/* Legend */}
 				<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
 					{(["Structured", "Marginal", "Accessible"] as const).map((lbl) => {
-						const c = lbl === "Accessible" ? "#1a4731"
-							    : lbl === "Marginal"   ? "#b8933a"
-							    :                        "#a02828";
+						const c = lbl === "Accessible" ? "#1a4731" : lbl === "Marginal" ? "#b8933a" : "#a02828";
 						return (
 							<div key={lbl} style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-								<div style={{
-									width: "14px", height: "5px",
-									background: c, borderRadius: "1px", opacity: 0.85,
-								}} />
-								<span style={{
-									fontFamily: "var(--font-courier)",
-									fontSize: "7.5px",
-									letterSpacing: "0.04em",
-									color: "#9a9284",
-								}}>
+								<div
+									style={{
+										width: "14px",
+										height: "5px",
+										background: c,
+										borderRadius: "1px",
+										opacity: 0.85,
+									}}
+								/>
+								<span
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "7.5px",
+										letterSpacing: "0.04em",
+										color: "#9a9284",
+									}}
+								>
 									{lbl}
 								</span>
 							</div>
@@ -240,18 +256,29 @@ export function AccessibilityTrack({
 					{primerPair && (
 						<>
 							<span style={{ color: "#ddd8ce", fontSize: "9px" }}>·</span>
-							{([["→F", "rgba(59,130,246,0.8)"], ["←R", "rgba(168,85,247,0.8)"]] as const).map(([lbl, c]) => (
+							{(
+								[
+									["→F", "rgba(59,130,246,0.8)"],
+									["←R", "rgba(168,85,247,0.8)"],
+								] as const
+							).map(([lbl, c]) => (
 								<div key={lbl} style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-									<div style={{
-										width: "14px", height: "5px",
-										background: c, borderRadius: "1px",
-									}} />
-									<span style={{
-										fontFamily: "var(--font-courier)",
-										fontSize: "7.5px",
-										letterSpacing: "0.04em",
-										color: "#9a9284",
-									}}>
+									<div
+										style={{
+											width: "14px",
+											height: "5px",
+											background: c,
+											borderRadius: "1px",
+										}}
+									/>
+									<span
+										style={{
+											fontFamily: "var(--font-courier)",
+											fontSize: "7.5px",
+											letterSpacing: "0.04em",
+											color: "#9a9284",
+										}}
+									>
 										{lbl}
 									</span>
 								</div>
@@ -272,10 +299,7 @@ export function AccessibilityTrack({
 				}}
 			>
 				{!ready ? (
-					<div
-						className="access-shimmer"
-						style={{ height: BAR_HEIGHT, borderRadius: "3px" }}
-					/>
+					<div className="access-shimmer" style={{ height: BAR_HEIGHT, borderRadius: "3px" }} />
 				) : (
 					<canvas
 						ref={canvasRef}
@@ -293,41 +317,49 @@ export function AccessibilityTrack({
 
 			{/* Tooltip — fixed to viewport so it clears the canvas bounds */}
 			{tooltip && tip && (
-				<div style={{
-					position: "fixed",
-					left: tooltip.cx + 14,
-					top:  tooltip.cy - 52,
-					background: "rgba(22,16,10,0.93)",
-					borderRadius: "5px",
-					padding: "6px 10px",
-					pointerEvents: "none",
-					zIndex: 9999,
-					boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
-					whiteSpace: "nowrap",
-				}}>
-					<div style={{
-						fontFamily: "var(--font-courier)",
-						fontSize: "9px",
-						color: "#7a7268",
-						letterSpacing: "0.05em",
-						marginBottom: "2px",
-					}}>
+				<div
+					style={{
+						position: "fixed",
+						left: tooltip.cx + 14,
+						top: tooltip.cy - 52,
+						background: "rgba(22,16,10,0.93)",
+						borderRadius: "5px",
+						padding: "6px 10px",
+						pointerEvents: "none",
+						zIndex: 9999,
+						boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
+						whiteSpace: "nowrap",
+					}}
+				>
+					<div
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							color: "#7a7268",
+							letterSpacing: "0.05em",
+							marginBottom: "2px",
+						}}
+					>
 						pos {tooltip.pos + 1}
 					</div>
-					<div style={{
-						fontFamily: "var(--font-courier)",
-						fontSize: "11px",
-						fontWeight: 700,
-						color: tip.color,
-					}}>
+					<div
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "11px",
+							fontWeight: 700,
+							color: tip.color,
+						}}
+					>
 						{tip.label}
 					</div>
-					<div style={{
-						fontFamily: "var(--font-courier)",
-						fontSize: "10px",
-						color: "#c4bfb4",
-						marginTop: "1px",
-					}}>
+					<div
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "10px",
+							color: "#c4bfb4",
+							marginTop: "1px",
+						}}
+					>
 						{(tooltip.score * 100).toFixed(0)}% open
 					</div>
 				</div>

@@ -1,11 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
 	let supabaseResponse = NextResponse.next({ request });
 
 	const supabase = createServerClient(
+		// biome-ignore lint/style/noNonNullAssertion: env vars guaranteed by Vercel
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		// biome-ignore lint/style/noNonNullAssertion: env vars guaranteed by Vercel
 		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 		{
 			cookies: {

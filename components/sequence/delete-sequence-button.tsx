@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { deleteSequence } from "@/app/actions/sequences";
 
 interface DeleteSequenceButtonProps {
@@ -27,16 +27,19 @@ export function DeleteSequenceButton({ id, name }: DeleteSequenceButtonProps) {
 	if (state === "confirming") {
 		return (
 			<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-				<span style={{
-					fontFamily: "var(--font-courier)",
-					fontSize: "10px",
-					color: "#8b3a2a",
-					letterSpacing: "0.02em",
-					whiteSpace: "nowrap",
-				}}>
+				<span
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "10px",
+						color: "#8b3a2a",
+						letterSpacing: "0.02em",
+						whiteSpace: "nowrap",
+					}}
+				>
 					Delete &ldquo;{name}&rdquo;?
 				</span>
 				<button
+					type="button"
 					onClick={async () => {
 						setState("deleting");
 						await deleteSequence(id);
@@ -48,6 +51,7 @@ export function DeleteSequenceButton({ id, name }: DeleteSequenceButtonProps) {
 					Confirm
 				</button>
 				<button
+					type="button"
 					onClick={() => setState("idle")}
 					style={{ ...btn, background: "none", color: "#5a5648", border: "1px solid #ddd8ce" }}
 				>
@@ -59,7 +63,14 @@ export function DeleteSequenceButton({ id, name }: DeleteSequenceButtonProps) {
 
 	if (state === "deleting") {
 		return (
-			<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", letterSpacing: "0.06em" }}>
+			<span
+				style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "9px",
+					color: "#9a9284",
+					letterSpacing: "0.06em",
+				}}
+			>
 				Deleting…
 			</span>
 		);
@@ -67,6 +78,7 @@ export function DeleteSequenceButton({ id, name }: DeleteSequenceButtonProps) {
 
 	return (
 		<button
+			type="button"
 			onClick={() => setState("confirming")}
 			style={{
 				fontFamily: "var(--font-courier)",
@@ -80,8 +92,12 @@ export function DeleteSequenceButton({ id, name }: DeleteSequenceButtonProps) {
 				padding: "4px 0",
 				transition: "color 0.1s",
 			}}
-			onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.color = "#8b3a2a"; }}
-			onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.color = "#9a9284"; }}
+			onMouseEnter={(e) => {
+				(e.target as HTMLButtonElement).style.color = "#8b3a2a";
+			}}
+			onMouseLeave={(e) => {
+				(e.target as HTMLButtonElement).style.color = "#9a9284";
+			}}
 		>
 			Delete
 		</button>

@@ -42,7 +42,7 @@ function parseLocation(raw: string): { start: number; end: number; direction: 1 
 	const nums: number[] = [];
 	for (const part of stripped.split(/[,..]+/)) {
 		const n = parseInt(part.trim(), 10);
-		if (!isNaN(n)) nums.push(n);
+		if (!Number.isNaN(n)) nums.push(n);
 	}
 	if (nums.length === 0) return null;
 	return {
@@ -68,7 +68,10 @@ export function parseGenBank(content: string): ParsedSequence {
 
 	// Name + topology from LOCUS line
 	const locusLine = lines[0] ?? "";
-	const lociParts = locusLine.replace(/^LOCUS\s+/, "").trim().split(/\s+/);
+	const lociParts = locusLine
+		.replace(/^LOCUS\s+/, "")
+		.trim()
+		.split(/\s+/);
 	const name = lociParts[0] ?? "Sequence";
 	const topology: "circular" | "linear" = locusLine.toLowerCase().includes("circular")
 		? "circular"
@@ -79,7 +82,8 @@ export function parseGenBank(content: string): ParsedSequence {
 	const endIdx = content.lastIndexOf("//");
 	let seq = "";
 	if (originIdx !== -1) {
-		const originText = endIdx !== -1 ? content.slice(originIdx + 7, endIdx) : content.slice(originIdx + 7);
+		const originText =
+			endIdx !== -1 ? content.slice(originIdx + 7, endIdx) : content.slice(originIdx + 7);
 		seq = originText.replace(/[\d\s]/g, "").toUpperCase();
 	}
 
@@ -114,7 +118,7 @@ export function parseGenBank(content: string): ParsedSequence {
 			if (!line) continue;
 
 			// Feature line: exactly 5 spaces, then type, then location
-			const featMatch = line.match(/^     (\S+)\s{1,}(\S.*)$/);
+			const featMatch = line.match(/^ {5}(\S+)\s{1,}(\S.*)$/);
 			if (featMatch && featMatch[1] !== "FEATURES") {
 				flush();
 				currentType = featMatch[1];

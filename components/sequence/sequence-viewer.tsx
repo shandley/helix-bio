@@ -1,8 +1,8 @@
 "use client";
 
+import type { PrimerPair } from "@shandley/primd";
 import SeqViz from "seqviz";
 import type { ParsedSequence } from "@/lib/bio/parse-genbank";
-import type { PrimerPair } from "@shandley/primd";
 import { AccessibilityTrack } from "./accessibility-track";
 
 export interface SeqVizSelection {
@@ -25,7 +25,14 @@ interface SequenceViewerProps {
 	primerPair?: PrimerPair | null;
 }
 
-export function SequenceViewer({ parsed, topology, enzymes, selection, onSelection, primerPair }: SequenceViewerProps) {
+export function SequenceViewer({
+	parsed,
+	topology,
+	enzymes,
+	selection,
+	onSelection,
+	primerPair,
+}: SequenceViewerProps) {
 	const seqvizAnnotations = [
 		...parsed.annotations.map(({ start, end, name, color, direction }) => ({
 			start,
@@ -36,8 +43,20 @@ export function SequenceViewer({ parsed, topology, enzymes, selection, onSelecti
 		})),
 		...(primerPair
 			? [
-					{ start: primerPair.fwd.start, end: primerPair.fwd.end, name: "→ Fwd", color: "#3b82f6", direction: 1 as const },
-					{ start: primerPair.rev.start, end: primerPair.rev.end, name: "← Rev", color: "#a855f7", direction: -1 as const },
+					{
+						start: primerPair.fwd.start,
+						end: primerPair.fwd.end,
+						name: "→ Fwd",
+						color: "#3b82f6",
+						direction: 1 as const,
+					},
+					{
+						start: primerPair.rev.start,
+						end: primerPair.rev.end,
+						name: "← Rev",
+						color: "#a855f7",
+						direction: -1 as const,
+					},
 				]
 			: []),
 	];
@@ -66,11 +85,7 @@ export function SequenceViewer({ parsed, topology, enzymes, selection, onSelecti
 			</div>
 
 			{/* Accessibility heat map — fixed-height strip below the map */}
-			<AccessibilityTrack
-				seq={parsed.seq}
-				selection={selection}
-				primerPair={primerPair}
-			/>
+			<AccessibilityTrack seq={parsed.seq} selection={selection} primerPair={primerPair} />
 		</div>
 	);
 }

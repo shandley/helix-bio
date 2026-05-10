@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { updateSequenceName } from "@/app/actions/sequences";
 
 interface SequenceNameEditorProps {
@@ -35,8 +35,14 @@ export function SequenceNameEditor({ id, name }: SequenceNameEditorProps) {
 	}
 
 	function onKeyDown(e: React.KeyboardEvent) {
-		if (e.key === "Enter") { e.preventDefault(); save(); }
-		if (e.key === "Escape") { setValue(name); setEditing(false); }
+		if (e.key === "Enter") {
+			e.preventDefault();
+			save();
+		}
+		if (e.key === "Escape") {
+			setValue(name);
+			setEditing(false);
+		}
 	}
 
 	if (editing) {
@@ -44,7 +50,7 @@ export function SequenceNameEditor({ id, name }: SequenceNameEditorProps) {
 			<input
 				ref={inputRef}
 				value={value}
-				onChange={e => setValue(e.target.value)}
+				onChange={(e) => setValue(e.target.value)}
 				onBlur={save}
 				onKeyDown={onKeyDown}
 				disabled={saving}

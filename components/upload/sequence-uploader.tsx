@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
 
 const ACCEPTED = [".gb", ".gbk", ".genbank", ".fa", ".fasta", ".fna", ".dna", ".embl"];
 const ACCEPTED_SET = new Set(ACCEPTED);
@@ -14,7 +14,13 @@ function fileExt(name: string): string {
 function UploadIcon({ color }: { color: string }) {
 	return (
 		<svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden>
-			<path d="M14 18V8M14 8L9 13M14 8L19 13" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+			<path
+				d="M14 18V8M14 8L9 13M14 8L19 13"
+				stroke={color}
+				strokeWidth="1.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			/>
 			<path d="M6 21h16" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
 		</svg>
 	);
@@ -53,7 +59,9 @@ export function SequenceUploader() {
 			if (!file) return;
 			const ext = fileExt(file.name);
 			if (!ACCEPTED_SET.has(ext)) {
-				setError(`Unsupported file type "${ext || file.name}". Use GenBank, FASTA, SnapGene, or EMBL.`);
+				setError(
+					`Unsupported file type "${ext || file.name}". Use GenBank, FASTA, SnapGene, or EMBL.`,
+				);
 				return;
 			}
 			upload(file);
@@ -65,7 +73,10 @@ export function SequenceUploader() {
 
 	return (
 		<div
-			onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+			onDragOver={(e) => {
+				e.preventDefault();
+				setDragging(true);
+			}}
 			onDragLeave={() => setDragging(false)}
 			onDrop={onDrop}
 			style={{
@@ -86,52 +97,70 @@ export function SequenceUploader() {
 
 			<div style={{ textAlign: "center" }}>
 				{uploading ? (
-					<p style={{
-						fontFamily: "var(--font-courier)",
-						fontSize: "12px",
-						color: "#9a9284",
-						letterSpacing: "0.04em",
-					}}>
+					<p
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "12px",
+							color: "#9a9284",
+							letterSpacing: "0.04em",
+						}}
+					>
 						Uploading…
 					</p>
 				) : (
-					<p style={{
-						fontFamily: "var(--font-courier)",
-						fontSize: "12px",
-						color: "#5a5648",
-						letterSpacing: "0.02em",
-					}}>
+					<p
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "12px",
+							color: "#5a5648",
+							letterSpacing: "0.02em",
+						}}
+					>
 						Drop a sequence file, or{" "}
-						<label style={{ color: "#1a4731", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+						<label
+							style={{
+								color: "#1a4731",
+								cursor: "pointer",
+								textDecoration: "underline",
+								textUnderlineOffset: "3px",
+							}}
+						>
 							browse
 							<input
 								type="file"
 								style={{ display: "none" }}
 								accept={ACCEPTED.join(",")}
-								onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }}
+								onChange={(e) => {
+									const f = e.target.files?.[0];
+									if (f) upload(f);
+								}}
 							/>
 						</label>
 					</p>
 				)}
-				<p style={{
-					fontFamily: "var(--font-courier)",
-					fontSize: "9px",
-					letterSpacing: "0.08em",
-					color: "#b8b0a4",
-					marginTop: "4px",
-					textTransform: "uppercase",
-				}}>
+				<p
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "9px",
+						letterSpacing: "0.08em",
+						color: "#b8b0a4",
+						marginTop: "4px",
+						textTransform: "uppercase",
+					}}
+				>
 					GenBank · FASTA · SnapGene · EMBL
 				</p>
 			</div>
 
 			{error && (
-				<p style={{
-					fontFamily: "var(--font-courier)",
-					fontSize: "11px",
-					color: "#8b3a2a",
-					letterSpacing: "0.02em",
-				}}>
+				<p
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "11px",
+						color: "#8b3a2a",
+						letterSpacing: "0.02em",
+					}}
+				>
 					{error}
 				</p>
 			)}

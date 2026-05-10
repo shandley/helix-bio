@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { updateSequenceMetadata } from "@/app/actions/sequences";
 
 interface SequenceDescriptionEditorProps {
@@ -34,8 +34,14 @@ export function SequenceDescriptionEditor({ id, description }: SequenceDescripti
 	}
 
 	function onKeyDown(e: React.KeyboardEvent) {
-		if (e.key === "Enter") { e.preventDefault(); save(); }
-		if (e.key === "Escape") { setValue(description ?? ""); setEditing(false); }
+		if (e.key === "Enter") {
+			e.preventDefault();
+			save();
+		}
+		if (e.key === "Escape") {
+			setValue(description ?? "");
+			setEditing(false);
+		}
 	}
 
 	const placeholder = "Add description…";
@@ -45,7 +51,7 @@ export function SequenceDescriptionEditor({ id, description }: SequenceDescripti
 			<input
 				ref={inputRef}
 				value={value}
-				onChange={e => setValue(e.target.value)}
+				onChange={(e) => setValue(e.target.value)}
 				onBlur={save}
 				onKeyDown={onKeyDown}
 				disabled={saving}

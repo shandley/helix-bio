@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { deleteSequence } from "@/app/actions/sequences";
 import type { Sequence } from "@/types/database";
 
@@ -34,7 +34,14 @@ function GcBar({ gc }: { gc: number }) {
 			<div style={{ width: "48px", height: "3px", background: "#e8e2d8", borderRadius: "2px" }}>
 				<div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: "2px" }} />
 			</div>
-			<span style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#9a9284", minWidth: "32px" }}>
+			<span
+				style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "10px",
+					color: "#9a9284",
+					minWidth: "32px",
+				}}
+			>
 				{gc.toFixed(0)}%
 			</span>
 		</div>
@@ -65,7 +72,12 @@ function formatLength(bp: number | null): string {
 type SortKey = "recent" | "name" | "length" | "gc";
 type TopologyFilter = "all" | "circular" | "linear";
 
-const SORT_LABELS: Record<SortKey, string> = { recent: "Recent", name: "Name", length: "Length", gc: "GC%" };
+const SORT_LABELS: Record<SortKey, string> = {
+	recent: "Recent",
+	name: "Name",
+	length: "Length",
+	gc: "GC%",
+};
 
 export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 	const router = useRouter();
@@ -77,28 +89,34 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 	const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
 	async function handleDelete(id: string) {
-		setItems(prev => prev.filter(s => s.id !== id));
+		setItems((prev) => prev.filter((s) => s.id !== id));
 		setPendingDelete(null);
 		await deleteSequence(id);
 		router.refresh();
 	}
 
-	function resetPage() { setPage(0); }
+	function resetPage() {
+		setPage(0);
+	}
 
 	const filtered = useMemo(() => {
 		const q = search.toLowerCase().trim();
 		let list = items;
-		if (topology !== "all") list = list.filter(s => s.topology === topology);
-		if (q) list = list.filter(s =>
-			s.name.toLowerCase().includes(q) ||
-			s.description?.toLowerCase().includes(q)
-		);
+		if (topology !== "all") list = list.filter((s) => s.topology === topology);
+		if (q)
+			list = list.filter(
+				(s) => s.name.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q),
+			);
 		return [...list].sort((a, b) => {
 			switch (sort) {
-				case "name": return a.name.localeCompare(b.name);
-				case "length": return (b.length ?? 0) - (a.length ?? 0);
-				case "gc": return (b.gc_content ?? 0) - (a.gc_content ?? 0);
-				default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+				case "name":
+					return a.name.localeCompare(b.name);
+				case "length":
+					return (b.length ?? 0) - (a.length ?? 0);
+				case "gc":
+					return (b.gc_content ?? 0) - (a.gc_content ?? 0);
+				default:
+					return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
 			}
 		});
 	}, [items, search, sort, topology]);
@@ -130,38 +148,54 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 		<div style={{ marginTop: "32px" }}>
 			{/* Section header row */}
 			<div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-				<span style={{
-					fontFamily: "var(--font-courier)",
-					fontSize: "9px",
-					letterSpacing: "0.14em",
-					textTransform: "uppercase",
-					color: "#5a5648",
-					flexShrink: 0,
-				}}>
+				<span
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "9px",
+						letterSpacing: "0.14em",
+						textTransform: "uppercase",
+						color: "#5a5648",
+						flexShrink: 0,
+					}}
+				>
 					Library
 				</span>
-				<span style={{
-					fontFamily: "var(--font-courier)",
-					fontSize: "9px",
-					color: "#9a9284",
-					border: "1px solid #ddd8ce",
-					padding: "1px 6px",
-					borderRadius: "2px",
-					flexShrink: 0,
-				}}>
+				<span
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "9px",
+						color: "#9a9284",
+						border: "1px solid #ddd8ce",
+						padding: "1px 6px",
+						borderRadius: "2px",
+						flexShrink: 0,
+					}}
+				>
 					{items.length}
 				</span>
 				<div style={{ flex: 1, height: "1px", background: "#ddd8ce" }} />
 			</div>
 
 			{/* Filter/search row */}
-			<div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", flexWrap: "wrap" }}>
+			<div
+				style={{
+					display: "flex",
+					alignItems: "center",
+					gap: "8px",
+					marginBottom: "12px",
+					flexWrap: "wrap",
+				}}
+			>
 				{/* Topology filter */}
 				<div style={{ display: "flex", gap: "4px" }}>
-					{(["all", "circular", "linear"] as TopologyFilter[]).map(t => (
+					{(["all", "circular", "linear"] as TopologyFilter[]).map((t) => (
 						<button
+							type="button"
 							key={t}
-							onClick={() => { setTopology(t); resetPage(); }}
+							onClick={() => {
+								setTopology(t);
+								resetPage();
+							}}
 							style={filterBtnStyle(topology === t)}
 						>
 							{t === "all" ? "All" : t === "circular" ? "Circular" : "Linear"}
@@ -175,7 +209,10 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 				<input
 					type="text"
 					value={search}
-					onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+					onChange={(e) => {
+						setSearch(e.target.value);
+						resetPage();
+					}}
 					placeholder="Search by name…"
 					style={{
 						fontFamily: "var(--font-courier)",
@@ -193,7 +230,10 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 				{/* Sort */}
 				<select
 					value={sort}
-					onChange={(e) => { setSort(e.target.value as SortKey); resetPage(); }}
+					onChange={(e) => {
+						setSort(e.target.value as SortKey);
+						resetPage();
+					}}
 					style={{
 						fontFamily: "var(--font-courier)",
 						fontSize: "11px",
@@ -207,205 +247,268 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 					}}
 				>
 					{(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
-						<option key={k} value={k}>{SORT_LABELS[k]}</option>
+						<option key={k} value={k}>
+							{SORT_LABELS[k]}
+						</option>
 					))}
 				</select>
 			</div>
 
 			{/* List */}
-			<div style={{ border: "1px solid #ddd8ce", borderRadius: "3px", overflow: "hidden", background: "#faf7f2" }}>
+			<div
+				style={{
+					border: "1px solid #ddd8ce",
+					borderRadius: "3px",
+					overflow: "hidden",
+					background: "#faf7f2",
+				}}
+			>
 				{filtered.length === 0 ? (
-					<div style={{ padding: "28px", textAlign: "center", fontFamily: "var(--font-courier)", fontSize: "11px", color: "#9a9284" }}>
+					<div
+						style={{
+							padding: "28px",
+							textAlign: "center",
+							fontFamily: "var(--font-courier)",
+							fontSize: "11px",
+							color: "#9a9284",
+						}}
+					>
 						{search || topology !== "all"
 							? `No sequences match${search ? ` "${search}"` : ""}${topology !== "all" ? ` (${topology})` : ""}`
 							: "No sequences yet. Upload one to get started."}
 					</div>
-				) : paginated.map((seq, i) => (
-					<Link
-						key={seq.id}
-						href={`/sequence/${seq.id}`}
-						className="sequence-row"
-						style={{
-							display: "flex",
-							alignItems: "center",
-							gap: "12px",
-							padding: "10px 16px",
-							borderBottom: i < paginated.length - 1 ? "1px solid rgba(221,216,206,0.6)" : "none",
-							textDecoration: "none",
-						}}
-					>
-						{/* Topology icon */}
-						<span title={seq.topology} style={{ flexShrink: 0, display: "flex", alignSelf: "flex-start", paddingTop: "2px" }}>
-							{seq.topology === "circular" ? <CircularIcon /> : <LinearIcon />}
-						</span>
-
-						{/* Name + description */}
-						<span style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", gap: "2px" }}>
-							<span className="sequence-row-name" style={{
-								fontFamily: "var(--font-sans)",
-								fontSize: "14px",
-								color: "#1c1a16",
-								fontWeight: 500,
-								letterSpacing: "-0.01em",
-								overflow: "hidden",
-								textOverflow: "ellipsis",
-								whiteSpace: "nowrap",
-							}}>
-								{seq.name}
-							</span>
-							{seq.description && (
-								<span style={{
-									fontFamily: "var(--font-courier)",
-									fontSize: "10px",
-									color: "#9a9284",
-									overflow: "hidden",
-									textOverflow: "ellipsis",
-									whiteSpace: "nowrap",
-									letterSpacing: "0.01em",
-								}}>
-									{seq.description}
-								</span>
-							)}
-						</span>
-
-						{/* Format badge */}
-						<span style={{
-							fontFamily: "var(--font-courier)",
-							fontSize: "9px",
-							letterSpacing: "0.1em",
-							textTransform: "uppercase",
-							color: "#9a9284",
-							border: "1px solid #ddd8ce",
-							padding: "2px 6px",
-							borderRadius: "2px",
-							flexShrink: 0,
-							alignSelf: "flex-start",
-							marginTop: "1px",
-						}}>
-							{seq.file_format}
-						</span>
-
-						{/* Length */}
-						<span style={{
-							fontFamily: "var(--font-courier)",
-							fontSize: "11px",
-							color: "#5a5648",
-							flexShrink: 0,
-							minWidth: "56px",
-							textAlign: "right",
-							alignSelf: "flex-start",
-							paddingTop: "1px",
-						}}>
-							{formatLength(seq.length)}
-						</span>
-
-						{/* GC bar */}
-						<span style={{ alignSelf: "flex-start", paddingTop: "3px" }}>
-							{seq.gc_content != null
-								? <GcBar gc={seq.gc_content} />
-								: <span style={{ display: "inline-block", width: "86px" }} />
-							}
-						</span>
-
-						{/* Date */}
-						<span style={{
-							fontFamily: "var(--font-courier)",
-							fontSize: "10px",
-							color: "#b8b0a4",
-							flexShrink: 0,
-							minWidth: "58px",
-							textAlign: "right",
-							alignSelf: "flex-start",
-							paddingTop: "2px",
-						}}>
-							{relativeDate(seq.created_at)}
-						</span>
-
-						{/* Delete */}
-						{pendingDelete === seq.id ? (
+				) : (
+					paginated.map((seq, i) => (
+						<Link
+							key={seq.id}
+							href={`/sequence/${seq.id}`}
+							className="sequence-row"
+							style={{
+								display: "flex",
+								alignItems: "center",
+								gap: "12px",
+								padding: "10px 16px",
+								borderBottom: i < paginated.length - 1 ? "1px solid rgba(221,216,206,0.6)" : "none",
+								textDecoration: "none",
+							}}
+						>
+							{/* Topology icon */}
 							<span
-								style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}
-								onClick={e => e.preventDefault()}
+								title={seq.topology}
+								style={{
+									flexShrink: 0,
+									display: "flex",
+									alignSelf: "flex-start",
+									paddingTop: "2px",
+								}}
 							>
-								<button
-									onClick={() => handleDelete(seq.id)}
-									style={{
-										fontFamily: "var(--font-courier)",
-										fontSize: "8px",
-										letterSpacing: "0.08em",
-										textTransform: "uppercase",
-										color: "white",
-										background: "#8b3a2a",
-										border: "none",
-										borderRadius: "2px",
-										padding: "3px 8px",
-										cursor: "pointer",
-									}}
-								>
-									Confirm
-								</button>
-								<button
-									onClick={() => setPendingDelete(null)}
-									style={{
-										fontFamily: "var(--font-courier)",
-										fontSize: "8px",
-										letterSpacing: "0.08em",
-										textTransform: "uppercase",
-										color: "#5a5648",
-										background: "none",
-										border: "1px solid #ddd8ce",
-										borderRadius: "2px",
-										padding: "3px 8px",
-										cursor: "pointer",
-									}}
-								>
-									Cancel
-								</button>
+								{seq.topology === "circular" ? <CircularIcon /> : <LinearIcon />}
 							</span>
-						) : (
-							<button
-								onClick={e => { e.preventDefault(); setPendingDelete(seq.id); }}
-								className="sequence-row-delete"
+
+							{/* Name + description */}
+							<span
+								style={{
+									flex: 1,
+									overflow: "hidden",
+									display: "flex",
+									flexDirection: "column",
+									gap: "2px",
+								}}
+							>
+								<span
+									className="sequence-row-name"
+									style={{
+										fontFamily: "var(--font-sans)",
+										fontSize: "14px",
+										color: "#1c1a16",
+										fontWeight: 500,
+										letterSpacing: "-0.01em",
+										overflow: "hidden",
+										textOverflow: "ellipsis",
+										whiteSpace: "nowrap",
+									}}
+								>
+									{seq.name}
+								</span>
+								{seq.description && (
+									<span
+										style={{
+											fontFamily: "var(--font-courier)",
+											fontSize: "10px",
+											color: "#9a9284",
+											overflow: "hidden",
+											textOverflow: "ellipsis",
+											whiteSpace: "nowrap",
+											letterSpacing: "0.01em",
+										}}
+									>
+										{seq.description}
+									</span>
+								)}
+							</span>
+
+							{/* Format badge */}
+							<span
 								style={{
 									fontFamily: "var(--font-courier)",
 									fontSize: "9px",
-									letterSpacing: "0.06em",
+									letterSpacing: "0.1em",
+									textTransform: "uppercase",
 									color: "#9a9284",
-									background: "none",
-									border: "none",
-									cursor: "pointer",
-									padding: "0",
+									border: "1px solid #ddd8ce",
+									padding: "2px 6px",
+									borderRadius: "2px",
 									flexShrink: 0,
-									opacity: 0,
-									transition: "opacity 0.1s, color 0.1s",
+									alignSelf: "flex-start",
+									marginTop: "1px",
 								}}
-								onMouseEnter={e => { (e.target as HTMLButtonElement).style.color = "#8b3a2a"; }}
-								onMouseLeave={e => { (e.target as HTMLButtonElement).style.color = "#9a9284"; }}
 							>
-								×
-							</button>
-						)}
-					</Link>
-				))}
+								{seq.file_format}
+							</span>
+
+							{/* Length */}
+							<span
+								style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "11px",
+									color: "#5a5648",
+									flexShrink: 0,
+									minWidth: "56px",
+									textAlign: "right",
+									alignSelf: "flex-start",
+									paddingTop: "1px",
+								}}
+							>
+								{formatLength(seq.length)}
+							</span>
+
+							{/* GC bar */}
+							<span style={{ alignSelf: "flex-start", paddingTop: "3px" }}>
+								{seq.gc_content != null ? (
+									<GcBar gc={seq.gc_content} />
+								) : (
+									<span style={{ display: "inline-block", width: "86px" }} />
+								)}
+							</span>
+
+							{/* Date */}
+							<span
+								style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "10px",
+									color: "#b8b0a4",
+									flexShrink: 0,
+									minWidth: "58px",
+									textAlign: "right",
+									alignSelf: "flex-start",
+									paddingTop: "2px",
+								}}
+							>
+								{relativeDate(seq.created_at)}
+							</span>
+
+							{/* Delete */}
+							{pendingDelete === seq.id ? (
+								<span
+									style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}
+									onClick={(e) => e.preventDefault()}
+								>
+									<button
+										type="button"
+										onClick={() => handleDelete(seq.id)}
+										style={{
+											fontFamily: "var(--font-courier)",
+											fontSize: "8px",
+											letterSpacing: "0.08em",
+											textTransform: "uppercase",
+											color: "white",
+											background: "#8b3a2a",
+											border: "none",
+											borderRadius: "2px",
+											padding: "3px 8px",
+											cursor: "pointer",
+										}}
+									>
+										Confirm
+									</button>
+									<button
+										type="button"
+										onClick={() => setPendingDelete(null)}
+										style={{
+											fontFamily: "var(--font-courier)",
+											fontSize: "8px",
+											letterSpacing: "0.08em",
+											textTransform: "uppercase",
+											color: "#5a5648",
+											background: "none",
+											border: "1px solid #ddd8ce",
+											borderRadius: "2px",
+											padding: "3px 8px",
+											cursor: "pointer",
+										}}
+									>
+										Cancel
+									</button>
+								</span>
+							) : (
+								<button
+									type="button"
+									onClick={(e) => {
+										e.preventDefault();
+										setPendingDelete(seq.id);
+									}}
+									className="sequence-row-delete"
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "9px",
+										letterSpacing: "0.06em",
+										color: "#9a9284",
+										background: "none",
+										border: "none",
+										cursor: "pointer",
+										padding: "0",
+										flexShrink: 0,
+										opacity: 0,
+										transition: "opacity 0.1s, color 0.1s",
+									}}
+									onMouseEnter={(e) => {
+										(e.target as HTMLButtonElement).style.color = "#8b3a2a";
+									}}
+									onMouseLeave={(e) => {
+										(e.target as HTMLButtonElement).style.color = "#9a9284";
+									}}
+								>
+									×
+								</button>
+							)}
+						</Link>
+					))
+				)}
 			</div>
 
 			{/* Pagination + stats row */}
-			<div style={{
-				marginTop: "8px",
-				display: "flex",
-				alignItems: "center",
-				gap: "10px",
-				fontFamily: "var(--font-courier)",
-				fontSize: "9px",
-				letterSpacing: "0.06em",
-				color: "#b8b0a4",
-			}}>
+			<div
+				style={{
+					marginTop: "8px",
+					display: "flex",
+					alignItems: "center",
+					gap: "10px",
+					fontFamily: "var(--font-courier)",
+					fontSize: "9px",
+					letterSpacing: "0.06em",
+					color: "#b8b0a4",
+				}}
+			>
 				{/* Stats */}
-				<span>{items.length} sequence{items.length !== 1 ? "s" : ""}</span>
+				<span>
+					{items.length} sequence{items.length !== 1 ? "s" : ""}
+				</span>
 				<span>·</span>
 				<span>{totalFormatted} total</span>
 				<span>·</span>
-				<span>{circularCount} circular, {items.length - circularCount} linear</span>
+				<span>
+					{circularCount} circular, {items.length - circularCount} linear
+				</span>
 
 				{/* Pagination controls — only shown when there's more than one page */}
 				{totalPages > 1 && (
@@ -415,7 +518,8 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 							{rangeStart}–{rangeEnd} of {filtered.length}
 						</span>
 						<button
-							onClick={() => setPage(p => Math.max(0, p - 1))}
+							type="button"
+							onClick={() => setPage((p) => Math.max(0, p - 1))}
 							disabled={safePage === 0}
 							style={{
 								fontFamily: "var(--font-courier)",
@@ -431,7 +535,8 @@ export function SequenceLibrary({ sequences }: { sequences: Sequence[] }) {
 							←
 						</button>
 						<button
-							onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+							type="button"
+							onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
 							disabled={safePage >= totalPages - 1}
 							style={{
 								fontFamily: "var(--font-courier)",

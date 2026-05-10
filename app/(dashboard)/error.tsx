@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function DashboardError({
 	error,
@@ -15,28 +15,33 @@ export default function DashboardError({
 	}, [error]);
 
 	return (
-		<div style={{
-			display: "flex",
-			flexDirection: "column",
-			alignItems: "center",
-			justifyContent: "center",
-			flex: 1,
-			height: "100%",
-			gap: "16px",
-			fontFamily: "var(--font-courier)",
-			padding: "48px 24px",
-			textAlign: "center",
-		}}>
+		<div
+			style={{
+				display: "flex",
+				flexDirection: "column",
+				alignItems: "center",
+				justifyContent: "center",
+				flex: 1,
+				height: "100%",
+				gap: "16px",
+				fontFamily: "var(--font-courier)",
+				padding: "48px 24px",
+				textAlign: "center",
+			}}
+		>
 			<p style={{ fontSize: "12px", color: "#1c1a16", letterSpacing: "0.04em" }}>
 				Failed to load this page
 			</p>
 			{error.message && (
-				<p style={{ fontSize: "10px", color: "#9a9284", letterSpacing: "0.02em", maxWidth: "360px" }}>
+				<p
+					style={{ fontSize: "10px", color: "#9a9284", letterSpacing: "0.02em", maxWidth: "360px" }}
+				>
 					{error.message}
 				</p>
 			)}
 			<div style={{ display: "flex", gap: "10px" }}>
 				<button
+					type="button"
 					onClick={reset}
 					style={{
 						fontFamily: "var(--font-courier)",

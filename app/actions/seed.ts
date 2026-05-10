@@ -1,9 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
 
 // Demo plasmids are bundled as static GenBank files under public/demo/.
 // Source notes:
@@ -119,7 +119,14 @@ export async function populateDemoSequences() {
 			// Update the existing DB record so the viewer gets the refreshed file
 			const { error } = await supabase
 				.from("sequences")
-				.update({ description, topology, length, gc_content: gcContent, file_path: filePath, file_format: "genbank" })
+				.update({
+					description,
+					topology,
+					length,
+					gc_content: gcContent,
+					file_path: filePath,
+					file_format: "genbank",
+				})
 				.eq("id", existingId);
 			if (!error) updated++;
 		} else {

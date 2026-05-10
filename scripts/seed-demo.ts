@@ -2,20 +2,38 @@
  * One-time script to seed the demo account with example plasmids.
  * Run: npx tsx scripts/seed-demo.ts
  */
-import { createClient } from "@supabase/supabase-js";
+
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://mexubhrfyfeacpnygpig.supabase.co";
+// biome-ignore lint/style/noNonNullAssertion: must be set to run seed script
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const DEMO_USER_ID = "98089d07-1bdc-47f8-baa6-79c081bab536";
 
 const DEMO_PLASMIDS = [
-	{ file: "pUC19.gb",     name: "pUC19",      note: "Common high-copy cloning vector. AmpR, lacZ-alpha, MCS. 2686 bp." },
-	{ file: "pBR322.gb",    name: "pBR322",     note: "Classic cloning vector. AmpR + TetR. 4361 bp." },
-	{ file: "pACYC184.gb",  name: "pACYC184",   note: "Low-copy compatible vector. CmR + TetR, p15A origin. 4245 bp." },
-	{ file: "pGEX-4T-1.gb", name: "pGEX-4T-1", note: "GST fusion expression vector. AmpR, tac promoter. 4969 bp." },
-	{ file: "pEGFP-N1.gb",  name: "pEGFP-N1",  note: "EGFP expression vector. NeoR/KanR, CMV promoter. 4733 bp." },
+	{
+		file: "pUC19.gb",
+		name: "pUC19",
+		note: "Common high-copy cloning vector. AmpR, lacZ-alpha, MCS. 2686 bp.",
+	},
+	{ file: "pBR322.gb", name: "pBR322", note: "Classic cloning vector. AmpR + TetR. 4361 bp." },
+	{
+		file: "pACYC184.gb",
+		name: "pACYC184",
+		note: "Low-copy compatible vector. CmR + TetR, p15A origin. 4245 bp.",
+	},
+	{
+		file: "pGEX-4T-1.gb",
+		name: "pGEX-4T-1",
+		note: "GST fusion expression vector. AmpR, tac promoter. 4969 bp.",
+	},
+	{
+		file: "pEGFP-N1.gb",
+		name: "pEGFP-N1",
+		note: "EGFP expression vector. NeoR/KanR, CMV promoter. 4733 bp.",
+	},
 ];
 
 function detectTopology(content: string): "circular" | "linear" {
@@ -56,7 +74,10 @@ async function main() {
 	for (const plasmid of DEMO_PLASMIDS) {
 		const filePath = join(process.cwd(), "public", "demo", plasmid.file);
 		const content = await readFile(filePath, "utf-8");
-		if (!content.startsWith("LOCUS")) { console.warn(`Skipping ${plasmid.file} — not GenBank`); continue; }
+		if (!content.startsWith("LOCUS")) {
+			console.warn(`Skipping ${plasmid.file} — not GenBank`);
+			continue;
+		}
 
 		const topology = detectTopology(content);
 		const length = extractLength(content);
@@ -68,11 +89,13 @@ async function main() {
 			.from("sequences")
 			.upload(storagePath, new Blob([content], { type: "text/plain" }), { upsert: true });
 
-		if (uploadErr) { console.error(`Upload failed for ${plasmid.name}:`, uploadErr.message); continue; }
+		if (uploadErr) {
+			console.error(`Upload failed for ${plasmid.name}:`, uploadErr.message);
+			continue;
+		}
 
 		// Upsert DB record (delete existing by name+user first)
-		await supabase.from("sequences").delete()
-			.eq("user_id", DEMO_USER_ID).eq("name", plasmid.name);
+		await supabase.from("sequences").delete().eq("user_id", DEMO_USER_ID).eq("name", plasmid.name);
 
 		const { error: insertErr } = await supabase.from("sequences").insert({
 			user_id: DEMO_USER_ID,
@@ -85,7 +108,10 @@ async function main() {
 			file_format: "genbank",
 		});
 
-		if (insertErr) { console.error(`DB insert failed for ${plasmid.name}:`, insertErr.message); continue; }
+		if (insertErr) {
+			console.error(`DB insert failed for ${plasmid.name}:`, insertErr.message);
+			continue;
+		}
 
 		console.log(`✓ ${plasmid.name} — ${length} bp, ${topology}, GC ${gcContent?.toFixed(1)}%`);
 		seeded++;

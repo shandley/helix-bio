@@ -6,7 +6,9 @@ export async function createClient() {
 	const cookieStore = await cookies();
 
 	return createServerClient<Database>(
+		// biome-ignore lint/style/noNonNullAssertion: env vars guaranteed by Vercel
 		process.env.NEXT_PUBLIC_SUPABASE_URL!,
+		// biome-ignore lint/style/noNonNullAssertion: env vars guaranteed by Vercel
 		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 		{
 			cookies: {

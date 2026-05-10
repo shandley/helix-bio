@@ -48,33 +48,48 @@ export default function ResetPasswordPage() {
 	}
 
 	return (
-		<div style={{
-			width: "100%",
-			maxWidth: "380px",
-			background: "#faf7f2",
-			border: "1px solid #ddd8ce",
-			borderRadius: "4px",
-			padding: "40px 36px",
-		}}>
-			<div style={{ marginBottom: "32px", paddingBottom: "20px", borderBottom: "1px solid #ddd8ce" }}>
-				<h1 style={{
-					fontFamily: "var(--font-playfair)",
-					fontSize: "26px",
-					fontWeight: 400,
-					color: "#1c1a16",
-					letterSpacing: "-0.01em",
-					marginBottom: "6px",
-				}}>
+		<div
+			style={{
+				width: "100%",
+				maxWidth: "380px",
+				background: "#faf7f2",
+				border: "1px solid #ddd8ce",
+				borderRadius: "4px",
+				padding: "40px 36px",
+			}}
+		>
+			<div
+				style={{ marginBottom: "32px", paddingBottom: "20px", borderBottom: "1px solid #ddd8ce" }}
+			>
+				<h1
+					style={{
+						fontFamily: "var(--font-playfair)",
+						fontSize: "26px",
+						fontWeight: 400,
+						color: "#1c1a16",
+						letterSpacing: "-0.01em",
+						marginBottom: "6px",
+					}}
+				>
 					New password
 				</h1>
-				<p style={{ fontFamily: "var(--font-karla)", fontSize: "13px", fontWeight: 300, color: "#5a5648" }}>
+				<p
+					style={{
+						fontFamily: "var(--font-karla)",
+						fontSize: "13px",
+						fontWeight: 300,
+						color: "#5a5648",
+					}}
+				>
 					Choose a strong password for your account.
 				</p>
 			</div>
 
 			<form action={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
 				<div>
-					<label htmlFor="password" style={labelStyle}>New password</label>
+					<label htmlFor="password" style={labelStyle}>
+						New password
+					</label>
 					<input
 						id="password"
 						name="password"
@@ -83,12 +98,18 @@ export default function ResetPasswordPage() {
 						minLength={8}
 						required
 						style={inputStyle}
-						onFocus={e => { e.target.style.borderColor = "#1a4731"; }}
-						onBlur={e => { e.target.style.borderColor = "#ddd8ce"; }}
+						onFocus={(e) => {
+							e.target.style.borderColor = "#1a4731";
+						}}
+						onBlur={(e) => {
+							e.target.style.borderColor = "#ddd8ce";
+						}}
 					/>
 				</div>
 				<div>
-					<label htmlFor="confirm" style={labelStyle}>Confirm password</label>
+					<label htmlFor="confirm" style={labelStyle}>
+						Confirm password
+					</label>
 					<input
 						id="confirm"
 						name="confirm"
@@ -97,21 +118,27 @@ export default function ResetPasswordPage() {
 						minLength={8}
 						required
 						style={inputStyle}
-						onFocus={e => { e.target.style.borderColor = "#1a4731"; }}
-						onBlur={e => { e.target.style.borderColor = "#ddd8ce"; }}
+						onFocus={(e) => {
+							e.target.style.borderColor = "#1a4731";
+						}}
+						onBlur={(e) => {
+							e.target.style.borderColor = "#ddd8ce";
+						}}
 					/>
 				</div>
 
 				{error && (
-					<p style={{
-						fontFamily: "var(--font-karla)",
-						fontSize: "13px",
-						color: "#8b3a2a",
-						padding: "10px 14px",
-						background: "rgba(139,58,42,0.06)",
-						border: "1px solid rgba(139,58,42,0.2)",
-						borderRadius: "4px",
-					}}>
+					<p
+						style={{
+							fontFamily: "var(--font-karla)",
+							fontSize: "13px",
+							color: "#8b3a2a",
+							padding: "10px 14px",
+							background: "rgba(139,58,42,0.06)",
+							border: "1px solid rgba(139,58,42,0.2)",
+							borderRadius: "4px",
+						}}
+					>
 						{error}
 					</p>
 				)}

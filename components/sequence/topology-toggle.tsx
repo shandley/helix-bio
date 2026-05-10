@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { updateSequenceMetadata } from "@/app/actions/sequences";
 
 interface TopologyToggleProps {
@@ -46,6 +46,7 @@ export function TopologyToggle({ id, topology }: TopologyToggleProps) {
 
 	return (
 		<button
+			type="button"
 			onClick={toggle}
 			disabled={saving}
 			title={`${current} — click to switch to ${current === "circular" ? "linear" : "circular"}`}
@@ -60,10 +61,7 @@ export function TopologyToggle({ id, topology }: TopologyToggleProps) {
 				transition: "opacity 0.15s",
 			}}
 		>
-			{current === "circular"
-				? <CircularIcon color={color} />
-				: <LinearIcon color={color} />
-			}
+			{current === "circular" ? <CircularIcon color={color} /> : <LinearIcon color={color} />}
 		</button>
 	);
 }

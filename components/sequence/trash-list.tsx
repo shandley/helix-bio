@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { restoreSequence, permanentlyDeleteSequence } from "@/app/actions/sequences";
+import { useState } from "react";
+import { permanentlyDeleteSequence, restoreSequence } from "@/app/actions/sequences";
 import type { Sequence } from "@/types/database";
 
 function relativeDate(dateStr: string): string {
@@ -33,7 +33,7 @@ export function TrashList({ sequences }: { sequences: Sequence[] }) {
 
 	async function handleRestore(id: string) {
 		setLoading(id);
-		setItems(prev => prev.filter(s => s.id !== id));
+		setItems((prev) => prev.filter((s) => s.id !== id));
 		await restoreSequence(id);
 		router.refresh();
 		setLoading(null);
@@ -41,7 +41,7 @@ export function TrashList({ sequences }: { sequences: Sequence[] }) {
 
 	async function handlePurge(id: string) {
 		setLoading(id);
-		setItems(prev => prev.filter(s => s.id !== id));
+		setItems((prev) => prev.filter((s) => s.id !== id));
 		setPendingPurge(null);
 		await permanentlyDeleteSequence(id);
 		router.refresh();
@@ -50,14 +50,30 @@ export function TrashList({ sequences }: { sequences: Sequence[] }) {
 
 	if (items.length === 0) {
 		return (
-			<div style={{ marginTop: "24px", textAlign: "center", fontFamily: "var(--font-courier)", fontSize: "11px", color: "#b8b0a4", letterSpacing: "0.06em" }}>
+			<div
+				style={{
+					marginTop: "24px",
+					textAlign: "center",
+					fontFamily: "var(--font-courier)",
+					fontSize: "11px",
+					color: "#b8b0a4",
+					letterSpacing: "0.06em",
+				}}
+			>
 				All items restored or removed.
 			</div>
 		);
 	}
 
 	return (
-		<div style={{ border: "1px solid #ddd8ce", borderRadius: "3px", overflow: "hidden", background: "#faf7f2" }}>
+		<div
+			style={{
+				border: "1px solid #ddd8ce",
+				borderRadius: "3px",
+				overflow: "hidden",
+				background: "#faf7f2",
+			}}
+		>
 			{items.map((seq, i) => (
 				<div
 					key={seq.id}
@@ -73,46 +89,67 @@ export function TrashList({ sequences }: { sequences: Sequence[] }) {
 				>
 					{/* Name + description */}
 					<div style={{ flex: 1, overflow: "hidden" }}>
-						<div style={{
-							fontFamily: "var(--font-sans)",
-							fontSize: "14px",
-							color: "#5a5648",
-							fontWeight: 500,
-							letterSpacing: "-0.01em",
-							overflow: "hidden",
-							textOverflow: "ellipsis",
-							whiteSpace: "nowrap",
-						}}>
-							{seq.name}
-						</div>
-						{seq.description && (
-							<div style={{
-								fontFamily: "var(--font-courier)",
-								fontSize: "10px",
-								color: "#b8b0a4",
+						<div
+							style={{
+								fontFamily: "var(--font-sans)",
+								fontSize: "14px",
+								color: "#5a5648",
+								fontWeight: 500,
+								letterSpacing: "-0.01em",
 								overflow: "hidden",
 								textOverflow: "ellipsis",
 								whiteSpace: "nowrap",
-								marginTop: "2px",
-							}}>
+							}}
+						>
+							{seq.name}
+						</div>
+						{seq.description && (
+							<div
+								style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "10px",
+									color: "#b8b0a4",
+									overflow: "hidden",
+									textOverflow: "ellipsis",
+									whiteSpace: "nowrap",
+									marginTop: "2px",
+								}}
+							>
 								{seq.description}
 							</div>
 						)}
 					</div>
 
 					{/* Topology + length */}
-					<span style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#9a9284", flexShrink: 0 }}>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "10px",
+							color: "#9a9284",
+							flexShrink: 0,
+						}}
+					>
 						{seq.topology} · {formatLength(seq.length)}
 					</span>
 
 					{/* Deleted date */}
-					<span style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#b8b0a4", flexShrink: 0, minWidth: "70px", textAlign: "right" }}>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "10px",
+							color: "#b8b0a4",
+							flexShrink: 0,
+							minWidth: "70px",
+							textAlign: "right",
+						}}
+					>
 						{seq.deleted_at ? relativeDate(seq.deleted_at) : "—"}
 					</span>
 
 					{/* Actions */}
 					<div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
 						<button
+							type="button"
 							onClick={() => handleRestore(seq.id)}
 							disabled={loading === seq.id}
 							style={{
@@ -134,6 +171,7 @@ export function TrashList({ sequences }: { sequences: Sequence[] }) {
 						{pendingPurge === seq.id ? (
 							<>
 								<button
+									type="button"
 									onClick={() => handlePurge(seq.id)}
 									disabled={loading === seq.id}
 									style={{
@@ -152,6 +190,7 @@ export function TrashList({ sequences }: { sequences: Sequence[] }) {
 									Confirm
 								</button>
 								<button
+									type="button"
 									onClick={() => setPendingPurge(null)}
 									style={{
 										fontFamily: "var(--font-courier)",
@@ -171,6 +210,7 @@ export function TrashList({ sequences }: { sequences: Sequence[] }) {
 							</>
 						) : (
 							<button
+								type="button"
 								onClick={() => setPendingPurge(seq.id)}
 								style={{
 									fontFamily: "var(--font-courier)",

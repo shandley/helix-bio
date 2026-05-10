@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { populateDemoSequences } from "@/app/actions/seed";
 
 export function LoadExamplesButton() {
@@ -13,7 +13,10 @@ export function LoadExamplesButton() {
 		setState("loading");
 		try {
 			const result = await populateDemoSequences();
-			if (result.error) { setState("error"); return; }
+			if (result.error) {
+				setState("error");
+				return;
+			}
 			setCount(result.count ?? 0);
 			setState("done");
 			router.refresh();
@@ -24,7 +27,14 @@ export function LoadExamplesButton() {
 
 	if (state === "done") {
 		return (
-			<p style={{ fontFamily: "var(--font-courier)", fontSize: "11px", color: "#1a4731", letterSpacing: "0.02em" }}>
+			<p
+				style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "11px",
+					color: "#1a4731",
+					letterSpacing: "0.02em",
+				}}
+			>
 				{count > 0 ? `${count} examples loaded` : "Already in library"}
 			</p>
 		);
@@ -32,7 +42,14 @@ export function LoadExamplesButton() {
 
 	if (state === "error") {
 		return (
-			<p style={{ fontFamily: "var(--font-courier)", fontSize: "11px", color: "#8b3a2a", letterSpacing: "0.02em" }}>
+			<p
+				style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "11px",
+					color: "#8b3a2a",
+					letterSpacing: "0.02em",
+				}}
+			>
 				Failed — check connection
 			</p>
 		);
@@ -40,6 +57,7 @@ export function LoadExamplesButton() {
 
 	return (
 		<button
+			type="button"
 			onClick={handleLoad}
 			disabled={state === "loading"}
 			style={{

@@ -1,8 +1,8 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { randomUUID } from "crypto";
+import { createClient } from "@/lib/supabase/server";
 
 /** Soft-delete: sets deleted_at, does NOT remove storage or the row. */
 export async function deleteSequence(id: string) {
@@ -20,10 +20,7 @@ export async function deleteSequence(id: string) {
 /** Restore a soft-deleted sequence back to the library. */
 export async function restoreSequence(id: string) {
 	const supabase = await createClient();
-	const { error } = await supabase
-		.from("sequences")
-		.update({ deleted_at: null })
-		.eq("id", id);
+	const { error } = await supabase.from("sequences").update({ deleted_at: null }).eq("id", id);
 	if (error) return { error: error.message };
 	revalidatePath("/dashboard");
 	revalidatePath("/trash");
@@ -79,16 +76,17 @@ export async function saveClonedSequence(
 	topology: "circular" | "linear",
 ): Promise<{ id?: string; error?: string }> {
 	const supabase = await createClient();
-	const { data: { user }, error: authError } = await supabase.auth.getUser();
+	const {
+		data: { user },
+		error: authError,
+	} = await supabase.auth.getUser();
 	if (authError || !user) return { error: "Not authenticated" };
 
 	const fasta = `>${productName}\n${resultSeq}\n`;
 	const blob = new Blob([fasta], { type: "text/plain" });
 	const fileName = `${user.id}/${randomUUID()}.fasta`;
 
-	const { error: uploadError } = await supabase.storage
-		.from("sequences")
-		.upload(fileName, blob);
+	const { error: uploadError } = await supabase.storage.from("sequences").upload(fileName, blob);
 	if (uploadError) return { error: uploadError.message };
 
 	const upper = resultSeq.toUpperCase();

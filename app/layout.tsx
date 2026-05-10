@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Karla, Courier_Prime } from "next/font/google";
+import { Courier_Prime, Karla, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
 const playfair = Playfair_Display({

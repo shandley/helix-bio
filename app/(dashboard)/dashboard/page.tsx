@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { SequenceUploader } from "@/components/upload/sequence-uploader";
-import { LoadExamplesButton } from "@/components/upload/load-examples-button";
 import { SequenceLibrary } from "@/components/sequence/sequence-library";
+import { LoadExamplesButton } from "@/components/upload/load-examples-button";
+import { SequenceUploader } from "@/components/upload/sequence-uploader";
+import { createClient } from "@/lib/supabase/server";
 import type { Sequence } from "@/types/database";
 
 export default async function DashboardPage() {
@@ -25,30 +25,50 @@ export default async function DashboardPage() {
 	return (
 		<div style={{ maxWidth: "900px", margin: "0 auto", padding: "36px 40px 60px" }}>
 			{/* Page header */}
-			<div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "28px", gap: "16px" }}>
+			<div
+				style={{
+					display: "flex",
+					alignItems: "flex-start",
+					justifyContent: "space-between",
+					marginBottom: "28px",
+					gap: "16px",
+				}}
+			>
 				<div>
-					<h1 style={{
-						fontFamily: "var(--font-playfair)",
-						fontSize: "28px",
-						fontWeight: 400,
-						color: "#1c1a16",
-						letterSpacing: "-0.02em",
-						margin: 0,
-						lineHeight: 1.2,
-					}}>
+					<h1
+						style={{
+							fontFamily: "var(--font-playfair)",
+							fontSize: "28px",
+							fontWeight: 400,
+							color: "#1c1a16",
+							letterSpacing: "-0.02em",
+							margin: 0,
+							lineHeight: 1.2,
+						}}
+					>
 						Sequence Library
 					</h1>
-					<p style={{
-						fontFamily: "var(--font-courier)",
-						fontSize: "11px",
-						color: "#9a9284",
-						letterSpacing: "0.04em",
-						marginTop: "6px",
-					}}>
+					<p
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "11px",
+							color: "#9a9284",
+							letterSpacing: "0.04em",
+							marginTop: "6px",
+						}}
+					>
 						Upload and explore plasmids, vectors, and linear constructs
 					</p>
 				</div>
-				<div style={{ display: "flex", alignItems: "center", gap: "12px", paddingTop: "4px", flexShrink: 0 }}>
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "12px",
+						paddingTop: "4px",
+						flexShrink: 0,
+					}}
+				>
 					{(trashCount ?? 0) > 0 && (
 						<Link
 							href="/trash"
@@ -79,22 +99,26 @@ export default async function DashboardPage() {
 				<SequenceLibrary sequences={sequences} />
 			) : (
 				<div style={{ marginTop: "48px", textAlign: "center" }}>
-					<p style={{
-						fontFamily: "var(--font-courier)",
-						fontSize: "11px",
-						color: "#b8b0a4",
-						letterSpacing: "0.06em",
-						textTransform: "uppercase",
-					}}>
+					<p
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "11px",
+							color: "#b8b0a4",
+							letterSpacing: "0.06em",
+							textTransform: "uppercase",
+						}}
+					>
 						No sequences yet
 					</p>
-					<p style={{
-						fontFamily: "var(--font-courier)",
-						fontSize: "11px",
-						color: "#9a9284",
-						marginTop: "8px",
-						letterSpacing: "0.02em",
-					}}>
+					<p
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "11px",
+							color: "#9a9284",
+							marginTop: "8px",
+							letterSpacing: "0.02em",
+						}}
+					>
 						Drop a file above, browse to upload, or load example sequences to get started.
 					</p>
 				</div>

@@ -1,22 +1,56 @@
 const IUPAC_RE: Record<string, string> = {
-	A: "A", C: "C", G: "G", T: "T", U: "T",
-	R: "[AG]", Y: "[CT]", S: "[GC]", W: "[AT]",
-	K: "[GT]", M: "[AC]", B: "[CGT]", D: "[AGT]",
-	H: "[ACT]", V: "[ACG]", N: "[ACGT]",
+	A: "A",
+	C: "C",
+	G: "G",
+	T: "T",
+	U: "T",
+	R: "[AG]",
+	Y: "[CT]",
+	S: "[GC]",
+	W: "[AT]",
+	K: "[GT]",
+	M: "[AC]",
+	B: "[CGT]",
+	D: "[AGT]",
+	H: "[ACT]",
+	V: "[ACG]",
+	N: "[ACGT]",
 };
 
 function revComp(seq: string): string {
 	const comp: Record<string, string> = {
-		A: "T", T: "A", U: "A", C: "G", G: "C",
-		R: "Y", Y: "R", S: "S", W: "W",
-		K: "M", M: "K", B: "V", D: "H", H: "D", V: "B", N: "N",
+		A: "T",
+		T: "A",
+		U: "A",
+		C: "G",
+		G: "C",
+		R: "Y",
+		Y: "R",
+		S: "S",
+		W: "W",
+		K: "M",
+		M: "K",
+		B: "V",
+		D: "H",
+		H: "D",
+		V: "B",
+		N: "N",
 	};
-	return seq.toUpperCase().split("").reverse().map((c) => comp[c] ?? c).join("");
+	return seq
+		.toUpperCase()
+		.split("")
+		.reverse()
+		.map((c) => comp[c] ?? c)
+		.join("");
 }
 
 function queryToRegex(query: string): RegExp | null {
 	try {
-		const pattern = query.toUpperCase().split("").map((c) => IUPAC_RE[c] ?? c).join("");
+		const pattern = query
+			.toUpperCase()
+			.split("")
+			.map((c) => IUPAC_RE[c] ?? c)
+			.join("");
 		return new RegExp(pattern, "g");
 	} catch {
 		return null;
@@ -24,8 +58,8 @@ function queryToRegex(query: string): RegExp | null {
 }
 
 export interface SearchMatch {
-	start: number;  // 0-indexed
-	end: number;    // exclusive
+	start: number; // 0-indexed
+	end: number; // exclusive
 	strand: "+" | "-";
 }
 
@@ -42,7 +76,7 @@ export function searchSequence(seq: string, query: string, circular = false): Se
 	const matches: SearchMatch[] = [];
 	const seen = new Set<string>();
 
-	function addMatch(start: number, end: number, strand: "+" | "-") {
+	function addMatch(start: number, _end: number, strand: "+" | "-") {
 		// Normalize positions for circular sequences
 		const normStart = start % seq.length;
 		const key = `${normStart}:${strand}`;
@@ -54,8 +88,7 @@ export function searchSequence(seq: string, query: string, circular = false): Se
 	// Forward strand
 	const fwdRe = queryToRegex(query);
 	if (fwdRe) {
-		let m: RegExpExecArray | null;
-		while ((m = fwdRe.exec(searchSeq)) !== null) {
+		for (let m = fwdRe.exec(searchSeq); m !== null; m = fwdRe.exec(searchSeq)) {
 			if (m.index < seq.length) addMatch(m.index, m.index + query.length, "+");
 		}
 	}
@@ -65,8 +98,7 @@ export function searchSequence(seq: string, query: string, circular = false): Se
 	if (rcQuery !== query.toUpperCase()) {
 		const revRe = queryToRegex(rcQuery);
 		if (revRe) {
-			let m: RegExpExecArray | null;
-			while ((m = revRe.exec(searchSeq)) !== null) {
+			for (let m = revRe.exec(searchSeq); m !== null; m = revRe.exec(searchSeq)) {
 				if (m.index < seq.length) addMatch(m.index, m.index + query.length, "-");
 			}
 		}

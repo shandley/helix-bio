@@ -3,17 +3,27 @@
 Open-source, web-based, LLM-powered molecular biology platform.
 
 ## Project structure
-- `app/` — Next.js 15 App Router (TypeScript strict)
+- `app/` — Next.js 16 App Router (TypeScript strict), Turbopack bundler
 - `components/` — React UI components (shadcn/ui using @base-ui/react, NOT Radix)
-- `lib/bio/` — GenBank parser, future feature-library annotation engine
+- `components/sequence/` — Sequence viewer, primer panel, accessibility heat map, enzyme/ORF/digest/search panels
+- `lib/bio/` — GenBank parser, restriction enzymes, ORF finder, cloning simulations (Gibson, Gateway, RE)
 - `app/actions/` — Next.js server actions (auth, sequences, seed)
 - `supabase/migrations/` — Database schema
+
+## primd — local primer design library
+`primd` lives at `../primd` (sibling directory). Linked via `file:../primd` in package.json.
+- **Use `file:` not `link:`** — `link:` creates a symlink outside the project root which Turbopack rejects. `file:` copies dist into `.pnpm/` store within the project tree.
+- After changing primd source: `cd ../primd && npx tsc --project tsconfig.build.json && cd ../snapgene-alternative && pnpm install`
+- Exports: `designPCR`, `designLAMP`, `calcAccessibilityProfile`, `calcTm`, `reverseComplement`, and thermodynamic utilities
+- Web Worker: `components/sequence/primer-design.worker.ts` runs designPCR off the main thread
 
 ## Critical Next.js / shadcn gotchas
 - **No `asChild` prop** — shadcn here uses `@base-ui/react`, not Radix UI. Never use `<Button asChild>`. Use `<Link className={buttonVariants({...})}>` instead.
 - **`proxy.ts` not `middleware.ts`** — Next.js 16 renamed the file; export is `proxy` not `middleware`.
 - **Supabase types**: Use `{ [_ in never]: never }` (NOT `Record<string, never>`) for Views/Functions/Enums or queries return `never`.
 - **SeqViz**: Pass `seq` + `annotations` props directly — do NOT use `file` prop (crashes on NCBI GenBank). Topology is controlled via `viewer` prop ("linear"/"circular"/"both"), not a `topology` prop.
+- **SeqViz `onSelection`**: When an annotation is clicked, the selection object has `type: "ANNOTATION"` and `name: "AmpR"` (etc). The `ref` field is stripped by SeqViz before reaching `onSelection` — use `name` not `ref`.
+- **Turbopack + symlinks**: Do not set `turbopack.root` to expand the filesystem root — it breaks tailwind CSS resolution. Use `file:` protocol for local packages instead.
 
 ## Supabase CLI
 
@@ -146,8 +156,9 @@ Annotation query: hmmscan --domtblout against compressed hmm/features.hmm
 
 ### Next steps (in order)
 1. ✅ Fix `03_extract_features.py` for `.gz` RefSeq files
-2. Run feature extraction across SnapGene + RefSeq (iGEM after download finishes)
+2. Check iGEM download job status on HTCF (was ~11% done, job 39960873)
 3. Get Addgene credentials and run `01_fetch_addgene.py`
-4. Run `04_cluster.sh` (MMseqs2)
-5. Run `05_build_hmms.sh` (MAFFT + hmmbuild + hmmpress)
-6. Wire HMMscan into Ori upload pipeline
+4. Run feature extraction (SnapGene done; iGEM + Addgene after data lands)
+5. Run `04_cluster.sh` (MMseqs2 at 80% identity)
+6. Run `05_build_hmms.sh` (MAFFT + hmmbuild + hmmpress)
+7. Wire HMMscan into Ori upload pipeline

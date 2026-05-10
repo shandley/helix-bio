@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { calcAccessibilityProfile } from "primd";
-import type { PrimerPair } from "primd";
+import { calcAccessibilityProfile } from "@shandley/primd";
+import type { PrimerPair } from "@shandley/primd";
 
 const BAR_HEIGHT = 28;
 

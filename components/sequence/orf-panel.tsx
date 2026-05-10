@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { findORFs, type ORF } from "@/lib/bio/orf-finder";
 import { translate } from "@/lib/bio/translate";
-import { reverseComplement } from "primd";
+import { reverseComplement } from "@shandley/primd";
 
 interface ORFPanelProps {
 	seq: string;

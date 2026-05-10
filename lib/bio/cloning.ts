@@ -1,4 +1,4 @@
-import { reverseComplement } from "primd";
+import { reverseComplement } from "@shandley/primd";
 
 export interface CloneableEnzyme {
 	name: string;

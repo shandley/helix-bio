@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { PrimerCandidate, PrimerPair } from "primd";
+import type { PrimerCandidate, PrimerPair } from "@shandley/primd";
 import type { PrimerWorkerResponse } from "./primer-design.worker";
 
 interface PrimerPanelProps {

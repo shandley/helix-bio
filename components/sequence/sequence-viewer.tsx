@@ -2,7 +2,7 @@
 
 import SeqViz from "seqviz";
 import type { ParsedSequence } from "@/lib/bio/parse-genbank";
-import type { PrimerPair } from "primd";
+import type { PrimerPair } from "@shandley/primd";
 import { AccessibilityTrack } from "./accessibility-track";
 
 export interface SeqVizSelection {

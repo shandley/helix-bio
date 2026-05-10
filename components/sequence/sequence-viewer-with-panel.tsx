@@ -13,7 +13,7 @@ import { SearchPanel } from "./search-panel";
 import { CloningModal } from "@/components/cloning/cloning-modal";
 import type { SequenceContext } from "@/app/api/chat/route";
 import type { SearchMatch } from "@/lib/bio/search";
-import type { PrimerPair } from "primd";
+import type { PrimerPair } from "@shandley/primd";
 
 interface SequenceViewerWithPanelProps {
 	fileUrl: string;

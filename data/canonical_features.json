@@ -1,0 +1,69 @@
+[
+  {
+    "canonical_name": "AmpR",
+    "aliases": [
+      "bla",
+      "beta-lactamase",
+      "TEM-1",
+      "TEM-1 beta-lactamase",
+      "ampicillin resistance",
+      "ampicillin resistance gene",
+      "bla(TEM-1)",
+      "blaTEM",
+      "blaTEM-1",
+      "Amp resistance",
+      "AmpR gene",
+      "beta-lactamase TEM"
+    ],
+    "so_term": "SO:0001236",
+    "so_label": "antibiotic_resistance_gene",
+    "category": "resistance_marker",
+    "description": "The bla gene encodes TEM-1 beta-lactamase, conferring resistance to ampicillin and related beta-lactam antibiotics. It is the most widely used selectable marker in bacterial cloning, allowing selection of plasmid-containing colonies on ampicillin-supplemented media. Nearly ubiquitous in cloning vectors such as pUC19, pBR322, pBluescript, and pGEM series.",
+    "mechanism": "TEM-1 beta-lactamase is a serine protease secreted to the gram-negative periplasm that hydrolyzes the beta-lactam ring of ampicillin and related penicillins, inactivating the antibiotic before it reaches its transpeptidase target. The enzyme acts catalytically and can deplete extracellular ampicillin over time, leading to satellite colony formation in prolonged cultures.",
+    "expression_systems": [
+      "e_coli",
+      "gram_negative"
+    ],
+    "expected_length_bp": [
+      861,
+      1100
+    ],
+    "expected_gc_fraction": [
+      0.5,
+      0.58
+    ],
+    "reference_accessions": [
+      "J01749",
+      "V00613",
+      "M34933"
+    ],
+    "reference_plasmids": [
+      "pBR322",
+      "pUC19",
+      "pUC18",
+      "pBluescript SK+",
+      "pBluescript KS+",
+      "pGEM-T",
+      "pGEM-3Z",
+      "pACYC177",
+      "pET-28a"
+    ],
+    "known_variants": [
+      "TEM-2 (Q39K substitution, functionally equivalent for lab use)",
+      "Codon-optimized bla for improved expression in specific hosts",
+      "Extended-spectrum TEM variants (ESBLs, e.g. TEM-3 through TEM-29) \u2014 rarely in lab vectors but found in clinical isolates",
+      "Truncated bla lacking signal peptide (cytoplasmic retention, reduced activity)"
+    ],
+    "known_misannotations": [
+      "AmpR promoter annotated as part of the AmpR CDS rather than as a separate feature",
+      "bla (gene symbol) and AmpR (resistance phenotype) used interchangeably without distinguishing CDS boundary",
+      "Signal peptide region (N-terminal 23 aa) sometimes excluded from annotated CDS coordinates",
+      "SHV-type and OXA-type beta-lactamases mislabeled as AmpR or bla(TEM-1)",
+      "Annotation spanning only the ORF without the native promoter, causing length discrepancy across databases"
+    ],
+    "notes": "AmpR selection is notoriously unstable in overnight or high-density cultures: secreted beta-lactamase accumulates in medium and degrades ampicillin, permitting growth of plasmid-free satellite colonies. Carbenicillin (a more stable ampicillin analog) is preferred for sustained selection. AmpR is not suitable as a mammalian selectable marker. The TEM-1 enzyme is encoded on the bla gene of transposon Tn3, originally mobilized from R plasmids; its promoter is strong and constitutive in E. coli. CDS alone is 861 bp (encoding 286 aa including signal peptide); full functional cassette including native promoter is ~1,000\u20131,100 bp.",
+    "_source_name": "AmpR",
+    "_category_hint": "resistance_marker",
+    "_generated": true
+  }
+]

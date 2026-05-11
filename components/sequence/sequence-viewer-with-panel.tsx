@@ -1,9 +1,10 @@
 "use client";
 
 import type { PrimerPair } from "@shandley/primd";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { SequenceContext } from "@/app/api/chat/route";
 import { CloningModal } from "@/components/cloning/cloning-modal";
+import type { Annotation } from "@/lib/bio/annotate";
 import { DEFAULT_ENZYMES } from "@/lib/bio/enzymes";
 import { type ParsedSequence, parseGenBank } from "@/lib/bio/parse-genbank";
 import type { SearchMatch } from "@/lib/bio/search";
@@ -49,6 +50,9 @@ export function SequenceViewerWithPanel({
 	const [searchMatches, setSearchMatches] = useState<SearchMatch[]>([]);
 	const [bestPair, setBestPair] = useState<PrimerPair | null>(null);
 	const [annotationName, setAnnotationName] = useState<string | null>(null);
+	const [autoAnnotations, setAutoAnnotations] = useState<Annotation[]>([]);
+	const [annotating, setAnnotating] = useState(false);
+	const annotationWorkerRef = useRef<Worker | null>(null);
 
 	const handleSearchMatches = useCallback((matches: SearchMatch[]) => {
 		setSearchMatches(matches);
@@ -87,6 +91,34 @@ export function SequenceViewerWithPanel({
 			.catch((e: Error) => setError(e.message));
 	}, [fileUrl, name, fileFormat, topology]);
 
+	// Launch annotation worker whenever the sequence changes
+	useEffect(() => {
+		if (!parsed?.seq) return;
+		setAutoAnnotations([]);
+		setAnnotating(true);
+		annotationWorkerRef.current?.terminate();
+		const worker = new Worker(new URL("./annotation.worker.ts", import.meta.url));
+		annotationWorkerRef.current = worker;
+		worker.postMessage({ seq: parsed.seq });
+		worker.onmessage = (e: MessageEvent<{ type: string; annotations?: Annotation[] }>) => {
+			if (e.data.type === "success" && e.data.annotations) {
+				setAutoAnnotations(e.data.annotations);
+			}
+			setAnnotating(false);
+			worker.terminate();
+			annotationWorkerRef.current = null;
+		};
+		worker.onerror = () => {
+			setAnnotating(false);
+			worker.terminate();
+			annotationWorkerRef.current = null;
+		};
+		return () => {
+			worker.terminate();
+			annotationWorkerRef.current = null;
+		};
+	}, [parsed?.seq]);
+
 	if (error) {
 		return (
 			<div className="flex h-full items-center justify-center text-sm text-destructive">
@@ -118,29 +150,51 @@ export function SequenceViewerWithPanel({
 		seq: parsed.seq,
 	};
 
+	// Deduplicate auto-annotations against GenBank annotations already in the file.
+	// Skip any auto hit that overlaps >50% with a same-named existing annotation.
+	const dedupedAuto = autoAnnotations.filter((auto) => {
+		return !parsed.annotations.some((existing) => {
+			if (existing.name.toLowerCase() !== auto.name.toLowerCase()) return false;
+			const overlapStart = Math.max(existing.start, auto.start);
+			const overlapEnd = Math.min(existing.end, auto.end);
+			if (overlapEnd <= overlapStart) return false;
+			const overlapLen = overlapEnd - overlapStart;
+			const minLen = Math.min(existing.end - existing.start, auto.end - auto.start);
+			return overlapLen / minLen > 0.5;
+		});
+	});
+
 	// Merge search hit annotations into the parsed sequence for highlighting
-	const parsedWithSearch =
-		searchMatches.length > 0
-			? {
-					...parsed,
-					annotations: [
-						...parsed.annotations,
-						...searchMatches.map((m, i) => ({
-							start: m.start,
-							end: m.end,
-							name: `Hit ${i + 1}`,
-							color: "#f5a623",
-							direction: (m.strand === "+" ? 1 : -1) as 1 | -1,
-							type: "search_hit",
-						})),
-					],
-				}
-			: parsed;
+	// Build the annotation-merged parsed object (GenBank + auto + search hits)
+	const parsedWithAll = {
+		...parsed,
+		annotations: [
+			...parsed.annotations,
+			...dedupedAuto.map((a) => ({
+				start: a.start,
+				end: a.end,
+				name: a.name,
+				color: a.color,
+				direction: a.direction,
+				type: a.type,
+			})),
+			...searchMatches.map((m, i) => ({
+				start: m.start,
+				end: m.end,
+				name: `Hit ${i + 1}`,
+				color: "#f5a623",
+				direction: (m.strand === "+" ? 1 : -1) as 1 | -1,
+				type: "search_hit",
+			})),
+		],
+	};
+
+	const parsedWithSearch = parsedWithAll;
 
 	return (
 		<div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
 			{/* Sequence viewer */}
-			<div style={{ flex: 1, overflow: "hidden" }}>
+			<div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
 				<SequenceViewer
 					parsed={parsedWithSearch}
 					topology={topology}
@@ -149,6 +203,51 @@ export function SequenceViewerWithPanel({
 					onSelection={handleSelection}
 					primerPair={bestPair}
 				/>
+				{/* Annotation status badge */}
+				{(annotating || dedupedAuto.length > 0) && (
+					<div
+						style={{
+							position: "absolute",
+							top: "10px",
+							right: "12px",
+							display: "flex",
+							alignItems: "center",
+							gap: "5px",
+							background: "rgba(245,240,232,0.92)",
+							border: "1px solid #ddd8ce",
+							borderRadius: "3px",
+							padding: "3px 8px",
+							fontFamily: "var(--font-courier)",
+							fontSize: "8px",
+							letterSpacing: "0.06em",
+							color: annotating ? "#9a9284" : "#1a4731",
+							backdropFilter: "blur(4px)",
+							pointerEvents: "none",
+						}}
+					>
+						{annotating ? (
+							<>
+								<span
+									style={{
+										display: "inline-block",
+										width: "6px",
+										height: "6px",
+										borderRadius: "50%",
+										border: "1.5px solid #9a9284",
+										borderTopColor: "transparent",
+										animation: "spin 0.8s linear infinite",
+									}}
+								/>
+								detecting features
+							</>
+						) : (
+							<>
+								<span style={{ color: "#1a4731" }}>●</span>
+								{dedupedAuto.length} feature{dedupedAuto.length !== 1 ? "s" : ""} detected
+							</>
+						)}
+					</div>
+				)}
 			</div>
 
 			{/* Right panel */}

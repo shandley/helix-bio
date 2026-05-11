@@ -224,8 +224,8 @@ export default function LandingPage() {
 								animationDelay: "0.35s",
 							}}
 						>
-							Visualize plasmids with richly annotated maps. Detect features with profile HMMs that
-							catch variants BLAST misses. Simulate cloning workflows with AI assistance — all free,
+							Visualize plasmids with richly annotated maps. Automatically detect features from a
+							curated reference library. Simulate cloning workflows with AI assistance — all free,
 							forever.
 						</p>
 
@@ -303,14 +303,12 @@ export default function LandingPage() {
 								animationDelay: "0.7s",
 							}}
 						>
-							{["Next.js 16", "Supabase", "HMMER3", "SeqViz", "Open source · MIT"].map(
-								(item, i) => (
-									<span key={item} style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-										{i > 0 && <span style={{ color: "#b8b0a4" }}>·</span>}
-										{item}
-									</span>
-								),
-							)}
+							{["Next.js 16", "Supabase", "SeqViz", "primd", "Open source · MIT"].map((item, i) => (
+								<span key={item} style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+									{i > 0 && <span style={{ color: "#b8b0a4" }}>·</span>}
+									{item}
+								</span>
+							))}
 						</div>
 					</div>
 					{/* Sidebar */}
@@ -392,7 +390,7 @@ export default function LandingPage() {
 
 						{/* Facts */}
 						{[
-							{ label: "Features detected", value: "6", sub: "via profile HMM" },
+							{ label: "Features detected", value: "6", sub: "from reference library" },
 							{ label: "Database size", value: "2,700+", sub: "curated plasmids" },
 							{ label: "Topology", value: "Circular", sub: "2686 bp · ColE1 ori" },
 						].map((fact) => (
@@ -496,8 +494,8 @@ export default function LandingPage() {
 							{
 								num: "02",
 								title: "Feature Annotation",
-								desc: "Profile HMM database built from 200,000+ annotated plasmids. Catches codon-optimized variants and mutants that traditional BLAST misses.",
-								tag: "HMMER3 · MMseqs2",
+								desc: "Curated reference library of 1,400+ canonical features from the SnapGene public plasmid collection. Resistance markers, origins, promoters, reporters, and CRISPR elements — detected instantly in the browser.",
+								tag: "1,472 canonical features",
 							},
 							{
 								num: "03",
@@ -679,7 +677,7 @@ export default function LandingPage() {
 						>
 							The annotation
 							<br />
-							database
+							library
 						</h2>
 						<p
 							style={{
@@ -693,9 +691,9 @@ export default function LandingPage() {
 								paddingLeft: "20px",
 							}}
 						>
-							SnapGene's defining advantage is a proprietary BLAST feature library built from years
-							of curation. We're building a better one — open, reproducible, and based on profile
-							HMMs instead of raw sequence alignment.
+							SnapGene's defining advantage is a proprietary feature library built from years of
+							curation. Ori ships an open equivalent — derived from SnapGene's public plasmid
+							collection and clustered into canonical representatives.
 						</p>
 						<p
 							style={{
@@ -706,11 +704,9 @@ export default function LandingPage() {
 								color: "#5a5648",
 							}}
 						>
-							Every annotated plasmid from major public repositories is processed through a
-							four-stage pipeline: feature extraction → MMseqs2 clustering at 80% identity → MAFFT
-							multiple sequence alignment → HMMER3 profile construction. The result catches
-							codon-optimized variants, truncations, and mutants that BLAST misses at sub-50%
-							identity.
+							1,472 canonical sequences covering resistance markers, origins of replication,
+							promoters, terminators, tags, reporters, recombination sites, and CRISPR elements.
+							Annotation runs entirely in the browser — no server round-trip, no sequence upload.
 						</p>
 					</div>
 
@@ -729,21 +725,25 @@ export default function LandingPage() {
 								borderBottom: "1px solid #ddd8ce",
 							}}
 						>
-							Pipeline
+							Reference library
 						</div>
 						{[
 							{
 								step: "01",
-								label: "Extract features",
-								detail: "From all annotated GenBank records",
+								label: "SnapGene library",
+								detail: "2,550 public plasmids, richly annotated",
 							},
-							{ step: "02", label: "Cluster sequences", detail: "MMseqs2 at 80–90% identity" },
+							{ step: "02", label: "Extract features", detail: "17,885 named feature sequences" },
 							{
 								step: "03",
-								label: "Build alignments",
-								detail: "MAFFT multiple sequence alignment",
+								label: "Deduplicate",
+								detail: "Exact + 95% identity clustering",
 							},
-							{ step: "04", label: "Profile HMMs", detail: "HMMER3 · one profile per cluster" },
+							{
+								step: "04",
+								label: "Canonical set",
+								detail: "1,472 representatives · 815 feature types",
+							},
 						].map(({ step, label, detail }) => (
 							<div
 								key={step}

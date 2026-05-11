@@ -168,19 +168,25 @@ function searchStrand(
 
 // ── Deduplication ─────────────────────────────────────────────────────────────
 
+function overlapFraction(a: Annotation, b: Annotation): number {
+	if (a.direction !== b.direction) return 0;
+	const lo = Math.max(a.start, b.start);
+	const hi = Math.min(a.end, b.end);
+	if (hi <= lo) return 0;
+	const minLen = Math.min(a.end - a.start, b.end - b.start);
+	return minLen > 0 ? (hi - lo) / minLen : 0;
+}
+
 function dedup(annotations: Annotation[]): Annotation[] {
-	// Sort by identity descending, then deduplicate by overlapping same-name hits.
+	// Sort by identity descending so higher-confidence hits are kept first.
+	// Then collapse any pair that overlaps >70% of the shorter annotation,
+	// regardless of name — prevents pMB1-ori / pBR322-ori stacking etc.
 	annotations.sort((a, b) => b.identity - a.identity);
 	const kept: Annotation[] = [];
 	for (const ann of annotations) {
-		const overlaps = kept.some(
-			(k) =>
-				k.name === ann.name &&
-				k.direction === ann.direction &&
-				k.start < ann.end &&
-				ann.start < k.end,
-		);
-		if (!overlaps) kept.push(ann);
+		if (!kept.some((k) => overlapFraction(k, ann) > 0.7)) {
+			kept.push(ann);
+		}
 	}
 	return kept;
 }

@@ -151,16 +151,17 @@ export function SequenceViewerWithPanel({
 	};
 
 	// Deduplicate auto-annotations against GenBank annotations already in the file.
-	// Skip any auto hit that overlaps >50% with a same-named existing annotation.
+	// Skip any auto hit that overlaps >60% with any existing annotation regardless
+	// of name — prevents auto-detected AmpR, lacZ etc from doubling up on sequences
+	// that already have those features annotated in the GenBank file.
 	const dedupedAuto = autoAnnotations.filter((auto) => {
 		return !parsed.annotations.some((existing) => {
-			if (existing.name.toLowerCase() !== auto.name.toLowerCase()) return false;
 			const overlapStart = Math.max(existing.start, auto.start);
 			const overlapEnd = Math.min(existing.end, auto.end);
 			if (overlapEnd <= overlapStart) return false;
 			const overlapLen = overlapEnd - overlapStart;
 			const minLen = Math.min(existing.end - existing.start, auto.end - auto.start);
-			return overlapLen / minLen > 0.5;
+			return minLen > 0 && overlapLen / minLen > 0.6;
 		});
 	});
 

@@ -7,14 +7,22 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 export async function signInWithGoogle() {
 	const supabase = await createClient();
-	// Use the canonical site URL — the origin header is unreliable in server
-	// action context (some browsers omit it) and the PKCE redirectTo must
-	// exactly match an entry in Supabase's Redirect URLs allowlist.
-	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.app";
+	const headersList = await headers();
+	const origin = headersList.get("origin") ?? "";
+
+	// Use the request origin when it's a trusted domain so that OAuth works
+	// from Vercel preview/alias URLs (e.g. ori-bio-scott-handleys-projects.vercel.app)
+	// as well as the production domain. Fall back to NEXT_PUBLIC_SITE_URL otherwise.
+	const canonicalUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.app";
+	const isTrustedOrigin =
+		origin === canonicalUrl ||
+		origin.endsWith(".vercel.app") ||
+		origin.startsWith("http://localhost");
+	const redirectBase = isTrustedOrigin ? origin : canonicalUrl;
 
 	const { data, error } = await supabase.auth.signInWithOAuth({
 		provider: "google",
-		options: { redirectTo: `${siteUrl}/auth/callback` },
+		options: { redirectTo: `${redirectBase}/auth/callback` },
 	});
 
 	if (error || !data.url) redirect("/login?error=oauth_failed");

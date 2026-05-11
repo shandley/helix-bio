@@ -7,12 +7,14 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 
 export async function signInWithGoogle() {
 	const supabase = await createClient();
-	const headersList = await headers();
-	const origin = headersList.get("origin") ?? "https://ori-bio.app";
+	// Use the canonical site URL — the origin header is unreliable in server
+	// action context (some browsers omit it) and the PKCE redirectTo must
+	// exactly match an entry in Supabase's Redirect URLs allowlist.
+	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ori-bio.app";
 
 	const { data, error } = await supabase.auth.signInWithOAuth({
 		provider: "google",
-		options: { redirectTo: `${origin}/auth/callback` },
+		options: { redirectTo: `${siteUrl}/auth/callback` },
 	});
 
 	if (error || !data.url) redirect("/login?error=oauth_failed");

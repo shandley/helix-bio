@@ -51,5 +51,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-	matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+	matcher: [
+		// Skip static assets AND the auth callback route.
+		// /auth/callback must be excluded so the proxy's getUser() call
+		// does not consume or invalidate the PKCE code verifier cookie
+		// before the route handler can exchange it for a session.
+		"/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+	],
 };

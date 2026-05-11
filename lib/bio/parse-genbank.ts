@@ -101,6 +101,9 @@ export function parseGenBank(content: string): ParsedSequence {
 
 		const flush = () => {
 			if (!currentType || currentType === "source") return;
+			// Skip bare `gene` features — they always duplicate an adjacent CDS
+			// or mRNA at the same coordinates, producing stacked bars in the viewer.
+			if (currentType === "gene") return;
 			const loc = parseLocation(currentLocation);
 			if (!loc) return;
 			const label =

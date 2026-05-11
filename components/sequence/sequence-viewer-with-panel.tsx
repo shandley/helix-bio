@@ -156,27 +156,21 @@ export function SequenceViewerWithPanel({
 	//      Prevents luc+/luc+ and AmpR/AmpR doubles when GenBank already labels it.
 	//   2. Different name + >60% positional overlap → suppress.
 	//      Prevents pMB1-ori shadowing a pBR322-ori already in the file.
-	// Normalize a feature name for comparison: lowercase, strip trailing +/-.
-	// "luc+" and "luc" → "luc"; "AmpR" and "ampr" → "ampr".
-	const normName = (s: string) => s.toLowerCase().replace(/[+\-]$/, "").trim();
-	// Build a set of normalised names already present in the GenBank file.
-	const genBankNames = new Set(parsed.annotations.map((a) => normName(a.name)));
-
+	// Suppress any auto-annotation that substantially overlaps an existing
+	// GenBank annotation — regardless of name. This handles three cases:
+	//   1. Exact match: GenBank "luc+" overlaps auto "luc+" (same gene, same coords)
+	//   2. Name mismatch: GenBank "luc+" overlaps auto "luciferase" (same gene, different alias)
+	//   3. RC false positive: reverse-complement hit lands at a different position
+	//      with no overlap → NOT suppressed (correctly shown as a new find)
+	// Threshold 0.5: at least half of the shorter annotation must overlap.
 	const dedupedAuto = autoAnnotations.filter((auto) => {
-		const autoNorm = normName(auto.name);
-		// Same name as any GenBank annotation → suppress unconditionally.
-		// The reverse-complement search can find luc+/AmpR/etc. at a mirror position
-		// that has no positional overlap with the GenBank annotation; a name match
-		// alone is sufficient to identify it as a duplicate.
-		if (genBankNames.has(autoNorm)) return false;
-		// Different name → only suppress if it substantially overlaps an existing annotation.
 		return !parsed.annotations.some((existing) => {
 			const overlapStart = Math.max(existing.start, auto.start);
 			const overlapEnd = Math.min(existing.end, auto.end);
 			if (overlapEnd <= overlapStart) return false;
 			const overlapLen = overlapEnd - overlapStart;
 			const minLen = Math.min(existing.end - existing.start, auto.end - auto.start);
-			return minLen > 0 && overlapLen / minLen > 0.6;
+			return minLen > 0 && overlapLen / minLen > 0.5;
 		});
 	});
 

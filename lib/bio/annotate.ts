@@ -169,7 +169,6 @@ function searchStrand(
 // ── Deduplication ─────────────────────────────────────────────────────────────
 
 function overlapFraction(a: Annotation, b: Annotation): number {
-	if (a.direction !== b.direction) return 0;
 	const lo = Math.max(a.start, b.start);
 	const hi = Math.min(a.end, b.end);
 	if (hi <= lo) return 0;
@@ -179,8 +178,9 @@ function overlapFraction(a: Annotation, b: Annotation): number {
 
 function dedup(annotations: Annotation[]): Annotation[] {
 	// Sort by identity descending so higher-confidence hits are kept first.
-	// Then collapse any pair that overlaps >70% of the shorter annotation,
-	// regardless of name — prevents pMB1-ori / pBR322-ori stacking etc.
+	// Collapse any pair overlapping >70% of the shorter annotation regardless
+	// of name or strand — prevents f1-ori / pMB1-ori stacking and eliminates
+	// duplicate hits where the same feature matches both + and − strands.
 	annotations.sort((a, b) => b.identity - a.identity);
 	const kept: Annotation[] = [];
 	for (const ann of annotations) {

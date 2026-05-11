@@ -137,13 +137,20 @@ function searchStrand(
 			}
 		}
 
-		// Evaluate candidates
+		// Evaluate candidates — keep only the best-scoring offset per feature.
+		// Multiple offsets of the same feature can all pass the vote threshold
+		// when the feature sits at the start/end of a linearized circular sequence;
+		// emitting every offset produces cascading duplicate bars in the viewer.
+		let best: Annotation | null = null;
+
 		for (const [expectedStart, voteCount] of votes) {
 			if (voteCount < MIN_VOTES) continue;
 
 			const qStart = Math.max(0, expectedStart);
 			const qEnd = Math.min(queryLen, expectedStart + flen);
-			if (qEnd - qStart < Math.min(20, flen * 0.7)) continue;
+			// Require at least 60% of the feature to align (Math.max, not Math.min —
+			// the old Math.min allowed 20-bp hits from 450-bp features).
+			if (qEnd - qStart < Math.max(20, flen * 0.6)) continue;
 
 			const fOffset = qStart - expectedStart;
 			const queryWindow = querySeq.slice(qStart, qEnd);
@@ -151,7 +158,7 @@ function searchStrand(
 			const identity = computeIdentity(queryWindow, featureWindow);
 			if (identity < MIN_IDENTITY) continue;
 
-			results.push({
+			const candidate: Annotation = {
 				id: `${fi}-${strand}-${qStart}`,
 				name: feature.name,
 				type: feature.type,
@@ -160,8 +167,11 @@ function searchStrand(
 				direction: strand,
 				identity,
 				color: featureColor(feature.type),
-			});
+			};
+			if (!best || identity > best.identity) best = candidate;
 		}
+
+		if (best) results.push(best);
 	}
 	return results;
 }

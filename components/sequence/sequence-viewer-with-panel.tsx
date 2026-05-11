@@ -160,8 +160,11 @@ export function SequenceViewerWithPanel({
 		return !parsed.annotations.some((existing) => {
 			const overlapStart = Math.max(existing.start, auto.start);
 			const overlapEnd = Math.min(existing.end, auto.end);
-			if (overlapEnd <= overlapStart) return false; // no overlap at all
-			if (existing.name.toLowerCase() === auto.name.toLowerCase()) return true; // same name, any overlap → suppress
+			if (overlapEnd <= overlapStart) return false;
+			// Same name (case-insensitive, stripping trailing +/-) + any overlap → suppress
+			const normName = (s: string) => s.toLowerCase().replace(/[+\-]$/, "").trim();
+			if (normName(existing.name) === normName(auto.name)) return true;
+			// Different name → require substantial positional overlap
 			const overlapLen = overlapEnd - overlapStart;
 			const minLen = Math.min(existing.end - existing.start, auto.end - auto.start);
 			return minLen > 0 && overlapLen / minLen > 0.6;

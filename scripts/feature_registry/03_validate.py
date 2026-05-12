@@ -39,9 +39,17 @@ output_fna = Path(sys.argv[4])
 # ── Load registry entry ───────────────────────────────────────────────────────
 
 registry: list[dict] = json.loads(registry_path.read_text())
+
+def safe_id(s: str) -> str:
+    """Match the filename sanitisation used in 02_collect_sequences.py."""
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", s)
+
 feat = next(
     (r for r in registry
-     if r.get("_source_name") == feature_id or r.get("canonical_name") == feature_id),
+     if r.get("_source_name") == feature_id
+     or r.get("canonical_name") == feature_id
+     or safe_id(r.get("_source_name", "")) == feature_id
+     or safe_id(r.get("canonical_name", "")) == feature_id),
     None,
 )
 if feat is None:

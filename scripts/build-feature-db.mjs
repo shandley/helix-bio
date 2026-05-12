@@ -43,9 +43,12 @@ for (const line of lines) {
   if (line.startsWith(">")) {
     flush();
     const parts = line.slice(1).split("|");
-    // parts: [id, name, type, len]
-    name = (parts[1] ?? "unknown").replace(/_/g, " ").trim();
-    type = (parts[2] ?? "misc_feature").trim();
+    // Support two header formats:
+    //   Old (SnapGene corpus): >id|name|type|len   (4 parts, name at [1])
+    //   New (registry export): >name|type|len       (3 parts, name at [0])
+    const has4 = parts.length >= 4;
+    name = (has4 ? parts[1] : parts[0]).replace(/_/g, " ").trim();
+    type = (has4 ? parts[2] : parts[1]).trim();
   } else {
     seqParts.push(line.trim());
   }

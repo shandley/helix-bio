@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
 Build HMM profiles for canonical features from clustered representative sequences.
+Resume-safe: skips features with existing .hmm files.
 
-For each feature in variants/:
-  - 1 sequence: hmmbuild directly (no alignment needed)
-  - 2-50 sequences: MAFFT alignment then hmmbuild
-  - >50 sequences: random subsample to 50, then MAFFT + hmmbuild
-
-Concatenates all profiles and runs hmmpress to produce the final database.
-Resume-safe: skips features with existing HMM files.
+Strategy:
+  1 sequence : hmmbuild directly on single sequence (no alignment)
+  2–50 seqs  : MAFFT fast alignment (--retree 2 --maxiterate 0) + hmmbuild
+  >50 seqs   : random subsample to 50, then same as above
+  MAFFT fail : fall back to unaligned hmmbuild
 
 Usage: python3 05_build_hmms.py
 """
@@ -16,179 +15,160 @@ Usage: python3 05_build_hmms.py
 import random
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
-# ── Paths ──────────────────────────────────────────────────────────────────────
+# ── Config ────────────────────────────────────────────────────────────────────
+DB          = Path("/scratch/sahlab/shandley/helix-feature-db/feature_registry")
+VARIANTS    = DB / "variants"
+ALNS        = DB / "alignments"
+HMMS        = DB / "hmms"
+FINAL_HMM   = DB / "canonical_features.hmm"
+MAX_SEQS    = 50      # subsample threshold
+TIMEOUT_S   = 120     # 2-minute MAFFT timeout per feature
 
-DB = Path("/scratch/sahlab/shandley/helix-feature-db/feature_registry")
-VARIANTS_DIR = DB / "variants"
-ALIGNMENTS_DIR = DB / "alignments"
-HMMS_DIR = DB / "hmms"
-FINAL_HMM = DB / "canonical_features.hmm"
-MAX_SEQS_FOR_ALIGNMENT = 50
-MAFFT_TIMEOUT_SEC = 300  # 5-minute max per alignment
+ALNS.mkdir(parents=True, exist_ok=True)
+HMMS.mkdir(parents=True, exist_ok=True)
 
-ALIGNMENTS_DIR.mkdir(parents=True, exist_ok=True)
-HMMS_DIR.mkdir(parents=True, exist_ok=True)
+# ── FASTA helpers ─────────────────────────────────────────────────────────────
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def parse_fasta(path: Path) -> list[tuple[str, str]]:
-    records, header, seq_parts = [], None, []
+def read_fasta(path: Path) -> list[tuple[str, str]]:
+    records, hdr, parts = [], None, []
     for line in path.read_text().splitlines():
         if line.startswith(">"):
-            if header is not None:
-                records.append((header, "".join(seq_parts)))
-            header, seq_parts = line[1:].strip(), []
+            if hdr is not None:
+                records.append((hdr, "".join(parts)))
+            hdr, parts = line[1:].strip(), []
         else:
-            seq_parts.append(line.strip())
-    if header is not None:
-        records.append((header, "".join(seq_parts)))
+            parts.append(line.strip())
+    if hdr is not None:
+        records.append((hdr, "".join(parts)))
     return records
 
 def write_fasta(records: list[tuple[str, str]], path: Path) -> None:
-    lines = []
-    for header, seq in records:
-        lines.append(f">{header}")
-        for i in range(0, len(seq), 80):
-            lines.append(seq[i:i+80])
-    path.write_text("\n".join(lines) + "\n")
+    with open(path, "w") as fh:
+        for hdr, seq in records:
+            fh.write(f">{hdr}\n")
+            for i in range(0, len(seq), 80):
+                fh.write(seq[i:i+80] + "\n")
 
-def run(cmd: list[str], timeout: int | None = None) -> tuple[bool, str]:
-    """Run command, return (success, stderr)."""
+# ── HMM build ─────────────────────────────────────────────────────────────────
+
+def hmmbuild(input_path: Path, hmm_out: Path, cpus: int = 8) -> tuple[bool, str]:
+    r = subprocess.run(
+        ["hmmbuild", "--cpu", str(cpus), "--dna", str(hmm_out), str(input_path)],
+        capture_output=True, text=True,
+    )
+    return r.returncode == 0, r.stderr[:120]
+
+def mafft_align(input_path: Path, aln_out: Path) -> tuple[bool, str]:
+    """Fast MAFFT alignment with timeout. Returns (success, note)."""
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True,
-            timeout=timeout, check=False,
+        r = subprocess.run(
+            # --retree 2 --maxiterate 0 = fast progressive, no refinement
+            ["mafft", "--retree", "2", "--maxiterate", "0",
+             "--thread", "8", "--quiet", str(input_path)],
+            capture_output=True, text=True, timeout=TIMEOUT_S,
         )
-        return result.returncode == 0, result.stderr
+        if r.returncode == 0 and r.stdout.strip():
+            aln_out.write_text(r.stdout)
+            return True, "aligned"
+        return False, f"mafft error: {r.stderr[:80]}"
     except subprocess.TimeoutExpired:
-        return False, f"TIMEOUT after {timeout}s"
-    except Exception as e:
-        return False, str(e)
+        return False, f"mafft timeout >{TIMEOUT_S}s"
 
-def build_hmm(input_fna: Path, hmm_out: Path) -> tuple[bool, str]:
-    """Align (if needed) and build HMM. Returns (success, note)."""
-    records = parse_fasta(input_fna)
+def build_one(input_fna: Path, hmm_out: Path) -> tuple[bool, str]:
+    records = read_fasta(input_fna)
     n = len(records)
-
     if n == 0:
-        return False, "empty input"
+        return False, "empty"
 
     if n == 1:
-        ok, err = run(["hmmbuild", "--cpu", "2", "--dna", str(hmm_out), str(input_fna)])
-        return ok, "single-seq" if ok else f"hmmbuild failed: {err[:80]}"
+        ok, err = hmmbuild(input_fna, hmm_out, cpus=2)
+        return ok, "single-seq" if ok else f"hmmbuild failed: {err}"
 
-    # Subsample if too many sequences
-    if n > MAX_SEQS_FOR_ALIGNMENT:
-        records = random.sample(records, MAX_SEQS_FOR_ALIGNMENT)
-        note = f"subsampled {n}→{MAX_SEQS_FOR_ALIGNMENT}"
+    # Subsample if needed
+    if n > MAX_SEQS:
+        records = random.sample(records, MAX_SEQS)
+        note = f"subsampled {n}→{MAX_SEQS}"
     else:
         note = f"{n} seqs"
 
-    # Write (possibly subsampled) FASTA to temp file for alignment
-    with tempfile.NamedTemporaryFile(suffix=".fna", delete=False, mode="w") as tmp_fna:
-        write_fasta(records, Path(tmp_fna.name))
-        tmp_path = Path(tmp_fna.name)
+    # Write (sub)sample to temp file for alignment
+    tmp = input_fna.parent / f"_tmp_{input_fna.stem}.fna"
+    write_fasta(records, tmp)
 
-    aln_path = ALIGNMENTS_DIR / (input_fna.stem + ".afa")
-
-    # MAFFT alignment with timeout
-    ok, err = run(
-        ["mafft", "--auto", "--thread", "8", "--quiet", str(tmp_path)],
-        timeout=MAFFT_TIMEOUT_SEC,
-    )
-    tmp_path.unlink(missing_ok=True)
-
-    if not ok:
-        # Timeout or error: fall back to no-alignment hmmbuild
-        note += f" MAFFT failed ({err[:50]}), using unaligned"
-        ok2, err2 = run(["hmmbuild", "--cpu", "8", "--dna", str(hmm_out), str(input_fna)])
-        return ok2, note + (" ok" if ok2 else f" hmmbuild failed: {err2[:50]}")
-
-    # Write MAFFT output to alignment file
-    aln_path.write_text(err if not ok else "")  # MAFFT writes to stdout via subprocess
-    # Re-run MAFFT capturing stdout properly
     try:
-        mafft_result = subprocess.run(
-            ["mafft", "--auto", "--thread", "8", "--quiet", str(input_fna)
-             if n <= MAX_SEQS_FOR_ALIGNMENT else str(input_fna)],
-            capture_output=True, text=True, timeout=MAFFT_TIMEOUT_SEC,
-        )
-        if mafft_result.returncode != 0 or not mafft_result.stdout.strip():
-            raise RuntimeError(mafft_result.stderr[:80])
-        aln_path.write_text(mafft_result.stdout)
-    except (subprocess.TimeoutExpired, RuntimeError) as e:
-        note += f" MAFFT timeout/error, using unaligned"
-        ok2, err2 = run(["hmmbuild", "--cpu", "8", "--dna", str(hmm_out), str(input_fna)])
-        return ok2, note
+        aln_out = ALNS / (input_fna.stem + ".afa")
+        ok_aln, aln_note = mafft_align(tmp, aln_out)
 
-    # hmmbuild from alignment
-    ok3, err3 = run(["hmmbuild", "--cpu", "8", "--dna", str(hmm_out), str(aln_path)])
-    return ok3, note + (" ok" if ok3 else f" hmmbuild failed: {err3[:50]}")
+        if ok_aln:
+            ok, err = hmmbuild(aln_out, hmm_out)
+            result_note = f"{note}, {aln_note}"
+            return ok, result_note if ok else f"{result_note}, hmmbuild failed: {err}"
+        else:
+            # MAFFT failed/timed out — use unaligned
+            ok, err = hmmbuild(tmp, hmm_out)
+            result_note = f"{note}, {aln_note}, unaligned fallback"
+            return ok, result_note if ok else f"{result_note}, hmmbuild failed: {err}"
+    finally:
+        tmp.unlink(missing_ok=True)
 
-# ── Main ───────────────────────────────────────────────────────────────────────
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
     random.seed(42)
-    variant_files = sorted(VARIANTS_DIR.glob("*.fna"))
-    print(f"Building HMMs for {len(variant_files)} canonical features")
-    print(f"Max seqs for alignment: {MAX_SEQS_FOR_ALIGNMENT}  MAFFT timeout: {MAFFT_TIMEOUT_SEC}s\n")
+    files = sorted(VARIANTS.glob("*.fna"))
+    print(f"Processing {len(files)} feature files")
+    print(f"Max seqs: {MAX_SEQS}  MAFFT timeout: {TIMEOUT_S}s\n")
 
-    built = skipped = failed = 0
+    built = failed = skipped = 0
 
-    for i, input_fna in enumerate(variant_files):
-        basename = input_fna.stem
-        hmm_out = HMMS_DIR / f"{basename}.hmm"
+    for i, fna in enumerate(files):
+        hmm = HMMS / (fna.stem + ".hmm")
 
-        if hmm_out.exists():
+        if hmm.exists():
             skipped += 1
             continue
 
-        if not input_fna.exists() or input_fna.stat().st_size == 0:
+        if fna.stat().st_size == 0:
             skipped += 1
             continue
 
-        ok, note = build_hmm(input_fna, hmm_out)
+        ok, note = build_one(fna, hmm)
         if ok:
             built += 1
-            print(f"[{i+1:3d}] OK    {basename} ({note})")
+            print(f"[{i+1:3d}] OK    {fna.stem[:50]}  ({note})")
         else:
             failed += 1
-            print(f"[{i+1:3d}] FAIL  {basename}: {note}")
+            print(f"[{i+1:3d}] FAIL  {fna.stem[:50]}  ({note})")
 
-        if built % 20 == 0 and built > 0:
-            print(f"      --- progress: built={built} failed={failed} skipped={skipped} ---")
+        if (built + failed) % 20 == 0:
+            print(f"  --- built={built} failed={failed} skipped={skipped} ---")
 
-    print(f"\nBuilt: {built}  Failed: {failed}  Skipped: {skipped}")
+    print(f"\nFinal: built={built} failed={failed} skipped={skipped}")
 
     # Concatenate and press
-    print("\n=== Concatenating and pressing HMM database ===")
-    hmm_files = sorted(HMMS_DIR.glob("*.hmm"))
+    print("\n=== Concatenating and pressing ===")
+    hmm_files = sorted(HMMS.glob("*.hmm"))
     if not hmm_files:
-        print("ERROR: no HMM files to concatenate")
+        print("No HMM files — nothing to press")
         sys.exit(1)
 
     with open(FINAL_HMM, "w") as out:
         for f in hmm_files:
             out.write(f.read_text())
 
-    n_profiles = FINAL_HMM.read_text().count("HMMER3")
-    print(f"Total profiles: {n_profiles}")
+    n = FINAL_HMM.read_text().count("HMMER3")
+    print(f"Total profiles: {n}")
 
-    ok, err = run(["hmmpress", "-f", str(FINAL_HMM)])
-    if ok:
-        print("hmmpress complete")
-        for f in FINAL_HMM.parent.glob("canonical_features.hmm*"):
-            import os
-            size = os.path.getsize(f)
-            print(f"  {f.name}: {size/1e6:.1f} MB")
+    r = subprocess.run(["hmmpress", "-f", str(FINAL_HMM)],
+                       capture_output=True, text=True)
+    if r.returncode == 0:
+        print("hmmpress OK")
     else:
-        print(f"hmmpress failed: {err[:200]}")
+        print(f"hmmpress failed: {r.stderr[:200]}")
 
-    print(f"\nDone. Database: {FINAL_HMM}")
-
+    print(f"\nDone — database: {FINAL_HMM}")
 
 if __name__ == "__main__":
     main()

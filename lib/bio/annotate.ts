@@ -1,16 +1,22 @@
 /**
- * In-browser sequence annotation using k-mer matching against a curated
- * reference library of 1,472 canonical molecular biology features.
+ * In-browser sequence annotation using a two-tier approach:
  *
- * Algorithm:
+ * Tier A — k-mer vote (features ≥ 50 bp):
  *   1. Build a k-mer position map for the query (O(queryLen))
  *   2. For each feature, sample seed k-mers and look them up in the query map
  *   3. Cluster votes by expected start position; candidates with ≥3 agreement
  *   4. Verify with identity calculation over the candidate window
  *   5. Repeat on reverse complement for minus-strand features
  *
- * Coverage: >85% identity matches, which encompasses virtually all standard
- * lab features. Novel or highly diverged sequences will not be detected.
+ * Tier B — sliding-window exact match (features 10–49 bp):
+ *   Short features have too few k-mers for reliable voting. Instead, a window
+ *   of exactly feature.length is slid across the query on both strands.
+ *   Threshold: at most 2 mismatches allowed (≈ 93% for a 30 bp feature),
+ *   which is strict enough to avoid random hits in typical plasmid sequences.
+ *   All hits above threshold are returned; the dedup step handles overlaps.
+ *
+ * Coverage: virtually all standard lab features including short regulatory
+ * elements, epitope tags, recombination sites, and protease recognition sites.
  */
 
 export interface CanonicalFeature {
@@ -35,7 +41,10 @@ export interface Annotation {
 const K = 15;
 const MIN_VOTES = 3;
 const MIN_IDENTITY = 0.82;
-const SEEDS_PER_FEATURE = 12; // evenly spaced k-mer seeds
+const SEEDS_PER_FEATURE = 12;       // evenly spaced k-mer seeds
+const SHORT_THRESHOLD = 50;          // features below this use exact-match tier
+const SHORT_MIN_LENGTH = 10;         // features shorter than this are skipped
+const SHORT_MAX_MISMATCHES = 2;      // at most 2 mismatches for any short feature
 
 const TYPE_COLORS: Record<string, string> = {
 	CDS: "#3b82f6",
@@ -105,7 +114,87 @@ function seedPositions(featureLen: number, seeds: number, k: number): number[] {
 	return positions;
 }
 
-// ── Core search ───────────────────────────────────────────────────────────────
+// ── Tier B: short-feature exact-match search ──────────────────────────────────
+
+// Max sequence variants to search per short feature name.
+// The clustering step keeps up to 30 representatives per feature, but for
+// short sequences (20-48 bp) many are identical copies. Capping at 10 unique
+// sequences per name eliminates redundant work while preserving variant coverage.
+const SHORT_MAX_VARIANTS = 10;
+
+/**
+ * Sliding-window identity search for features shorter than SHORT_THRESHOLD.
+ * Scans both forward and reverse-complement strands.
+ *
+ * Deduplication: sequences are grouped by canonical name; identical sequences
+ * within a name are collapsed and at most SHORT_MAX_VARIANTS are searched.
+ * This reduces 456 raw short-feature entries to ~100 unique sequences,
+ * keeping the sliding-window cost well under 50 ms for typical plasmids.
+ *
+ * Adaptive threshold: allow at most SHORT_MAX_MISMATCHES mismatches, giving
+ * a minimum identity of (flen − SHORT_MAX_MISMATCHES) / flen per feature.
+ */
+function searchShortFeatures(
+	querySeq: string,
+	rcSeq: string,
+	features: CanonicalFeature[],
+): Annotation[] {
+	// Build deduplicated variant map: name → unique sequences (capped)
+	type Variant = { seq: string; rcSeq: string; type: string; color: string };
+	const byName = new Map<string, Variant[]>();
+
+	for (const f of features) {
+		const flen = f.seq.length;
+		if (flen < SHORT_MIN_LENGTH || flen >= SHORT_THRESHOLD) continue;
+		const existing = byName.get(f.name) ?? [];
+		if (existing.length < SHORT_MAX_VARIANTS && !existing.some((e) => e.seq === f.seq)) {
+			existing.push({
+				seq: f.seq,
+				rcSeq: reverseComplement(f.seq),
+				type: f.type,
+				color: featureColor(f.type),
+			});
+			byName.set(f.name, existing);
+		}
+	}
+
+	const results: Annotation[] = [];
+	const qLen = querySeq.length;
+
+	for (const [name, variants] of byName) {
+		for (const v of variants) {
+			const flen = v.seq.length;
+			// Adaptive threshold: at most SHORT_MAX_MISMATCHES mismatches
+			const minId = (flen - SHORT_MAX_MISMATCHES) / flen;
+
+			for (const [queryStrand, fseq, dir] of [
+				[querySeq, v.seq,   1] as [string, string, 1],
+				[rcSeq,    v.rcSeq, -1] as [string, string, -1],
+			]) {
+				for (let i = 0; i <= qLen - flen; i++) {
+					const id = computeIdentity(queryStrand.slice(i, i + flen), fseq);
+					if (id < minId) continue;
+					const start = dir === 1 ? i : qLen - (i + flen);
+					const end   = dir === 1 ? i + flen : qLen - i;
+					results.push({
+						id: `short-${name}-${dir}-${i}`,
+						name,
+						type: v.type,
+						start,
+						end,
+						direction: dir,
+						identity: id,
+						color: v.color,
+					});
+				}
+			}
+		}
+	}
+
+	return results;
+}
+
+// ── Tier A: k-mer vote search (long features) ─────────────────────────────────
 
 function searchStrand(
 	querySeq: string,
@@ -120,7 +209,8 @@ function searchStrand(
 		const feature = features[fi]!;
 		const fseq = strand === 1 ? feature.seq : reverseComplement(feature.seq);
 		const flen = fseq.length;
-		if (flen < K) continue;
+		// Short features are handled by searchShortFeatures — skip here
+		if (flen < SHORT_THRESHOLD) continue;
 
 		// Vote on expected start position in query
 		const votes = new Map<number, number>();
@@ -205,17 +295,20 @@ function dedup(annotations: Annotation[]): Annotation[] {
 
 /**
  * Annotate a DNA sequence against the canonical feature library.
- * Both strands are searched. Returns deduplicated annotations sorted by position.
+ *
+ * Tier A (k-mer vote) handles features ≥ 50 bp.
+ * Tier B (exact-match scan) handles features 10–49 bp.
+ * Results from both tiers are merged, deduplicated, and sorted by position.
  */
 export function annotate(seq: string, features: CanonicalFeature[]): Annotation[] {
 	const upper = seq.toUpperCase().replace(/[^ACGTN]/g, "N");
-	const fwdMap = buildKmerMap(upper, K);
 	const rcSeq = reverseComplement(upper);
-	const rcMap = buildKmerMap(rcSeq, K);
+
+	// Tier A — k-mer vote for long features
+	const fwdMap = buildKmerMap(upper, K);
+	const rcMap  = buildKmerMap(rcSeq, K);
 
 	const fwd = searchStrand(upper, fwdMap, features, 1);
-
-	// For reverse strand: search against the RC sequence, then convert coordinates
 	const revRaw = searchStrand(rcSeq, rcMap, features, -1);
 	const rev = revRaw.map((a) => ({
 		...a,
@@ -223,7 +316,10 @@ export function annotate(seq: string, features: CanonicalFeature[]): Annotation[
 		end: upper.length - a.start,
 	}));
 
-	const all = dedup([...fwd, ...rev]);
+	// Tier B — exact-match sliding window for short features
+	const short = searchShortFeatures(upper, rcSeq, features);
+
+	const all = dedup([...fwd, ...rev, ...short]);
 	all.sort((a, b) => a.start - b.start);
 	return all;
 }

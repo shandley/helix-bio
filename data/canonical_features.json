@@ -11339,5 +11339,528 @@
     "_source_name": "bom (basis of mobility)",
     "_category_hint": "structural",
     "_generated": true
+  },
+  {
+    "canonical_name": "par (partition system)",
+    "aliases": [
+      "par",
+      "par locus",
+      "partition locus",
+      "partition system",
+      "parABS",
+      "parAB",
+      "parS",
+      "parA",
+      "parB",
+      "parMRC",
+      "parM",
+      "parR",
+      "parC",
+      "sop",
+      "sopABC",
+      "sopA",
+      "sopB",
+      "sopC",
+      "stability locus",
+      "plasmid partition system",
+      "plasmid segregation locus",
+      "centromere-like sequence",
+      "plasmid stabilization system"
+    ],
+    "so_term": "SO:0000440",
+    "so_label": "plasmid_partition_site",
+    "category": "structural",
+    "description": "Par (partition) systems are DNA segregation machinery encoded by low-copy plasmids that ensure accurate distribution of plasmid copies to daughter cells during cell division, preventing plasmid loss through random assortment. They function analogously to eukaryotic centromere-kinetochore systems and are essential for stable maintenance of low-copy vectors such as pSC101 (5 copies/cell) and P1 prophage derivatives. In plasmid engineering, par systems are incorporated into vectors requiring stable low-copy maintenance, including BAC vectors used for genomic library construction.",
+    "mechanism": "Type I systems (parABS, most common) use a Walker-type ATPase (ParA) that oscillates along the nucleoid as a DNA-bound gradient and interacts with ParB protein bound to centromere-like parS sequences, pulling plasmid copies toward opposite cell poles before division. Type II systems (parMRC, e.g., R1 plasmid) use an actin-like ATPase (ParM) that polymerizes bidirectionally between two ParR-bound plasmid complexes, pushing them to opposite poles in a spindle-like mechanism.",
+    "expression_systems": [
+      "e_coli",
+      "gram_negative"
+    ],
+    "expected_length_bp": [
+      200,
+      5000
+    ],
+    "expected_gc_fraction": [
+      0.4,
+      0.6
+    ],
+    "reference_accessions": [
+      "J02442",
+      "AP001918"
+    ],
+    "reference_plasmids": [
+      "pSC101 (original par system, Type I)",
+      "P1 prophage (parABS, used in BAC vectors)",
+      "F plasmid (sopABC, Type I variant)",
+      "pBeloBAC11 (BAC vector with P1 par elements)",
+      "R1 plasmid (parMRC, Type II)"
+    ],
+    "known_variants": [
+      "Type I parABS (Walker-type ATPase ParA + DNA-binding ParB + centromere-like parS) \u2014 predominant in gram-negative plasmids",
+      "Type II parMRC (actin-like ParM ATPase + ParR DNA-binding + parC centromere site) \u2014 R1, pB171",
+      "Type III tubZRC (tubulin-like TubZ ATPase) \u2014 Bacillus plasmids",
+      "sop system (F plasmid SopA/SopB/sopC) \u2014 functionally Type I, different gene names",
+      "Minimal parS (synthetic centromere site only, without parAB genes, paired with trans-supplied proteins)"
+    ],
+    "known_misannotations": [
+      "Confusion with pAD1 'par' locus, which is a toxin-antitoxin addiction system, not a partition system",
+      "'par' label applied inconsistently \u2014 may annotate only the cis-acting parS centromere site (~200\u2013400 bp), only the parAB coding region (~1.5\u20133 kb), or the complete operon",
+      "F plasmid sop genes (sopA, sopB, sopC) not recognized as a par system; sometimes labeled 'plasmid stability' without partition classification",
+      "Confusion with hok/sok and other post-segregational killing systems, which stabilize plasmids by a distinct mechanism (toxin-antitoxin, not active partition)"
+    ],
+    "notes": "Par systems are relevant only for low-copy plasmids; high-copy ColE1-derived vectors (pUC, pBluescript, pET) do not require partition because random assortment at high copy number rarely produces plasmid-free daughters. The expected_length_bp range is wide because 'par' annotations span from the minimal centromere site alone (~200\u2013400 bp for parS/sopC) to the complete partition operon including trans-acting protein genes (~2\u20135 kb). When reviewing GenBank annotations, always check which components are included. The pSC101 par system is unusual in that it also requires the plasmid-encoded IHF-binding site and involves host IHF protein for full activity.",
+    "_source_name": "par (partition)",
+    "_category_hint": "structural",
+    "_generated": true
+  },
+  {
+    "canonical_name": "reverse tetracycline transactivator (rtTA)",
+    "aliases": [
+      "rtTA",
+      "rtTA2",
+      "rtTA2S-M2",
+      "rtTA-M2",
+      "rtTA3",
+      "rtTA-Advanced",
+      "rtTA-S2",
+      "reverse tet transactivator",
+      "reverse tetracycline transactivator",
+      "Tet-On transactivator",
+      "Tet-On activator",
+      "doxycycline-inducible transactivator",
+      "reverse transactivator",
+      "rTet-VP16",
+      "hrtTA",
+      "humanized rtTA"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "regulatory",
+    "description": "The reverse tetracycline transactivator (rtTA) is the central regulatory protein of the Tet-On inducible expression system, consisting of a mutated Tet repressor (TetR) DNA-binding domain fused to the VP16 transactivation domain of herpes simplex virus. Unlike the original tTA (Tet-Off), rtTA binds tetracycline response elements (TRE) only when doxycycline is present, enabling doxycycline-dependent activation of downstream gene expression. It is widely used for inducible transgene expression in mammalian cells, enabling temporal and dose-dependent control of genes of interest without permanently altering cell state.",
+    "mechanism": "Mutations in the TetR DNA-binding domain (canonically E71K, D95N, L101S, G102D) invert its allosteric response so that doxycycline binding drives a conformational change that permits, rather than prevents, TRE binding; once bound, the fused VP16 activation domain recruits the general transcription machinery to drive expression from any downstream TRE-controlled promoter.",
+    "expression_systems": [
+      "mammalian",
+      "yeast",
+      "insect"
+    ],
+    "expected_length_bp": [
+      750,
+      960
+    ],
+    "expected_gc_fraction": [
+      0.44,
+      0.62
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "pUHrT62-1",
+      "pTet-On",
+      "pTet-On Advanced",
+      "pRetroX-Tet-On Advanced",
+      "pLenti CMV rtTA3 Blast"
+    ],
+    "known_variants": [
+      "rtTA original (Gossen 1995): 4 TetR mutations, functional but higher background leakiness",
+      "rtTA2S-M2 (Urlinger 2000): additional TetR mutations improving doxycycline sensitivity and reducing basal activity",
+      "rtTA3: third-generation variant with minimal leaky expression and improved fold-induction ratio",
+      "rtTA-Advanced (Takara/Clontech): commercially optimized variant with lower background",
+      "humanized rtTA (hrtTA): codon-optimized for mammalian expression to increase protein output",
+      "rtTA-VP64 and rtTA-p65 fusions: VP16 replaced with stronger synthetic (VP64) or p65 NF-\u03baB activation domains for higher induction levels",
+      "Tet3G / Tet-On 3G: third-generation rtTA with further mutations for improved performance at lower doxycycline concentrations"
+    ],
+    "known_misannotations": [
+      "Confused with tTA (Tet-Off transactivator): tTA is inhibited by doxycycline, rtTA is activated \u2014 opposite regulatory logic",
+      "Annotated as 'TetR' alone, omitting the VP16 transactivation domain that is essential for the activator function",
+      "TRE promoter element annotated as 'rtTA': the TRE is the DNA target site for rtTA, not the transactivator protein itself",
+      "Confused with rTetR (reverse tet repressor): rTetR also binds DNA in the presence of doxycycline but lacks the VP16 domain and acts as a repressor, not an activator",
+      "Generation not specified: 'rtTA' without version label is ambiguous given the substantially different performance characteristics of rtTA, rtTA2S-M2, and rtTA3"
+    ],
+    "notes": "rtTA is nearly always used in a two-component system: the rtTA expression cassette (driven by a constitutive promoter such as CMV or EF1\u03b1) on one plasmid or genomic locus, and the TRE-driven gene of interest on another. Leaky (doxycycline-independent) expression is the most common practical problem; rtTA2S-M2 and rtTA3 substantially reduce this. Doxycycline is strongly preferred over tetracycline due to its superior cell and tissue permeability and longer half-life. At high doxycycline concentrations, some cytotoxicity has been reported in sensitive cell lines, which should be titrated. rtTA is also functional in Drosophila, zebrafish, and mouse in vivo models in addition to cell culture.",
+    "_source_name": "reverse tetracycline transactivator (rtTA)",
+    "_category_hint": "regulatory",
+    "_generated": true
+  },
+  {
+    "canonical_name": "tetracycline transactivator (tTA)",
+    "aliases": [
+      "tTA",
+      "Tet-Off transactivator",
+      "tetracycline-controlled transactivator",
+      "TetR-VP16",
+      "tetracycline repressor-VP16 fusion",
+      "Tet transactivator",
+      "tTA-S2",
+      "tTA2",
+      "tetracycline-dependent transactivator",
+      "Tet-Off activator",
+      "tTA wild-type",
+      "tTA-wt"
+    ],
+    "so_term": "SO:0000704",
+    "so_label": "gene",
+    "category": "regulatory",
+    "description": "The tetracycline transactivator (tTA) is a chimeric transcriptional activator composed of the DNA-binding domain of the E. coli Tn10 tetracycline repressor (TetR) fused to the VP16 transcriptional activation domain from Herpes Simplex Virus. It is the core component of the Tet-Off inducible gene expression system, where it drives strong transcription from tetracycline response element (TRE) promoters in the absence of tetracycline or doxycycline. Addition of doxycycline (or tetracycline) silences downstream transgene expression, making tTA useful for conditional, titratable gene regulation in mammalian cells and transgenic organisms.",
+    "mechanism": "In the absence of tetracycline or doxycycline, tTA binds tetO operator sequences within the TRE promoter via its TetR domain and activates RNA polymerase II recruitment through its VP16 activation domain. Tetracycline or doxycycline binding to the TetR moiety induces a conformational change that abolishes tetO DNA binding, preventing transactivation and silencing the downstream gene.",
+    "expression_systems": [
+      "mammalian",
+      "yeast"
+    ],
+    "expected_length_bp": [
+      840,
+      950
+    ],
+    "expected_gc_fraction": [
+      0.46,
+      0.58
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "pUHD15-1",
+      "pTet-Off",
+      "pTRE-tTA",
+      "pLenti-tTA-IRES-Puro"
+    ],
+    "known_variants": [
+      "tTA2 \u2014 second-generation tTA with improved transcriptional activity and reduced leakiness",
+      "tTA-S2 \u2014 mutations reducing basal (leaky) transcription in the absence of induction",
+      "rtTA (reverse tTA) \u2014 mutations in TetR (e.g., S12G, E19G, A56P) that invert the response so doxycycline activates rather than silences expression (Tet-On system)",
+      "rtTA2s-M2 \u2014 improved reverse transactivator with tighter doxycycline dependence",
+      "codon-optimized tTA \u2014 human codon-optimized version for enhanced mammalian expression",
+      "tTA-advanced (Takara Bio) \u2014 proprietary optimized variant with reduced leakiness"
+    ],
+    "known_misannotations": [
+      "Frequently confused or conflated with rtTA (reverse tetracycline transactivator); tTA is Tet-Off (expression ON without drug), rtTA is Tet-On (expression ON with drug)",
+      "Sometimes annotated as 'TetR' alone, omitting the VP16 activation domain that defines tTA",
+      "Entire TRE-tTA bidirectional cassette occasionally annotated as a single tTA feature",
+      "VP16 activation domain subregion may be separately annotated as 'VP16' in the same construct, creating redundant overlapping annotations",
+      "tTA-S2 and tTA2 variants sometimes labeled generically as 'tTA' without distinguishing the improved generation"
+    ],
+    "notes": "tTA is the original 'Tet-Off' transactivator (Gossen & Bujard, 1992, PNAS); transgene expression is ON by default and switched OFF by doxycycline addition\u2014the opposite logic of the Tet-On (rtTA) system. A matched TRE-containing responder plasmid is required in trans. High tTA expression levels can be cytotoxic in some cell lines; titering the tTA vector or using weaker promoters to drive tTA is often necessary. Doxycycline is preferred over tetracycline in practice due to superior cell permeability, lower toxicity, and faster clearance. For inducible systems in new designs, rtTA-based Tet-On systems are now more commonly chosen because the 'drug-on' logic is experimentally more convenient.",
+    "_source_name": "tetracycline transactivator (tTA)",
+    "_category_hint": "regulatory",
+    "_generated": true
+  },
+  {
+    "canonical_name": "Cre recombinase",
+    "aliases": [
+      "Cre",
+      "cre",
+      "Cre recombinase",
+      "cyclization recombination enzyme",
+      "P1 Cre",
+      "Cre/lox recombinase",
+      "iCre",
+      "CreERT2",
+      "Cre-ERT2",
+      "CreERT",
+      "Cre-ERT",
+      "tamoxifen-inducible Cre",
+      "Cre-PR",
+      "NLS-Cre",
+      "nls-Cre",
+      "Cre-IRES",
+      "P1 bacteriophage Cre"
+    ],
+    "so_term": "SO:0001037",
+    "so_label": "recombinase",
+    "category": "recombinase",
+    "description": "Cre (Cyclization Recombination) recombinase is a tyrosine site-specific recombinase from bacteriophage P1 that catalyzes recombination between 34-bp loxP recognition sites. In plasmid engineering it is used to excise, invert, or integrate DNA flanked by loxP sites, enabling conditional knockouts, floxed allele deletion, reporter activation, and inducible expression systems. The Cre/lox system is one of the most widely deployed recombination tools in both prokaryotic and eukaryotic genetic engineering.",
+    "mechanism": "Cre binds as a homodimer to each loxP half-site and assembles a synaptic tetramer that makes staggered single-strand cuts at the 8-bp spacer, exchanges strands via a covalent 3\u2032-phosphotyrosine intermediate, and ligates to complete recombination. Directly oriented loxP sites yield excision/deletion; inversely oriented sites yield inversion; sites on separate molecules yield integration.",
+    "expression_systems": [
+      "e_coli",
+      "gram_negative",
+      "gram_positive",
+      "yeast",
+      "insect",
+      "mammalian",
+      "plant"
+    ],
+    "expected_length_bp": [
+      1029,
+      1050
+    ],
+    "expected_gc_fraction": [
+      0.44,
+      0.65
+    ],
+    "reference_accessions": [
+      "X03705",
+      "NC_005856"
+    ],
+    "reference_plasmids": [
+      "pCAG-Cre",
+      "pCMV-Cre",
+      "pCreERT2",
+      "pCAGGS-CreERT2",
+      "pPGK-Cre",
+      "pACN",
+      "pBS185"
+    ],
+    "known_variants": [
+      "iCre \u2014 codon-optimized for mammalian expression, reduced CpG content, improved nuclear localization",
+      "CreERT2 \u2014 Cre fused to triple-mutant estrogen receptor LBD (G400V/M543A/L544A); tamoxifen-inducible, cytoplasmic sequestration until ligand addition",
+      "CreERT \u2014 earlier single-mutant ER-LBD fusion; less stringent tamoxifen dependence than ERT2",
+      "Cre-PR \u2014 fusion to progesterone receptor LBD for mifepristone-inducible activation",
+      "Split-Cre \u2014 two inactive fragments reconstituted by protein-protein interaction or chemical inducers",
+      "SLiCE Cre \u2014 bacterial cell lysate-based in vitro Cre for seamless cloning",
+      "Cre-2A fusion constructs \u2014 Cre linked via self-cleaving peptide to fluorescent reporters"
+    ],
+    "known_misannotations": [
+      "iCre frequently labeled as 'Cre' without indicating codon optimization, causing GC-content and sequence mismatches during auto-annotation",
+      "CreERT and CreERT2 conflated despite distinct tamoxifen sensitivities and leakiness profiles",
+      "NLS-Cre (nuclear localization signal fused) annotated as plain 'Cre', obscuring the larger ORF size",
+      "Cre-ERT2 fusion ORF (~2.7 kb) sometimes split into separate 'Cre' and 'ERT2' feature annotations by parsers that expect the 1029-bp ORF",
+      "P1 phage Cre CDS occasionally mis-strand-annotated when extracted from the complementary strand of P1 genome records"
+    ],
+    "notes": "The wild-type Cre ORF is exactly 1029 bp (343 aa). loxP sites (required substrates, not part of the Cre ORF) are 34 bp each and must be present in the target for recombination to occur. Cre has low toxicity in bacteria and mice but high-level constitutive expression can cause chromosomal rearrangements at cryptic lox-like sites in mammalian genomes; inducible CreERT2 is preferred for in vivo use. Cre is active without cofactors or ATP across all tested organisms.",
+    "_source_name": "Cre recombinase",
+    "_category_hint": "recombinase",
+    "_generated": true
+  },
+  {
+    "canonical_name": "Flp recombinase",
+    "aliases": [
+      "FLP",
+      "Flp",
+      "FLP recombinase",
+      "flipase",
+      "Flpe",
+      "FlpO",
+      "Flp site-specific recombinase",
+      "FLP site-specific recombinase",
+      "yeast Flp recombinase",
+      "Saccharomyces cerevisiae Flp",
+      "2-micron plasmid recombinase",
+      "FLP1"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "recombinase",
+    "description": "The Flp (flippase) recombinase is a tyrosine family site-specific recombinase encoded by the 2-micron plasmid of Saccharomyces cerevisiae. It catalyzes recombination between FRT (Flp Recognition Target) sequences, enabling gene excision, inversion, or cassette exchange depending on FRT site orientation and placement. It is widely used in conditional gene knockout strategies, Flp-In stable cell line generation, and inducible combinatorial expression systems.",
+    "mechanism": "Flp binds as a dimer to each 13-bp inverted repeat of the 34-bp FRT site; two dimers synapse to form a tetrameric complex that introduces staggered double-strand breaks within the 8-bp asymmetric spacer via a covalent 3\u2032-phosphotyrosine intermediate, with strand exchange and ligation completing recombination without requiring ATP, metal cofactors, or high-energy molecules.",
+    "expression_systems": [
+      "e_coli",
+      "yeast",
+      "insect",
+      "mammalian"
+    ],
+    "expected_length_bp": [
+      1200,
+      1300
+    ],
+    "expected_gc_fraction": [
+      0.38,
+      0.56
+    ],
+    "reference_accessions": [
+      "NC_001398"
+    ],
+    "reference_plasmids": [
+      "pOG44",
+      "pCAGGS-Flpe",
+      "pFlpBtM",
+      "pACN"
+    ],
+    "known_variants": [
+      "Flpe \u2014 enhanced variant with four point mutations conferring higher thermostability and activity at 37\u00b0C; codon-optimized for mammalian expression (Buchholz et al. 1998)",
+      "FlpO \u2014 independently codon-optimized for mammalian expression with distinct codon usage from Flpe, used in Rosa26-targeted alleles",
+      "Flp(opt) \u2014 generic term for various additional human or mammalian codon-optimized versions with differing efficacies",
+      "Flp-ERT2 \u2014 fusion with mutant estrogen ligand-binding domain for tamoxifen-inducible nuclear translocation"
+    ],
+    "known_misannotations": [
+      "Often annotated simply as 'FLP' without specifying native yeast vs. mammalian-optimized variant (Flpe/FlpO), obscuring expected 37\u00b0C activity",
+      "FRT recognition site and Flp recombinase sometimes co-annotated or conflated under a single 'Flp/FRT' label",
+      "Flpe and FlpO frequently interchanged in annotations despite distinct codon usage and slightly different activity profiles",
+      "Occasionally mislabeled as Cre recombinase due to similar function; the two enzymes share no sequence homology and use different recognition sites (FRT vs. loxP)"
+    ],
+    "notes": "Native Flp has suboptimal recombination efficiency at 37\u00b0C due to reduced thermostability; Flpe and FlpO are the preferred variants for mammalian applications. The Thermo Fisher Flp-In system uses pOG44 (expressing Flpe) to integrate a GOI at a pre-inserted FRT site. Recombination leaves a characteristic 34-bp FRT scar. Minimal functional FRT is ~48 bp including flanking sequence context. Unlike Cre-lox, Flp/FRT is commonly used for marker excision in bacterial and yeast genetics as well as mammalian conditional systems.",
+    "_source_name": "Flp recombinase",
+    "_category_hint": "recombinase",
+    "_generated": true
+  },
+  {
+    "canonical_name": "PhiC31 integrase",
+    "aliases": [
+      "\u03a6C31 integrase",
+      "phiC31 integrase",
+      "PhiC31 Int",
+      "phi31 integrase",
+      "\u03a6C31 Int",
+      "phiC31-int",
+      "Streptomyces phage phiC31 integrase",
+      "site-specific recombinase PhiC31",
+      "int (phiC31)",
+      "PhiC31 serine integrase"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "recombinase",
+    "description": "PhiC31 integrase is a serine integrase from the Streptomyces bacteriophage \u03a6C31 that catalyzes site-specific recombination between attB and attP recognition sequences. It is widely used in plasmid engineering and gene therapy for stable genomic integration, directing unidirectional insertion of an attB-containing donor plasmid into pseudo-attP sites in the host genome. Its unidirectionality \u2014 excision does not occur without the accessory recombination directionality factor (RDF) \u2014 makes it highly valuable for generating stable, heritable integrations across diverse organisms.",
+    "mechanism": "PhiC31 integrase forms a synaptic complex between a 34 bp attB site and a 39 bp attP site, performing a double-strand break and strand exchange via a covalent serine-phosphodiester intermediate. The reaction generates hybrid attL and attR sites that are not substrates for further recombination in the absence of RDF, rendering integration essentially irreversible under standard conditions.",
+    "expression_systems": [
+      "e_coli",
+      "gram_negative",
+      "gram_positive",
+      "yeast",
+      "insect",
+      "mammalian",
+      "plant"
+    ],
+    "expected_length_bp": [
+      1800,
+      1900
+    ],
+    "expected_gc_fraction": [
+      0.45,
+      0.7
+    ],
+    "reference_accessions": [
+      "AF462511"
+    ],
+    "reference_plasmids": [
+      "pCMV-Int",
+      "pTA-attB",
+      "pUCIDT-attB"
+    ],
+    "known_variants": [
+      "codon-optimized for mammalian expression (reduces native ~68% GC to ~50%)",
+      "codon-optimized for Drosophila melanogaster",
+      "NLS fusion (SV40 nuclear localization signal appended for improved nuclear targeting in eukaryotes)",
+      "I12 hyperactive mutant (point mutation conferring enhanced integration efficiency in mammalian cells)"
+    ],
+    "known_misannotations": [
+      "attB or attP recombination sites sometimes labeled as 'PhiC31 integrase' rather than the correct 'attB site' or 'attP site' feature keys",
+      "annotated as 'int' without phage context, causing confusion with lambda phage integrase (a tyrosine recombinase with different chemistry)",
+      "NLS-tagged and untagged versions labeled identically, obscuring whether nuclear import is passive or active",
+      "occasionally written as 'Phi31' or 'FC31', dropping the 'C' or 'Phi' prefix"
+    ],
+    "notes": "The native coding sequence has approximately 68% GC content due to Streptomyces origin; codon-optimized variants are strongly preferred for expression in mammalian, insect, or plant systems. PhiC31 integrase requires no host-specific cofactors for attB \u00d7 attP recombination, accounting for its broad host range. In mammalian genomes, integration occurs at pseudo-attP sites (core sequence TTGAT for attB, TTGAT for attP); thousands of such sites exist genome-wide with a small subset used preferentially, raising insertional mutagenesis considerations for therapeutic applications. Not to be confused with the attB, attP, attL, or attR attachment site features, which are the DNA substrates recognized by this enzyme.",
+    "_source_name": "PhiC31 integrase",
+    "_category_hint": "recombinase",
+    "_generated": true
+  },
+  {
+    "canonical_name": "piggyBac transposase",
+    "aliases": [
+      "PBase",
+      "pB transposase",
+      "PB transposase",
+      "piggyBac",
+      "PiggyBac transposase",
+      "Trichoplusia ni piggyBac transposase",
+      "mPB",
+      "hyPBase",
+      "hyperactive piggyBac transposase",
+      "oPB",
+      "optimized piggyBac transposase",
+      "SPBase",
+      "super piggyBac transposase",
+      "IFP2 transposase"
+    ],
+    "so_term": "SO:0000111",
+    "so_label": "transposable_element_gene",
+    "category": "transposase",
+    "description": "piggyBac is a cut-and-paste DNA transposase originally isolated from the cabbage looper moth (Trichoplusia ni) that excises and integrates DNA flanked by its inverted terminal repeats (ITRs) at TTAA genomic target sites. It is widely used in plasmid engineering for stable genomic integration of transgenes in mammalian, insect, and plant cells without the need for viral vectors. Unlike lentiviral integration, piggyBac excises precisely and seamlessly upon re-expression, enabling footprint-free genome editing and reversible transgenesis.",
+    "mechanism": "The transposase binds its 13-bp terminal inverted repeats (TIRs) on the donor transposon, excises the intervening cargo by double-strand cleavage at TTAA sequences, and integrates the excised element into a TTAA target site in the genome via a cut-and-paste mechanism that leaves the donor site repaired without a footprint.",
+    "expression_systems": [
+      "mammalian",
+      "insect",
+      "plant",
+      "yeast"
+    ],
+    "expected_length_bp": [
+      1780,
+      2000
+    ],
+    "expected_gc_fraction": [
+      0.43,
+      0.57
+    ],
+    "reference_accessions": [
+      "U43559"
+    ],
+    "reference_plasmids": [
+      "pCMV-hyPBase",
+      "pCMV-PBase",
+      "pBASE (System Biosciences PB210PA-1)",
+      "pHL-EF1a-SB100x (analogous helper architecture)"
+    ],
+    "known_variants": [
+      "hyPBase (hyperactive): 7 point mutations (A46V, S103P, G165S, M282V, S509G, N538K, N558D) conferring ~17-fold higher activity than wild-type (Yusa et al. 2011, Nature Methods)",
+      "mPB: mammalian codon-optimized wild-type transposase for improved expression in human/mouse cells",
+      "oPB: further codon-optimized variant with enhanced nuclear localization",
+      "SPBase (super piggyBac): additional mutations beyond hyPBase for further activity enhancement",
+      "dCas9-PBase fusions: catalytically inactive Cas9 tethered to PBase for targeted integration at specific loci"
+    ],
+    "known_misannotations": [
+      "Transposase helper plasmid sometimes annotated as the transposon donor rather than the trans-acting enzyme",
+      "Confused with Sleeping Beauty (SB100x) transposase, which is a different Tc1/mariner-family system with distinct ITR sequences and TATA target sites",
+      "hyPBase sometimes labeled simply as 'piggyBac transposase' without indicating it is the hyperactive variant, leading to inconsistent activity expectations",
+      "'PB' abbreviation occasionally confused with PBX or other gene symbols in annotation pipelines"
+    ],
+    "notes": "piggyBac is the dominant non-viral integration tool for stable mammalian cell line generation and iPSC reprogramming. The transposase must be supplied in trans (separate helper plasmid) from the transposon donor carrying ITR-flanked cargo; co-delivery of both plasmids is required for integration. Cargo capacity is large (>100 kb reported). Integration is semi-random but shows a mild preference for active transcription units, which can cause insertional mutagenesis concerns in therapeutic contexts. Precise excision upon transposase re-expression makes it suitable for generating footprint-free iPS cells.",
+    "_source_name": "piggyBac transposase",
+    "_category_hint": "transposase",
+    "_generated": true
+  },
+  {
+    "canonical_name": "Sleeping Beauty transposase",
+    "aliases": [
+      "SB transposase",
+      "SB100X",
+      "SB10",
+      "SB11",
+      "SB12",
+      "SB13",
+      "hsb5",
+      "hsb16",
+      "hsb17",
+      "SBx3",
+      "SBx6",
+      "Sleeping Beauty Tc1 transposase",
+      "SB transposon transposase",
+      "pSB transposase"
+    ],
+    "so_term": "SO:0000111",
+    "so_label": "transposable_element_gene",
+    "category": "transposase",
+    "description": "Sleeping Beauty (SB) transposase is a reconstructed Tc1/mariner-superfamily transposase originally derived from inactive transposon fossils in salmonid fish genomes. It mediates precise cut-and-paste insertion of a flanking transposon cargo (marked by inverted terminal repeats, ITRs) into TA dinucleotide sites in the host genome. It is widely used for stable genomic integration of transgenes in mammalian cells, including gene therapy, CAR-T cell engineering, and functional genomics screens.",
+    "mechanism": "SB transposase binds the direct repeat subunits within the inverted terminal repeats (ITRs) flanking the transposon cargo, excises the element via double-strand breaks at both ends, and catalyzes insertion at random TA dinucleotide sites through a concerted transesterification mechanism, leaving a 2-bp TA duplication at each insertion site.",
+    "expression_systems": [
+      "mammalian"
+    ],
+    "expected_length_bp": [
+      1005,
+      1020
+    ],
+    "expected_gc_fraction": [
+      0.44,
+      0.6
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "pCMV-SB100X",
+      "pT2/HB",
+      "pSBbi-GP",
+      "pCMV(CAT)T7-SB100"
+    ],
+    "known_variants": [
+      "SB10 \u2014 original reconstructed transposase (baseline activity)",
+      "SB11, SB12, SB13 \u2014 early hyperactive variants from rational mutagenesis",
+      "HSB series (hsb5, hsb16, hsb17) \u2014 hyperactive variants from saturation mutagenesis (~10-fold over SB10)",
+      "SB100X \u2014 hyperactive mutant with 12 mutations, ~100-fold increased activity over SB10; current clinical standard",
+      "Codon-optimized SB100X for improved human cell expression",
+      "mRNA-encoded SB100X for transient delivery without plasmid integration risk"
+    ],
+    "known_misannotations": [
+      "Transposase expression plasmid mislabeled as transposon donor \u2014 the two-plasmid system requires these to be separate constructs",
+      "'T2' used to refer to the transposase rather than the transposon ITR design (T2 designates the ITR variant, not the enzyme)",
+      "Generic 'transposase' annotation without specifying SB family, preventing disambiguation from PiggyBac or Tol2 transposases",
+      "SB100X annotated simply as 'SB transposase' losing variant-level information critical for reproducibility"
+    ],
+    "notes": "Sleeping Beauty operates as a two-component system: the transposase is supplied in trans from one plasmid while the transposon cargo flanked by ITRs resides on a separate donor plasmid \u2014 expressing both from the same plasmid causes overproduction inhibition and sharply reduces efficiency. SB100X is the current gold standard for research and clinical use. Integration occurs semi-randomly at TA dinucleotides with mild enrichment in transcriptionally active regions but without the strong oncogenic hotspot bias of gammaretroviral vectors. Practical cargo limit is approximately 10 kb; larger inserts show substantially reduced transposition efficiency. Widely used in FDA-approved and investigational gene therapy trials.",
+    "_source_name": "Sleeping Beauty transposase",
+    "_category_hint": "transposase",
+    "_generated": true
   }
 ]

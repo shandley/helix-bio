@@ -1,0 +1,8 @@
+New Category: Science-and-Technology
+
+Comment:
+ori-bio.app is an open-source, web-based molecular biology platform for visualizing and analyzing DNA plasmid sequences — a research tool for molecular biologists, graduate students, and postdoctoral researchers. It is actively used by academic researchers at Washington University in St. Louis.
+
+The domain was registered in May 2026 and is hosted on Vercel (a major cloud platform). The site is a legitimate scientific research application, not spam, malware, or a domain generation algorithm product. It is being blocked solely due to the Newly-Registered-Domain classification, which is a false positive for this established research tool.
+
+The site's source code is publicly available on GitHub (github.com/shandley/ori-bio). Vercel confirms the domain has a valid configuration serving a Next.js application.

@@ -13,6 +13,50 @@ community-extensible feature registry exists. Ori builds and publishes it.
 
 ---
 
+## Current Status (2026-05-12)
+
+### What is complete
+
+| Step | Status | Output |
+|---|---|---|
+| 01 — LLM metadata generation | ✅ Done | 200 canonical features, 1,695 aliases, SO terms |
+| 02 — Sequence collection | ✅ Done (v2) | 12,948 → cleaned sequences with GenBank coord extraction |
+| 03 — Validation | ✅ Done | 192 validated feature files |
+| 04 — Clustering | ✅ Done | 880 → ~700 representative sequences (14.7× reduction) |
+| 05 — HMM build | ✅ Done | 150 canonical HMM profiles, pressed database |
+| pUC19 validation scan | ✅ Done | 28 hits, major false positives eliminated |
+
+### Key milestone: false positive elimination
+
+The v1 HMM database (contaminated with full plasmid records) produced 51 hits on
+pUC19 including Renilla luciferase (E=0), TetR (E=0), CmR (E=0) — severe false
+positives caused by profiles trained on vector backbones.
+
+Root cause identified and fixed: NCBI `efetch?rettype=fasta` returns full genomic
+records (J01749 = 4361 bp pBR322) rather than feature coordinates. The HMM for
+"AmpR" was learning pBR322 backbone as part of AmpR.
+
+Fix (step 02 v2): fetch as GenBank format, parse feature annotation table with
+BioPython, extract only the annotated feature coordinates. J01749 now contributes
+857 bp of AmpR CDS rather than 4361 bp of backbone.
+
+After fix: 28 hits on pUC19, false positives reduced from 15+ to 3-4 (residual
+homology between related origins — not contamination artifacts).
+
+### Remaining false positives (accepted / low priority)
+
+| Hit | Score | Why | Action |
+|---|---|---|---|
+| pSC101_ori (E=0, 1210) | High | Profile spans long region with ColE1-like sequence | Score threshold or length filter |
+| R6K_ori, p15A_ori | ~400-750 | Real sequence homology between origins | E-value threshold (1e-20) eliminates |
+| pBBR1_ori, ARS1 | ~200-260 | Distant homology, short alignments | E-value threshold eliminates |
+
+All residual hits are below E=1e-50 threshold that would be used in production
+annotation — leaving only AmpR, lacZ, lac promoter, lac operator, rop, oriT, bom
+as confirmed true positives. That's exactly the right set for pUC19.
+
+---
+
 ## Architecture
 
 ### Two-tier annotation
@@ -22,38 +66,26 @@ TIER 1 — Browser (instant, < 1 second)
   k-mer matching against features.json
   Returns: canonical name, position, identity estimate
   Sensitivity: high  |  Specificity: moderate
+  Status: ✅ deployed and working
 
 TIER 2 — Server async (15–30 s after upload)
   a. BLAST vs. curated reference sequences  → E-value, % identity, allele ID
-  b. Profile HMM scoring (existing HTCF DB) → detects sub-50% identity homologs
+  b. Profile HMM scanning (canonical_features.hmm) → detects sub-50% homologs
   c. pgvector embedding nearest-neighbor    → catches novel/diverged variants
-  Returns: confidence score, variant ID, novelty flag
-  Sensitivity: high  |  Specificity: high
+  Returns: high-confidence annotations with E-values
+  Status: ⬜ HMM database ready; API integration pending
 ```
-
-Tier 1 renders immediately in SeqViz. Tier 2 updates annotations asynchronously
-after upload, adding confidence metadata and catching variants k-mer matching misses.
 
 ### Layered validation for database build
 
 ```
-Claude CLI metadata generation   → names, aliases, SO terms, accessions
-         ↓
-NCBI efetch + HTCF corpus        → raw sequences per canonical feature
-         ↓
-BLAST filter (E < 1e-20)         → validated sequences (real, correct function)
-         ↓
-MMseqs2 95% identity clustering  → representative variants per feature
-         ↓
-MAFFT + hmmbuild                 → HMM profile per canonical feature
-         ↓
-DNABERT-2 / Nucleotide Transformer embeddings (GPU) → 768-dim vectors
-         ↓
-Export:
-  features.json          (k-mer targets for browser)
-  feature_registry.json  (full metadata for Supabase)
-  embeddings.float32     (for pgvector)
-  feature_hmms.pressed   (for Tier 2 HMM annotation)
+01 Claude CLI metadata generation   → names, aliases, SO terms, accessions
+02 NCBI GenBank coord extraction    → feature sequences only (not full records)
+   + SnapGene/iGEM corpus sequences → length-filtered [0.3×, 3×] expected
+03 Length/name validation filter    → per-feature validation
+04 MMseqs2 95% identity clustering  → representative variants per feature
+05 MUSCLE alignment + hmmbuild      → HMM profile per canonical feature
+   → canonical_features.hmm (pressed, ready for nhmmscan)
 ```
 
 ---
@@ -71,54 +103,17 @@ Export:
   "so_term": "SO:0001950",
   "so_label": "antibiotic_resistance_gene",
   "category": "resistance_marker",
-  "description": "Encodes TEM-1 β-lactamase, hydrolyzing the β-lactam ring of ampicillin and related penicillins. Confers resistance in E. coli at ~100 μg/mL ampicillin. One of the most common selection markers in molecular cloning.",
-  "mechanism": "Serine β-lactamase; cleaves the β-lactam ring by acyl-enzyme mechanism. Secreted to periplasm via N-terminal signal peptide.",
+  "description": "...",
+  "mechanism": "...",
   "expression_systems": ["e_coli", "gram_negative"],
   "expected_length_bp": [858, 870],
-  "expected_gc_range": [0.52, 0.58],
+  "expected_gc_fraction": [0.52, 0.58],
   "reference_accessions": ["V00613", "J01749", "L09137"],
   "reference_plasmids": ["pUC19", "pBR322", "pGEX-4T-1"],
-  "known_variants": [
-    "TEM-1 (original, Tn3)",
-    "TEM-2 (Q39K substitution)",
-    "codon-optimized for human expression"
-  ],
-  "known_misannotations": [
-    "Sometimes labeled 'bla' without allele specification",
-    "TEM-1 and TEM-2 both called 'AmpR' — differ at position 39"
-  ],
-  "sequences": [
-    {
-      "id": "ORI:F0042:S001",
-      "seq": "ATGAGTATTCAACATTTCCGT...",
-      "source_plasmid": "pUC19",
-      "codon_opt": null,
-      "identity_to_ref": 1.0,
-      "verified_blast": true,
-      "blast_evalue": "0.0",
-      "blast_identity": 1.0
-    }
-  ]
+  "known_variants": [...],
+  "known_misannotations": [...]
 }
 ```
-
-### Feature categories (controlled vocabulary)
-
-| Category | Examples |
-|---|---|
-| resistance_marker | AmpR, KanR, CmR, HygR, PuroR, BleoR |
-| origin_of_replication | ColE1, p15A, pSC101, f1, 2μ, SV40 ori |
-| promoter_bacterial | T7, tac, lac, araBAD, rrnB, EM7 |
-| promoter_mammalian | CMV, EF-1α, PGK, CAG, SV40 |
-| terminator | T7 term, rrnB T1/T2, bGH polyA, SV40 polyA |
-| reporter | EGFP, mCherry, luc+, Rluc, β-gal, NanoLuc |
-| epitope_tag | 6xHis, FLAG, HA, Myc, V5, Strep-II |
-| recombination_site | loxP, FRT, attB/P/L/R |
-| crispr_element | SpCas9, SaCas9, sgRNA scaffold, U6 promoter |
-| regulatory | lac operator, IRES, WPRE, Kozak, T2A/P2A |
-| viral_element | LTR, ITR, psi packaging, CMV enhancer |
-| selection_marker | NeoR, hygromycin R (mammalian context) |
-| purification_tag | GST, MBP, SUMO, PreScission site |
 
 ---
 
@@ -135,318 +130,153 @@ iGEM Registry        ████          High volume, inconsistent quality    
 
 ### Coverage tiers
 
-**Tier 1 — Core canonical registry (~500 features)**
-- Source: SnapGene library + NCBI RefSeq
-- Validation: BLAST + HMM + LLM metadata curation
-- Quality bar: every entry manually verified
-- Status: buildable now from existing HTCF corpus
+**Tier 1 — Core canonical registry (~200 features, COMPLETE)**
+- Source: SnapGene library + NCBI GenBank (coordinate-extracted)
+- Validation: length filter + name match + (future) BLAST verification
+- 150 HMM profiles built and pressed
 
-**Tier 2 — Extended library (~5,000–15,000 features)**
-- Source: iGEM filtered (sequences + annotations) + Addgene deposits
-- Validation: BLAST against Tier 1; novel sequences → LLM candidate metadata → BLAST
-- Quality bar: machine-curated with confidence scores
-- iGEM: filter to parts with sequences + functional annotation → ~8,000 usable records
-- Addgene: requires credentials (`01_fetch_addgene.py` exists)
-
-**Tier 3 — Community contributions**
-- Source: Ori user submissions
-- Validation: BLAST + embedding similarity + community review
-- Quality bar: candidate status until verified
+**Tier 2 — Extended library (future)**
+- Source: iGEM filtered + Addgene deposits
+- Pipeline: same as Tier 1
+- Blocker: Addgene credentials needed
 
 ---
 
 ## Script Pipeline
 
-All scripts in: `/scratch/sahlab/shandley/helix-feature-db/scripts/feature_registry/`
-Metadata generation script runs locally (requires Claude Code CLI).
+All scripts in: `scripts/feature_registry/` (local) → synced to HTCF for runs.
 
-### 01_generate_metadata.py (runs locally on Mac)
+| Script | Location | Status | Notes |
+|---|---|---|---|
+| `01_generate_metadata.py` | Local (Mac) | ✅ Done | Uses `claude -p` headless; Max plan |
+| `02_collect_sequences.py` | HTCF | ✅ Done v2 | GenBank coord extraction via BioPython |
+| `03_validate.py` + SLURM | HTCF | ✅ Done | Length/name filter; SLURM array |
+| `04_cluster.py` + SLURM | HTCF | ✅ Done | MMseqs2 95% identity |
+| `05_build_hmms.py` + SLURM | HTCF | ✅ Done | MUSCLE + hmmbuild; 150 profiles |
+| `06_evaluate.py` | HTCF | ⬜ Pending | Ground truth precision/recall |
+| `07_export.py` | HTCF/Local | ⬜ Pending | Build new features.json + registry |
 
-**Purpose**: Use Claude Code CLI in headless mode to generate structured metadata
-for each canonical feature. Leverages Max plan — no API billing.
+### Key HTCF paths
 
-**Input**: `CANONICAL_FEATURES` list embedded in script (~500 feature names)
-**Output**: `feature_registry/canonical_features.json`
-
-**Approach**:
-- Call `claude -p "prompt"` via subprocess for each feature
-- Parse JSON from Claude's response
-- Resume-safe: skip already-processed features
-- Rate-limiting: 2-second delay between calls
-- Validates JSON schema before writing
-
-**Key prompt asks Claude for**:
-- Canonical name + all known aliases
-- Sequence Ontology term + label
-- Category, mechanism, description
-- Expected length and GC range
-- 3 verified NCBI accessions
-- Known variants + misannotations
-
-### 02_collect_sequences.py (HTCF)
-
-**Purpose**: For each canonical feature in `canonical_features.json`, collect all
-matching sequences from the HTCF corpus (SnapGene + iGEM).
-
-**Input**: `canonical_features.json`, HTCF corpus (`features/all_features.fna` + `metadata.tsv`)
-**Output**: `feature_registry/raw_sequences/{feature_id}.fna` (one file per canonical feature)
-
-**Logic**:
-1. For each canonical feature, build a set of all aliases (from metadata JSON)
-2. Search `metadata.tsv` for any feature whose name matches an alias (case-insensitive)
-3. Also search for features within expected length range ± 30%
-4. Extract matched sequences from `all_features.fna` using samtools faidx
-5. Add NCBI reference sequences fetched from accession numbers in metadata
-
-### 03_validate_blast.sh (HTCF, SLURM)
-
-**Purpose**: BLAST each collected sequence against NCBI nr to confirm it encodes
-the claimed function. Removes misannotations and off-target sequences.
-
-**Input**: `feature_registry/raw_sequences/`
-**Output**: `feature_registry/validated_sequences/` (only passing sequences)
-
-**Filter thresholds**:
-- E-value < 1e-20
-- Query coverage > 60%
-- Pident > 70%
-- Top hit description must match the canonical feature function
-  (checked via keyword matching against the feature's `description` field)
-
-**SLURM**: Array job, one task per canonical feature, BLAST against nr with 16 CPUs
-
-### 04_cluster_variants.sh (HTCF)
-
-**Purpose**: Cluster validated sequences at 95% identity to find representative
-variants. Each cluster = one "variant" of the canonical feature.
-
-**Input**: `feature_registry/validated_sequences/`
-**Output**: `feature_registry/variants/` (representative sequences per feature)
-
-**Tool**: MMseqs2 `cluster` at `--min-seq-id 0.95 -c 0.80`
-**Also**: Track cluster sizes — large clusters (> 50 members) are high-confidence
-
-### 05_build_hmm_profiles.sh (HTCF)
-
-**Purpose**: Build a profile HMM for each canonical feature from its aligned variants.
-These HMM profiles power Tier 2 annotation.
-
-**Input**: `feature_registry/variants/`
-**Output**: `feature_registry/hmms/` (one .hmm per canonical feature)
-           `feature_registry/canonical_features.hmm` (pressed database)
-
-**Pipeline per feature**: MAFFT alignment → hmmbuild → hmmpress
-**Note**: Existing 26,832 HMM profiles from Phase 1 remain as the extended library.
-The canonical 500 get new, higher-quality profiles from curated sequences.
-
-### 06_compute_embeddings.py (HTCF, GPU node)
-
-**Purpose**: Compute DNA language model embeddings for all canonical feature sequences.
-Embeddings enable semantic similarity search via Supabase pgvector.
-
-**Input**: `feature_registry/variants/` (representative sequences)
-**Output**: `feature_registry/embeddings.npz` (feature_id → 768-dim float32 vector)
-
-**Model**: DNABERT-2 (117M params) or Nucleotide Transformer 500M
-**Hardware**: GPU partition (A100 or V100)
-**Runtime**: ~2 hours for 5,000 sequences at 512 bp average
-
-**Note**: For long features (> 512 bp), split into overlapping windows and
-mean-pool the window embeddings.
-
-### 07_evaluate.py (HTCF)
-
-**Purpose**: Measure precision and recall on a ground-truth plasmid set.
-Used as regression test for any database update.
-
-**Input**: `ground_truth/` (50 well-annotated plasmids with known features)
-**Output**: `feature_registry/evaluation_report.json`
-
-**Ground truth set** (to be curated):
-- pUC19, pBR322, pACYC184, pGEX-4T-1, pEGFP-N1 (current demo set)
-- pET-28a, pGL3-Basic (newly seeded)
-- 10 Addgene CRISPR vectors with known annotations
-- 10 lentiviral vectors
-- 10 mammalian expression vectors
-- 10 synthetic biology constructs
-
-**Metrics per feature type**:
-- Precision: detected features that are real
-- Recall: real features that were detected
-- Position accuracy: median coordinate error (bp)
-- Variant identification accuracy
-
-**Pass threshold**: Precision > 0.95, Recall > 0.80 for all Tier 1 features
-
-### 08_export.py (HTCF)
-
-**Purpose**: Export all artifacts in formats consumed by Ori and the public API.
-
-**Outputs**:
-- `features.json` — browser k-mer targets (replaces current version)
-  Format: `[{name, type, seq}]` with canonical names
-- `feature_registry.json` — full metadata for Supabase loading
-- `embeddings.float32` — raw binary for pgvector bulk insert
-- `canonical_features.hmm` — pressed HMM database for Tier 2 annotation
-- `CHANGELOG.md` — what changed vs. previous version (semver: `1.0.0`)
+```
+/scratch/sahlab/shandley/helix-feature-db/
+  feature_registry/
+    canonical_features.json      ← 200-feature registry (from 01)
+    raw_sequences/               ← 192 per-feature FASTAs (from 02)
+    validated_sequences/         ← 192 length-filtered FASTAs (from 03)
+    variants/                    ← 192 clustered representatives (from 04)
+    alignments/                  ← MUSCLE alignments (from 05)
+    hmms/                        ← 150 individual .hmm files (from 05)
+    canonical_features.hmm       ← pressed database ready for nhmmscan
+    canonical_features.hmm.h3*   ← binary index files
+```
 
 ---
 
-## Embedding Integration (Supabase pgvector)
+## Next Steps (in order)
 
-### Schema
+### Immediate (next sprint)
 
-```sql
-CREATE TABLE feature_embeddings (
-    id TEXT PRIMARY KEY,              -- "ORI:F0042:S001"
-    feature_id TEXT,                  -- "ORI:F0042"
-    canonical_name TEXT,
-    category TEXT,
-    embedding vector(768),            -- DNABERT-2 embedding
-    seq_len INTEGER,
-    source TEXT
-);
+**1. Export pipeline (script 07)**
+- Build new `public/data/features.json` from the canonical registry
+  - 150 features × representative sequences → replace current 1,472 SnapGene sequences
+  - Add alias normalization: detection returns canonical name regardless of source naming
+- Load `canonical_features.json` into Supabase `feature_registry` table
+- Version-tag the release (semver: `1.0.0`)
 
-CREATE INDEX ON feature_embeddings
-    USING hnsw (embedding vector_cosine_ops)
-    WITH (m = 16, ef_construction = 64);
-```
+**2. Wire Tier 2 HMM annotation**
+- API endpoint: accepts sequence → runs nhmmscan → returns high-confidence hits
+- Hosting options: Vercel Edge (too large at 20MB), small API server, or HTCF
+- Apply E-value threshold (1e-20) to eliminate low-confidence hits
+- Update annotation worker to show Tier 2 results with confidence badges
 
-### Annotation query
+**3. Ground truth evaluation (script 06)**
+- Curate 50-plasmid ground truth set (annotate manually)
+- Measure precision/recall per feature type
+- Report: current browser k-mer vs. Tier 2 HMM vs. combined
 
-```sql
-SELECT feature_id, canonical_name, category,
-       1 - (embedding <=> $query_embedding) AS similarity
-FROM feature_embeddings
-ORDER BY embedding <=> $query_embedding
-LIMIT 5;
-```
+### Medium term
 
-### When embeddings are used
+**4. Alias integration into browser annotation**
+- Map auto-detected names → canonical names using the registry's alias table
+- Eliminates "luc" vs "luc+" vs "luciferase" naming fragmentation in results
 
-1. K-mer matching returns no hit for a sequence window (truly novel)
-2. K-mer hit identity is 82–88% (ambiguous — confirm with embedding)
-3. User requests "find similar features" search
+**5. iGEM + Addgene expansion (Tier 2)**
+- iGEM: ~8,000 usable records after quality filter, adds synthetic biology elements
+- Addgene: needs credentials (`01_fetch_addgene.py` exists)
+- CRISPR, lentiviral, AAV-specific features not in current corpus
+
+**6. BLAST validation of HMM profiles**
+- Add script `03b_validate_blast.py` to BLAST each feature's sequences against
+  the local SnapGene BLAST database (not full nt — avoids OOM)
+- Removes any remaining contaminated sequences that passed the length filter
+
+### Long term
+
+**7. Embeddings (Tier 3)**
+- Compute DNABERT-2 / Nucleotide Transformer embeddings on GPU nodes
+- Load into Supabase pgvector
+- Enable "find sequences functionally similar to this" semantic search
+
+**8. Community contribution pipeline**
+- Submission form in Ori UI
+- BLAST + embedding validation before acceptance
+- Public REST API (`api.ori-bio.app/features/AmpR`)
+
+**9. Publication**
+- "An open feature registry for plasmid annotation"
+- Target: Nature Methods or ACS Synthetic Biology
+- Data: 200 canonical features, 150 HMM profiles, precision/recall benchmarks
 
 ---
 
-## Build Order (Sprints)
+## Known Issues and Workarounds
 
-### Sprint 1 — Foundation (3 weeks)
-
-1. Write and run `01_generate_metadata.py` locally
-   - Target: 500 canonical features with full metadata JSON
-2. Build alias normalization table from metadata JSON
-   - Integrate into current `features.json` export
-   - Immediate win: eliminates luc/luc+/luciferase and similar naming fragmentation
-3. Run `02_collect_sequences.py` on HTCF
-   - Collect sequences for all 500 canonical features from existing corpus
-4. Run `03_validate_blast.sh` on HTCF
-   - Filter to verified sequences
-
-**Deliverable**: New `features.json` with 2,000–3,000 sequences and canonical names.
-Browser annotation quality improves immediately.
-
-### Sprint 2 — High-specificity annotation (4 weeks)
-
-1. `04_cluster_variants.sh` — cluster to representative variants
-2. `05_build_hmm_profiles.sh` — HMM per canonical feature
-3. Design Tier 2 annotation API endpoint (Vercel Edge + HTCF via SSH/job submission)
-4. `07_evaluate.py` — baseline precision/recall on ground-truth set
-5. Curate ground-truth plasmid set (annotate 50 plasmids manually)
-
-**Deliverable**: Tier 2 annotation running on uploads. Confidence scores in UI.
-
-### Sprint 3 — Embeddings (4 weeks)
-
-1. `06_compute_embeddings.py` — run DNABERT-2 on HTCF GPU
-2. Load embeddings into Supabase pgvector
-3. Build embedding query endpoint
-4. Wire into Tier 2 annotation pipeline
-5. "Novel variant" flag in UI for embedding-only hits
-
-**Deliverable**: Semantic annotation — catches novel variants and diverged sequences.
-
-### Sprint 4 — Scope expansion (6 weeks)
-
-1. iGEM filtered dataset → add ~5,000 novel synthetic biology features
-2. Addgene data collection (credentials needed)
-3. CRISPR, lentiviral, AAV-specific canonical features
-4. Community submission pipeline in Ori UI
-5. `08_export.py` — versioned release pipeline
-
-### Sprint 5 — Platform (ongoing)
-
-1. Public REST API (`api.ori-bio.app/features/AmpR`)
-2. Feature contribution submission form
-3. Automated nightly validation
-4. Paper: "An open feature registry for plasmid annotation"
-   Target: Nature Methods or ACS Synthetic Biology
+| Issue | Severity | Fix |
+|---|---|---|
+| MUSCLE times out on very long sequences | Medium | SIGKILL process group; 60s timeout; skip on failure |
+| pSC101_ori false positive on pUC19 | Low | Apply E-value threshold (1e-20) in production |
+| 34% of features have no HMM (alignment failed) | Medium | Fix in next build: trim long sequences before alignment |
+| NCBI reference sequences sometimes no matching annotation | Low | Length-filter fallback handles gracefully |
+| iGEM/Addgene data not yet incorporated | Medium | Pipeline ready; needs credentials for Addgene |
 
 ---
 
 ## Success Metrics
 
-| Metric | Current | Sprint 1 target | Sprint 3 target |
-|---|---|---|---|
-| Canonical features | 1,472 sequences, ~815 names | 500 canonical + 2,000 seqs | 500 canonical + 5,000 seqs |
-| Name consistency | Fragmented (luc/luc+/luciferase) | Alias-resolved | Fully canonical |
-| Browser precision (pUC19) | ~85% | ~90% | ~95% |
-| Novel variant detection | None | None | Via embeddings |
-| Tier 2 annotation | None | HMM scoring | HMM + embedding |
-| Sequences per feature | 1 | 2–5 verified variants | 5–20 variants |
-| Ground-truth recall | Not measured | Baseline established | > 80% |
+| Metric | Current | Target |
+|---|---|---|
+| Canonical features | 200 with metadata | 200 validated + 200 extended |
+| HMM profiles | 150 | 180+ (fix alignment failures) |
+| False positives on pUC19 (E<1e-20) | ~0 | 0 |
+| False positives on pUC19 (E<1e-3) | 3-4 (origins homology) | ≤2 |
+| Browser annotation precision | ~85% | >90% (with alias normalization) |
+| Ground truth recall | Not measured | >80% |
+| Sequences per canonical feature | 2-50 | 5-50 verified |
 
 ---
 
-## Files and Locations
+## Running the Pipeline
 
+```bash
+# Step 01: generate metadata (run locally, uses Max plan)
+python3 scripts/feature_registry/01_generate_metadata.py
+
+# Sync to HTCF
+scp scripts/feature_registry/*.py scripts/feature_registry/*.sh \
+    shandley@login.htcf.wustl.edu:/scratch/sahlab/shandley/helix-feature-db/scripts/feature_registry/
+scp data/canonical_features.json \
+    shandley@login.htcf.wustl.edu:/scratch/sahlab/shandley/helix-feature-db/feature_registry/
+
+# Steps 02-05: run as dependency chain on HTCF
+ssh shandley@login.htcf.wustl.edu "
+  JOB2=$(sbatch run_02_collect.sh | awk '{print $NF}')
+  JOB3=$(sbatch --dependency=afterok:$JOB2 run_03_validate.sh | awk '{print $NF}')
+  JOB4=$(sbatch --dependency=afterok:$JOB3 run_04_cluster.sh | awk '{print $NF}')
+  JOB5=$(sbatch --dependency=afterok:$JOB4 run_05_build_hmms.sh | awk '{print $NF}')
+  echo Jobs: $JOB2 $JOB3 $JOB4 $JOB5
+"
+
+# Test: scan pUC19 against canonical HMM database
+# nhmmscan --cpu 8 --tblout hits.tbl canonical_features.hmm puc19.fasta
 ```
-Local (Mac):
-  scripts/feature_registry/01_generate_metadata.py
-  data/canonical_features.json           ← output of 01_
-  data/feature_registry.json             ← output of 08_
-  public/data/features.json              ← browser k-mer targets (auto-built)
-
-HTCF:
-  /scratch/sahlab/shandley/helix-feature-db/
-    scripts/feature_registry/
-      02_collect_sequences.py
-      03_validate_blast.sh
-      04_cluster_variants.sh
-      05_build_hmm_profiles.sh
-      06_compute_embeddings.py
-      07_evaluate.py
-      08_export.py
-    feature_registry/
-      canonical_features.json            ← synced from Mac after 01_
-      raw_sequences/
-      validated_sequences/
-      variants/
-      hmms/
-      embeddings.npz
-      ground_truth/
-      evaluation_report.json
-
-Supabase:
-  Table: feature_registry               ← canonical feature metadata
-  Table: feature_sequences              ← sequences per feature
-  Table: feature_embeddings             ← pgvector embeddings
-```
-
----
-
-## Open Questions
-
-1. **Model for embeddings**: DNABERT-2 (faster) vs. Nucleotide Transformer 500M
-   (better quality)? Run both on 100 test sequences and compare retrieval quality.
-
-2. **Tier 2 API hosting**: HTCF job submission via SSH from Vercel is fragile.
-   Better: small dedicated API server on a cloud VM, or Supabase Edge Function
-   calling a pre-indexed HMM search?
-
-3. **Addgene credentials**: Approach Addgene directly? They have an academic
-   partnership program. Their deposits are the key source of cutting-edge vectors.
-
-4. **Paper scope**: Feature registry alone, or combined with the annotation
-   algorithm? ACS Synthetic Biology prefers tools papers with benchmarks.

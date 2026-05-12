@@ -1,0 +1,191 @@
+{
+  "overall": {
+    "precision": 0.46,
+    "recall": 0.5348837209302325,
+    "f1": 0.4946236559139785,
+    "total_gt": 42,
+    "total_pred": 50,
+    "total_tp": 23,
+    "total_fp": 27,
+    "total_fn": 20
+  },
+  "per_plasmid": [
+    {
+      "plasmid": "pACYC184",
+      "gt": 4,
+      "pred": 0,
+      "tp": 0,
+      "fp": 0,
+      "fn": 4,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "fn_features": [
+        "p15A ori",
+        "TetA",
+        "CmR",
+        "CmR"
+      ],
+      "fp_features": []
+    },
+    {
+      "plasmid": "pBR322",
+      "gt": 7,
+      "pred": 3,
+      "tp": 2,
+      "fp": 1,
+      "fn": 4,
+      "precision": 0.6666666666666666,
+      "recall": 0.3333333333333333,
+      "f1": 0.4444444444444444,
+      "fn_features": [
+        "from pSC101 (bp 1860-1986)",
+        "L-strand Y effector site",
+        "bla",
+        "bla"
+      ],
+      "fp_features": [
+        "bom (basis of mobility)"
+      ]
+    },
+    {
+      "plasmid": "pBluescriptKS",
+      "gt": 1,
+      "pred": 3,
+      "tp": 3,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "fn_features": [],
+      "fp_features": []
+    },
+    {
+      "plasmid": "pEGFP-N1",
+      "gt": 2,
+      "pred": 7,
+      "tp": 2,
+      "fp": 5,
+      "fn": 0,
+      "precision": 0.2857142857142857,
+      "recall": 1.0,
+      "f1": 0.4444444444444445,
+      "fn_features": [],
+      "fp_features": [
+        "CBh promoter",
+        "Multiple Cloning Site (MCS)",
+        "tac promoter",
+        "SV40 ori",
+        "R6K gamma origin of replication"
+      ]
+    },
+    {
+      "plasmid": "pET-28a",
+      "gt": 3,
+      "pred": 8,
+      "tp": 1,
+      "fp": 7,
+      "fn": 2,
+      "precision": 0.125,
+      "recall": 0.3333333333333333,
+      "f1": 0.18181818181818182,
+      "fn_features": [
+        "kanamycin marker",
+        "lac repressor"
+      ],
+      "fp_features": [
+        "f1 ori",
+        "tac promoter",
+        "R6K gamma origin of replication",
+        "T7 promoter",
+        "lac operator",
+        "RBS (ribosome binding site)",
+        "T7 terminator"
+      ]
+    },
+    {
+      "plasmid": "pGEX-4T-1",
+      "gt": 7,
+      "pred": 11,
+      "tp": 5,
+      "fp": 6,
+      "fn": 2,
+      "precision": 0.45454545454545453,
+      "recall": 0.7142857142857143,
+      "f1": 0.5555555555555556,
+      "fn_features": [
+        "encodes thrombin recognition site",
+        "Multiple Cloning Site (MCS); contains the unique restriction sites BamHI, EcoRI, SmaI, SalI, XhoI, and NotI; The EcoRI site of pGEX-4T1 is in frame with the EcoRI site of lambda gt11"
+      ],
+      "fp_features": [
+        "lac operator",
+        "R6K gamma origin of replication",
+        "lacI promoter",
+        "lac UV5 promoter",
+        "lac operator",
+        "\u03b2-galactosidase (lacZ)"
+      ]
+    },
+    {
+      "plasmid": "pGEX-6P-1",
+      "gt": 6,
+      "pred": 12,
+      "tp": 5,
+      "fp": 7,
+      "fn": 1,
+      "precision": 0.4166666666666667,
+      "recall": 0.8333333333333334,
+      "f1": 0.5555555555555556,
+      "fn_features": [
+        "GST"
+      ],
+      "fp_features": [
+        "tac promoter",
+        "lac operator",
+        "tac promoter",
+        "lacI promoter",
+        "lac UV5 promoter",
+        "lac operator",
+        "\u03b2-galactosidase (lacZ)"
+      ]
+    },
+    {
+      "plasmid": "pGL3-Basic",
+      "gt": 6,
+      "pred": 4,
+      "tp": 4,
+      "fp": 0,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.6666666666666666,
+      "f1": 0.8,
+      "fn_features": [
+        "multiple cloning site",
+        "AmpR"
+      ],
+      "fp_features": []
+    },
+    {
+      "plasmid": "pUC19",
+      "gt": 6,
+      "pred": 2,
+      "tp": 1,
+      "fp": 1,
+      "fn": 5,
+      "precision": 0.5,
+      "recall": 0.16666666666666666,
+      "f1": 0.25,
+      "fn_features": [
+        "pMB1 ori",
+        "AmpR",
+        "AmpR promoter",
+        "lacZ-alpha",
+        "MCS"
+      ],
+      "fp_features": [
+        "tac promoter"
+      ]
+    }
+  ]
+}

@@ -19,6 +19,8 @@ import type { BioAnnotation } from "@/lib/bio/parse-genbank";
 interface LinearMapProps {
 	seq: string;
 	annotations: BioAnnotation[];
+	selectionStart?: number;
+	selectionEnd?: number;
 	onPositionSelect?: (pos: number) => void;
 }
 
@@ -47,7 +49,7 @@ const MIN_LABEL = 30;   // min feature px-width to show label
 const FONT      = "9px 'Courier Prime', monospace";
 const FONT_BOLD = "bold 9px 'Courier Prime', monospace";
 
-export function LinearMap({ seq, annotations, onPositionSelect }: LinearMapProps) {
+export function LinearMap({ seq, annotations, selectionStart, selectionEnd, onPositionSelect }: LinearMapProps) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const seqLen = seq.length;
 
@@ -57,7 +59,7 @@ export function LinearMap({ seq, annotations, onPositionSelect }: LinearMapProps
 	const nTracks = visible.length > 0 ? Math.max(...[...tracks.values()]) + 1 : 1;
 	const height  = RULER_H + nTracks * (TRACK_H + TRACK_GAP) + 8;
 
-	const draw = useCallback(() => {
+	const draw = useCallback((selStart?: number, selEnd?: number) => {
 		const canvas = canvasRef.current;
 		if (!canvas || seqLen === 0) return;
 		const W = canvas.width;
@@ -67,8 +69,8 @@ export function LinearMap({ seq, annotations, onPositionSelect }: LinearMapProps
 
 		const toX = (pos: number) => (pos / seqLen) * W;
 
-		// Background
-		ctx.fillStyle = "#f5f0e8";
+		// Background — white so it reads as a diagram, not more sequence
+		ctx.fillStyle = "#ffffff";
 		ctx.fillRect(0, 0, W, H);
 
 		// ── Ruler ─────────────────────────────────────────────────────────────
@@ -180,10 +182,21 @@ export function LinearMap({ seq, annotations, onPositionSelect }: LinearMapProps
 			}
 		}
 
-		// Border
-		ctx.strokeStyle = "#ddd8ce";
-		ctx.lineWidth = 1;
-		ctx.strokeRect(0, 0, W, H);
+		// Selection cursor — show current viewport/selection position
+		if (selStart !== undefined && selStart >= 0 && selStart <= seqLen) {
+			const cx = toX(selStart);
+			const ex = selEnd !== undefined ? toX(Math.min(selEnd, seqLen)) : cx + 2;
+			// Highlight band
+			ctx.fillStyle = "rgba(26,71,49,0.12)";
+			ctx.fillRect(cx, RULER_H, Math.max(2, ex - cx), H - RULER_H);
+			// Cursor line
+			ctx.strokeStyle = "#1a4731";
+			ctx.lineWidth = 1.5;
+			ctx.beginPath();
+			ctx.moveTo(cx, 0);
+			ctx.lineTo(cx, H);
+			ctx.stroke();
+		}
 	}, [seqLen, visible, tracks]);
 
 	// Draw on mount and resize
@@ -193,19 +206,19 @@ export function LinearMap({ seq, annotations, onPositionSelect }: LinearMapProps
 		const ro = new ResizeObserver(() => {
 			canvas.width  = canvas.offsetWidth;
 			canvas.height = canvas.offsetHeight;
-			draw();
+			draw(selectionStart, selectionEnd);
 		});
 		ro.observe(canvas);
 		return () => ro.disconnect();
-	}, [draw]);
+	}, [draw, selectionStart, selectionEnd]);
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
 		if (!canvas) return;
 		canvas.width  = canvas.offsetWidth;
 		canvas.height = canvas.offsetHeight;
-		draw();
-	}, [draw]);
+		draw(selectionStart, selectionEnd);
+	}, [draw, selectionStart, selectionEnd]);
 
 	const handleClick = useCallback(
 		(e: React.MouseEvent<HTMLCanvasElement>) => {

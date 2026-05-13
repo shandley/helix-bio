@@ -11862,5 +11862,1130 @@
     "_source_name": "Sleeping Beauty transposase",
     "_category_hint": "transposase",
     "_generated": true
+  },
+  {
+    "canonical_name": "J23100 promoter",
+    "aliases": [
+      "BBa_J23100",
+      "J23100",
+      "Anderson promoter J23100"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "The J23100 promoter is the reference constitutive promoter in the Anderson promoter collection, providing the highest expression level in the series. It is widely used in E. coli synthetic biology circuits requiring strong, constitutive gene expression.",
+    "mechanism": "Functions as a \u03c370-dependent constitutive promoter via consensus-like -10 (TATAAT) and -35 (TTGACA) hexamers recognized by the E. coli housekeeping sigma factor, driving transcription without regulatory inputs.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.48,
+      0.58
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23100"
+    ],
+    "known_variants": [
+      "J23101 promoter",
+      "J23102 promoter",
+      "J23103 promoter",
+      "J23104 promoter",
+      "J23105 promoter",
+      "J23106 promoter",
+      "J23107 promoter",
+      "J23108 promoter",
+      "J23109 promoter",
+      "J23110 promoter",
+      "J23111 promoter",
+      "J23112 promoter",
+      "J23113 promoter",
+      "J23114 promoter",
+      "J23115 promoter",
+      "J23116 promoter",
+      "J23117 promoter",
+      "J23118 promoter",
+      "J23119 promoter"
+    ],
+    "known_misannotations": [
+      "Sequence: TTGACGGCTAGCTCAGTCCTAGGTACAGTGCTAGC \u2014 sometimes the flanking BioBrick prefix/suffix bases are incorrectly included, inflating length to 50+ bp"
+    ],
+    "notes": "Defined as relative strength 1.00 (the strongest) in the Anderson constitutive promoter series. Sequence: TTGACGGCTAGCTCAGTCCTAGGTACAGTGCTAGC (35 bp). All 19 Anderson promoters share this length and differ only in internal bases that tune -10/-35 consensus match.",
+    "_source_name": "J23100 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23101 promoter",
+    "aliases": [
+      "BBa_J23101",
+      "J23101",
+      "Anderson promoter J23101"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive sigma-70 promoter from the Anderson promoter collection, widely used in E. coli synthetic biology circuits. Drives moderate-to-high level constitutive expression; approximately 70% the strength of J23100 (the strongest Anderson promoter).",
+    "mechanism": "Constitutively recruits sigma-70 RNA polymerase holoenzyme in E. coli via -10 (TATAAT) and -35 (TTGACA) consensus-like hexamers; strength determined by deviation from consensus.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      30,
+      40
+    ],
+    "expected_gc_fraction": [
+      0.38,
+      0.5
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23101"
+    ],
+    "known_variants": [
+      "J23100",
+      "J23102",
+      "J23103",
+      "J23104",
+      "J23105",
+      "J23106",
+      "J23107",
+      "J23108",
+      "J23109",
+      "J23110",
+      "J23111",
+      "J23112",
+      "J23113",
+      "J23114",
+      "J23115",
+      "J23116",
+      "J23117",
+      "J23118",
+      "J23119"
+    ],
+    "known_misannotations": [
+      "Sometimes annotated as J23100 (strongest variant) when weaker expression is observed"
+    ],
+    "notes": "Relative strength ~70% of J23100 (1791 vs 2547 arbitrary fluorescence units per iGEM measurement). Core sequence: TTTACAGCTAGCTCAGTCCTAGGTATTATGCTAGC (35 bp). Part of the 20-member Anderson constitutive promoter library spanning ~1000-fold expression range.",
+    "_source_name": "J23101 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23102 promoter",
+    "aliases": [
+      "BBa_J23102",
+      "J23102",
+      "Anderson promoter J23102"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive bacterial promoter from the Anderson promoter collection, one of a series of synthetic promoters with characterized relative strengths in E. coli. Commonly used for tunable, constitutive gene expression in synthetic biology circuits.",
+    "mechanism": "Sigma-70-dependent constitutive promoter containing -10 and -35 consensus elements that drive transcription initiation without requiring activators or inducers.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      34,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.25,
+      0.45
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23102"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength ~0.86 compared to J23119 (strongest in collection, set to 1.0); part of the 20-member Anderson constitutive promoter library spanning a ~100-fold range of expression strengths",
+    "_source_name": "J23102 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23103 promoter",
+    "aliases": [
+      "BBa_J23103",
+      "J23103",
+      "Anderson promoter J23103"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "A constitutive \u03c370-dependent promoter from the Anderson promoter collection for E. coli, characterized at approximately 11% of J23100 (strongest) activity. Widely used for tunable gene expression in synthetic biology circuits.",
+    "mechanism": "Drives transcription initiation via \u03c370 recognition of -10 (TATAAT) and -35 (TTGACA) consensus hexamers; strength is modulated by deviations from consensus at key positions.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.38
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23103"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength ~11% of J23100 (strongest in the Anderson collection). Part of the standardized Anderson constitutive promoter family (J23100\u2013J23119); all are interchangeable drop-in parts for tuning expression level.",
+    "_source_name": "J23103 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23104 promoter",
+    "aliases": [
+      "BBa_J23104",
+      "J23104",
+      "Anderson promoter J23104"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive sigma70-recognized promoter from the Anderson promoter collection with medium-high relative strength (~72% of J23119). Widely used in synthetic biology for tunable, constitutive gene expression in E. coli.",
+    "mechanism": "Recognized by the housekeeping sigma70 (RpoD) subunit of E. coli RNA polymerase via consensus -10 (TATAAT) and -35 (TTGACA) hexamer sequences.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.38,
+      0.5
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23104"
+    ],
+    "known_variants": [],
+    "known_misannotations": [
+      "Sometimes annotated as J23100 due to visual similarity of short sequences; verify by exact sequence match"
+    ],
+    "notes": "Medium-high strength Anderson promoter; relative activity ~1299 a.u. in the Anderson collection scale (J23119 = 2547 a.u. as reference maximum). Sequence: TTGACAGCTAGCTCAGTCCTAGGTTATTATGCTAGC. All 20 Anderson promoters share the same BioBrick flanking context and differ only in the spacer/hexamer regions.",
+    "_source_name": "J23104 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23105 promoter",
+    "aliases": [
+      "BBa_J23105",
+      "J23105",
+      "Anderson J23105"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive bacterial promoter from the Anderson promoter collection, a synthetic library of sigma-70 promoters with defined relative strengths for use in E. coli. J23105 provides intermediate-strength constitutive expression and is widely used in synthetic biology circuits requiring tunable, predictable transcription.",
+    "mechanism": "Functions as a sigma-70-recognized constitutive promoter via conserved -10 (TATAAT) and -35 (TTGACA) hexamer elements with sequence variation that tunes RNA polymerase binding affinity and open-complex formation rate.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.42
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23105"
+    ],
+    "known_variants": [],
+    "known_misannotations": [
+      "Often confused with other J23-series members due to short length and sequence similarity; always verify exact sequence rather than relying on annotation name"
+    ],
+    "notes": "Relative strength approximately 47% of J23119 (the strongest Anderson promoter, used as reference = 1.0); part of a 20-member constitutive promoter library (J23100\u2013J23119) designed for predictable expression tuning in E. coli",
+    "_source_name": "J23105 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23106 promoter",
+    "aliases": [
+      "BBa_J23106",
+      "J23106",
+      "Anderson promoter J23106"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "J23106 is a constitutive sigma70 promoter from the Anderson promoter collection, a series of 20 synthetic constitutive promoters with varying strengths for use in E. coli. It drives moderate-low constitutive transcription and is commonly used for fine-tuned gene expression in metabolic engineering and synthetic circuits.",
+    "mechanism": "Functions as a constitutive sigma70 (housekeeping) promoter by providing -35 and -10 hexamer elements recognized by the E. coli RNA polymerase holoenzyme without requiring any transcriptional activator.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.37,
+      0.48
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23106"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength ~47% of J23119 (the strongest Anderson promoter, used as reference at 1.00). Sequence: TTTACGGCTAGCTCAGTCCTAGGTATAATGCTAGC. All Anderson promoters (J23100\u2013J23119) share the same 35 bp scaffold with single or double nucleotide substitutions that tune -35/-10 box strength.",
+    "_source_name": "J23106 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23107 promoter",
+    "aliases": [
+      "BBa_J23107",
+      "J23107",
+      "Anderson promoter J23107"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive bacterial promoter from the Anderson promoter collection, a set of \u03c370-compatible promoters spanning a ~300-fold range of expression strengths in E. coli. J23107 is a moderate-low strength member (~36% activity relative to J23119, the strongest Anderson promoter), commonly used in synthetic biology circuits requiring intermediate constitutive expression.",
+    "mechanism": "Constitutive \u03c370 promoter; drives transcription via the housekeeping sigma factor in E. coli without requiring any regulatory proteins or inducers.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.38,
+      0.48
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "https://parts.igem.org/Part:BBa_J23107"
+    ],
+    "known_variants": [],
+    "known_misannotations": [
+      "Sometimes annotated as J23100 or other Anderson promoters due to high sequence similarity; all J23 promoters differ by only a few nucleotides in -10/-35 boxes"
+    ],
+    "notes": "Relative strength ~36% of J23119 (the strongest Anderson promoter); part of the 20-member Anderson constitutive promoter library used for ratiometric gene expression tuning in E. coli synthetic circuits",
+    "_source_name": "J23107 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23108 promoter",
+    "aliases": [
+      "BBa_J23108",
+      "J23108",
+      "Anderson promoter J23108"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "J23108 is a constitutive \u03c370 promoter from the Anderson promoter collection providing medium-low strength constitutive expression in E. coli. Widely used in synthetic biology circuits requiring predictable, tunable constitutive transcription.",
+    "mechanism": "Constitutive \u03c370-dependent promoter with modified -10 (TATAAT) and -35 (TTGACA) consensus hexamers that drive transcription initiation without requiring transcriptional activators.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.45
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23108"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength ~0.51 normalized to J23100 (1.0); J23119 is the strongest in the collection (~1.17). Medium-low constitutive expression. All 20 Anderson promoters share identical flanking sequences (EcoRI/SpeI BioBrick prefix/suffix compatible) and differ only in the -10/-35 spacer region, enabling easy swap-in comparisons.",
+    "_source_name": "J23108 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23109 promoter",
+    "aliases": [
+      "BBa_J23109",
+      "J23109",
+      "Anderson promoter J23109"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive sigma70 promoter from the Anderson promoter collection with medium-low relative strength (~6% of J23119). Used in synthetic biology circuits requiring low, stable constitutive expression in E. coli.",
+    "mechanism": "Provides constitutive transcription initiation via recognition by E. coli sigma70-RNA polymerase holoenzyme at -35 and -10 hexamer elements.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      34,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.29,
+      0.4
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23109"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength ~6% of J23119 (strongest Anderson promoter). Part of the 20-member Anderson constitutive promoter library spanning ~0.5% to 100% relative strength; useful for titrating expression levels in E. coli metabolic engineering and genetic circuits.",
+    "_source_name": "J23109 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23110 promoter",
+    "aliases": [
+      "BBa_J23110",
+      "J23110",
+      "Anderson promoter J23110"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "J23110 is a constitutive sigma70 promoter from the Anderson promoter library, a collection of promoters with characterized relative strengths for use in E. coli. It drives moderate-low constitutive transcription and is commonly used when intermediate expression levels are needed.",
+    "mechanism": "Functions as a sigma70-recognized constitutive promoter with -10 and -35 consensus elements that recruit RNA polymerase for transcription initiation without requiring activators.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.4
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23110"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength approximately 33% of J23100 (the strongest Anderson promoter). Part of the Anderson promoter collection (J23100\u2013J23119), which spans ~0.6%\u2013100% of J23100 strength. Sequence: TTTACAGCTAGCTCAGTCCTAGGTATAATGCTAGC.",
+    "_source_name": "J23110 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23111 promoter",
+    "aliases": [
+      "BBa_J23111",
+      "J23111",
+      "Anderson promoter J23111"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive sigma70 promoter from the Anderson promoter collection with moderate strength (~58% of J23119). Widely used in synthetic biology for stable, tunable gene expression in E. coli without requiring inducers.",
+    "mechanism": "Recognized by E. coli sigma70 (\u03c370) RNA polymerase holoenzyme via -10 and -35 elements; mutations relative to the consensus sequence reduce binding affinity and transcription initiation rate compared to stronger Anderson promoters.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      50
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.42
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23111"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Moderate-strength promoter; ~58% relative activity compared to J23119 (the strongest Anderson promoter) as measured by GFP fluorescence in E. coli. All J23 promoters are constitutive, orthogonal to inducible systems, and differ only in their -10/-35 spacing and flanking sequences. The 35 bp core sequence is TTGACAGCTAGCTCAGTCCTAGGTATTATGCTAGC.",
+    "_source_name": "J23111 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23112 promoter",
+    "aliases": [
+      "BBa_J23112",
+      "J23112",
+      "Anderson promoter J23112"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive bacterial promoter from the Anderson promoter collection (iGEM); one of the weakest members with very low transcriptional activity in E. coli. Commonly used as a near-silent baseline or for tightly controlled low-level expression.",
+    "mechanism": "Sigma-70 dependent constitutive promoter whose -10 and -35 hexamer sequences diverge substantially from the consensus, resulting in poor RNA polymerase recognition and very low transcription initiation frequency.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.35,
+      0.5
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "https://parts.igem.org/Part:BBa_J23112"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength approximately 1-2% of J23119 (the strongest Anderson promoter, ~1791 au); J23112 is among the weakest in the series (~16 au). Part of the 20-member Anderson constitutive promoter library used for tuning gene expression levels in E. coli.",
+    "_source_name": "J23112 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23113 promoter",
+    "aliases": [
+      "BBa_J23113",
+      "J23113"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "J23113 is a weak constitutive promoter from the Anderson promoter collection, a family of sigma70-compatible promoters for E. coli with calibrated relative strengths. It drives low-level constitutive transcription and is used when minimal basal expression is needed.",
+    "mechanism": "Constitutive sigma70 promoter with variant -10 and -35 hexamer sequences that reduce RNA polymerase binding affinity relative to consensus, yielding low-level transcription without regulatory input.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      30,
+      40
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.45
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23113"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "One of the weaker members of the Anderson promoter collection; approximately 1-5% of J23119 strength. All J23 promoters are 35 bp with identical flanking sequences differing only in their -10/-35 box variants.",
+    "_source_name": "J23113 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23114 promoter",
+    "aliases": [
+      "BBa_J23114",
+      "J23114",
+      "Anderson promoter J23114"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive \u03c370 promoter from the Anderson promoter collection (iGEM Registry), characterized as a weak-strength promoter. Widely used in synthetic biology for low-level constitutive gene expression in E. coli.",
+    "mechanism": "Recognized by E. coli \u03c370 (housekeeping sigma factor) via -35 (TTGACA consensus) and -10 (TATAAT consensus) hexamer elements; drives constitutive transcription without regulatory inputs.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      33,
+      37
+    ],
+    "expected_gc_fraction": [
+      0.25,
+      0.4
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23114"
+    ],
+    "known_variants": [],
+    "known_misannotations": [
+      "Sometimes confused with J23104 or J23116 due to similar low strength; exact sequence identity required for correct assignment"
+    ],
+    "notes": "Relative promoter strength ~10% of J23119 (the strongest Anderson promoter); useful for fine-tuned low expression. Part of the Anderson constitutive promoter library (J23100\u2013J23119), all ~35 bp and interchangeable in cloning contexts.",
+    "_source_name": "J23114 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23115 promoter",
+    "aliases": [
+      "BBa_J23115",
+      "J23115",
+      "Anderson promoter J23115"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive sigma70-dependent promoter from the Anderson promoter collection (iGEM Registry), designed for tunable gene expression in E. coli. Exhibits relatively low promoter strength (~15% of J23119) and is used when minimal basal expression is desired.",
+    "mechanism": "Recognized by E. coli housekeeping sigma factor (sigma70/RpoD) via -35 (TTGACA) and -10 (TATAAT) hexamer consensus elements with sequence deviations that reduce binding affinity relative to the strongest Anderson promoters.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.4
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23115"
+    ],
+    "known_variants": [],
+    "known_misannotations": [
+      "Sometimes confused with J23105 or J23116, which have similar low-strength profiles"
+    ],
+    "notes": "Relative promoter strength ~15% of J23119 (the strongest Anderson promoter). Part of a family of 20 constitutive promoters with systematically varied -35/-10 sequences spanning a ~400-fold range of transcriptional activity. All family members are interchangeable in sequence length and BioBrick context.",
+    "_source_name": "J23115 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23116 promoter",
+    "aliases": [
+      "BBa_J23116",
+      "J23116",
+      "Anderson promoter J23116"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive bacterial promoter from the Anderson promoter collection, characterized for use in E. coli. Provides low-to-medium level constitutive transcription, with approximately 16% the strength of the strongest Anderson promoter J23119.",
+    "mechanism": "Recognized by E. coli sigma70 (\u03c370) RNA polymerase via conserved -10 (TATAAT) and -35 (TTGACA) hexamer elements; strength determined by deviation from consensus at key positions.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      33,
+      37
+    ],
+    "expected_gc_fraction": [
+      0.3,
+      0.45
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23116"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength ~16% of J23119 (strongest Anderson promoter); sequence: ttgacagctagctcagtcctagggactatgt (35 bp). Part of the Anderson constitutive promoter library (J23100\u2013J23119) widely used for fine-tuning gene expression in synthetic circuits.",
+    "_source_name": "J23116 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23117 promoter",
+    "aliases": [
+      "BBa_J23117",
+      "J23117",
+      "Anderson promoter J23117"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive bacterial promoter from the Anderson promoter collection, one of the weaker members of the series. Used in synthetic biology circuits requiring low, stable transcription levels in E. coli.",
+    "mechanism": "Sigma70-recognized constitutive promoter with -35 (TTGACA consensus) and -10 (TATAAT consensus) hexamer boxes; sequence variation from consensus reduces RNA polymerase affinity relative to stronger Anderson promoters.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      34,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.42
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23117"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength approximately 5% of J23100 (one of the weakest in the Anderson collection). Part of the constitutive promoter family BBa_J231xx. All Anderson promoters share identical flanking sequences; only the -35/-10 spacer region varies.",
+    "_source_name": "J23117 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23118 promoter",
+    "aliases": [
+      "BBa_J23118",
+      "J23118",
+      "Anderson promoter J23118"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "Constitutive sigma70 promoter from the Anderson promoter collection for E. coli. Used in synthetic biology circuits requiring moderate-strength, predictable, constitutive transcription.",
+    "mechanism": "Recognized by E. coli RNA polymerase sigma70 subunit via -35 (TTGACA) and -10 (TATAAT) consensus hexamer elements; transcription initiates constitutively without regulatory input.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      36
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.42
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23118"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative strength ~0.56 compared to J23119 (strongest, 1.0) and J23100 (1.0 in some scales); moderate-strength promoter in the Anderson constitutive promoter library.",
+    "_source_name": "J23118 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J23119 promoter",
+    "aliases": [
+      "BBa_J23119",
+      "J23119",
+      "Anderson promoter J23119"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "J23119 is the strongest constitutive promoter in the Anderson promoter collection, a family of sigma70-dependent promoters for E. coli. Widely used in synthetic biology for high-level constitutive expression of downstream genes.",
+    "mechanism": "Constitutive sigma70 RNA polymerase recognition via conserved -10 and -35 hexamer elements; no regulatory proteins required for activity.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      35,
+      55
+    ],
+    "expected_gc_fraction": [
+      0.38,
+      0.48
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J23119"
+    ],
+    "known_variants": [
+      "J23100",
+      "J23101",
+      "J23102",
+      "J23103",
+      "J23104",
+      "J23105",
+      "J23106",
+      "J23107",
+      "J23108",
+      "J23109",
+      "J23110",
+      "J23111",
+      "J23112",
+      "J23113",
+      "J23114",
+      "J23115",
+      "J23116",
+      "J23117",
+      "J23118"
+    ],
+    "known_misannotations": [
+      "Sometimes confused with J23100 (the conventional reference promoter in the family); J23119 is the strongest member, not J23100"
+    ],
+    "notes": "Strongest promoter in the Anderson constitutive promoter family; relative activity ~1825 AU (Elowitz GFP units) compared to ~1791 for J23100. Sequence: ttgacagctagctcagtcctaggtataatgctagc. Commonly used as a positive control or maximum expression benchmark.",
+    "_source_name": "J23119 promoter",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "B0010 terminator",
+    "aliases": [
+      "BBa_B0010",
+      "B0010",
+      "rrnB T1 terminator"
+    ],
+    "so_term": "SO:0000141",
+    "so_label": "terminator",
+    "category": "terminator",
+    "description": "Rho-independent transcriptional terminator derived from the E. coli rrnB ribosomal RNA operon T1 terminator. Widely used in BioBrick-based constructs to terminate transcription downstream of coding sequences.",
+    "mechanism": "Forms an intrinsic GC-rich RNA stem-loop hairpin structure followed by a poly-U tract, causing RNA polymerase to pause and dissociate from the DNA template.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      48,
+      60
+    ],
+    "expected_gc_fraction": [
+      0.42,
+      0.58
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_B0010"
+    ],
+    "known_variants": [
+      "B0012",
+      "B0015"
+    ],
+    "known_misannotations": [],
+    "notes": "Moderate-strength terminator; often used in combination with B0012 as the composite B0015 double terminator for more complete transcriptional insulation. Efficiency ~80% in E. coli.",
+    "_source_name": "B0010 terminator",
+    "_category_hint": "terminator",
+    "_generated": true
+  },
+  {
+    "canonical_name": "B0012 terminator",
+    "aliases": [
+      "BBa_B0012",
+      "B0012",
+      "rrnB T2 terminator"
+    ],
+    "so_term": "SO:0000141",
+    "so_label": "terminator",
+    "category": "terminator",
+    "description": "BBa_B0012 is a transcriptional terminator derived from the rrnB T2 terminator of E. coli. It is widely used in synthetic biology to terminate transcription downstream of genes of interest, often paired with B0010 to form the composite double terminator B0015.",
+    "mechanism": "Forms a GC-rich RNA stem-loop structure followed by a poly-U tract that causes RNA polymerase to pause and dissociate from the template in a rho-independent manner.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      38,
+      45
+    ],
+    "expected_gc_fraction": [
+      0.35,
+      0.55
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_B0012"
+    ],
+    "known_variants": [
+      "BBa_B0015 (B0010+B0012 double terminator)"
+    ],
+    "known_misannotations": [
+      "Sometimes confused with B0010 (rrnB T1) or B0015 (composite double terminator)"
+    ],
+    "notes": "Moderate termination efficiency (~60%); the weaker of the two rrnB terminators. Most constructs use B0015 (B0010+B0012) for robust termination. Length is approximately 41 bp.",
+    "_source_name": "B0012 terminator",
+    "_category_hint": "terminator",
+    "_generated": true
+  },
+  {
+    "canonical_name": "B0015 terminator",
+    "aliases": [
+      "BBa_B0015",
+      "B0015",
+      "double terminator B0015"
+    ],
+    "so_term": "SO:0000141",
+    "so_label": "terminator",
+    "category": "terminator",
+    "description": "B0015 is a composite double terminator from the iGEM Registry, consisting of B0010 (rrnB T1) followed by B0012 (rrnB T2). It is one of the most widely used transcriptional terminators in synthetic biology, providing strong and reliable termination in E. coli.",
+    "mechanism": "Sequential rho-independent terminators: a GC-rich hairpin loop in the nascent RNA followed by a poly-U tract causes RNA polymerase to pause and dissociate from the DNA template.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      120,
+      135
+    ],
+    "expected_gc_fraction": [
+      0.38,
+      0.52
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_B0015"
+    ],
+    "known_variants": [
+      "BBa_B0010",
+      "BBa_B0012"
+    ],
+    "known_misannotations": [
+      "Sometimes annotated as a single terminator rather than a double (composite) terminator",
+      "Occasionally confused with BBa_B0010 alone or BBa_B0012 alone"
+    ],
+    "notes": "Double terminator with very high read-through suppression; preferred over single terminators (B0010, B0012) when strong termination is required. Efficiency >99% in E. coli. Standard component in the BioBrick assembly toolkit.",
+    "_source_name": "B0015 terminator",
+    "_category_hint": "terminator",
+    "_generated": true
+  },
+  {
+    "canonical_name": "B1002 terminator",
+    "aliases": [
+      "BBa_B1002",
+      "B1002"
+    ],
+    "so_term": "SO:0000141",
+    "so_label": "terminator",
+    "category": "terminator",
+    "description": "BBa_B1002 is a transcriptional terminator from the iGEM Registry used to halt RNA polymerase progression in E. coli expression constructs. It is commonly used in synthetic biology to insulate genetic parts and prevent transcriptional read-through.",
+    "mechanism": "Forms an intrinsic (Rho-independent) hairpin stem-loop structure in the nascent RNA followed by a poly-U tract, causing RNA polymerase to pause and dissociate from the DNA template.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      40,
+      60
+    ],
+    "expected_gc_fraction": [
+      0.35,
+      0.55
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_B1002"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Part of the iGEM BioBrick B000x terminator series; weaker termination efficiency compared to B0010 or B0015 double terminator; sometimes used when partial read-through is acceptable or in stacked terminator configurations",
+    "_source_name": "B1002 terminator",
+    "_category_hint": "terminator",
+    "_generated": true
+  },
+  {
+    "canonical_name": "B0034 RBS",
+    "aliases": [
+      "BBa_B0034",
+      "B0034",
+      "Elowitz RBS",
+      "RBS34"
+    ],
+    "so_term": "SO:0000139",
+    "so_label": "ribosome_entry_site",
+    "category": "regulatory",
+    "description": "Strong constitutive ribosome binding site (RBS) derived from the phage T7 gene 10 leader sequence, widely used as the standard strong RBS in E. coli synthetic biology. It is one of the most commonly used RBS parts in the BioBrick Registry and serves as the reference point for the RBS Calculator.",
+    "mechanism": "Presents a Shine-Dalgarno consensus sequence (AAGGAG) spaced ~7\u20139 nt upstream of the AUG start codon, recruiting the 30S ribosomal subunit to initiate translation.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      10,
+      16
+    ],
+    "expected_gc_fraction": [
+      0.2,
+      0.35
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_B0034"
+    ],
+    "known_variants": [
+      "B0031 RBS",
+      "B0032 RBS",
+      "B0033 RBS",
+      "B0064 RBS"
+    ],
+    "known_misannotations": [
+      "Sometimes annotated with extended flanking sequence including the preceding spacer, inflating apparent length to 30\u201350 bp"
+    ],
+    "notes": "Strong RBS; translation initiation rate estimated at ~100% relative to other BioBrick RBS. Core sequence: AAAGAGGAGAAA. Paired with B0015 double terminator in many standard expression cassettes.",
+    "_source_name": "B0034 RBS",
+    "_category_hint": "regulatory",
+    "_generated": true
+  },
+  {
+    "canonical_name": "B0031 RBS",
+    "aliases": [
+      "BBa_B0031",
+      "B0031"
+    ],
+    "so_term": "SO:0000139",
+    "so_label": "ribosome_entry_site",
+    "category": "regulatory",
+    "description": "B0031 is a weak ribosome binding site (RBS) from the BioBrick Registry with approximately 0.07 relative strength compared to B0034. Used in synthetic biology constructs where low-level protein expression is desired.",
+    "mechanism": "Contains a Shine-Dalgarno sequence complementary to the 3' end of 16S rRNA, recruiting the 30S ribosomal subunit to initiate translation in E. coli.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      12,
+      20
+    ],
+    "expected_gc_fraction": [
+      0.2,
+      0.45
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_B0031"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Relative translation initiation strength ~0.07 compared to B0034 (normalized to 1.0); one of the weaker standard BioBrick RBS parts from the Elowitz/Endy collection. Useful for fine-tuning expression in multi-gene circuits.",
+    "_source_name": "B0031 RBS",
+    "_category_hint": "regulatory",
+    "_generated": true
+  },
+  {
+    "canonical_name": "B0032 RBS",
+    "aliases": [
+      "BBa_B0032",
+      "B0032",
+      "bba_b0032"
+    ],
+    "so_term": "SO:0000552",
+    "so_label": "ribosome_binding_site",
+    "category": "regulatory",
+    "description": "Medium-weak strength ribosome binding site (RBS) from the BioBrick standard parts collection, providing approximately 30% of the translation initiation activity of B0034. Widely used in E. coli synthetic biology circuits where moderate protein expression is desired.",
+    "mechanism": "Contains a Shine-Dalgarno sequence complementary to the 3\u2032 end of 16S rRNA; base-pairing positions the ribosome at the start codon to initiate translation.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      12,
+      20
+    ],
+    "expected_gc_fraction": [
+      0.25,
+      0.42
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_B0032"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "~30% the strength of BBa_B0034 in E. coli; part of the B00xx series of characterised BioBrick RBS standards. Useful when lower expression levels are required relative to B0034.",
+    "_source_name": "B0032 RBS",
+    "_category_hint": "regulatory",
+    "_generated": true
+  },
+  {
+    "canonical_name": "B0064 RBS",
+    "aliases": [
+      "BBa_B0064",
+      "B0064"
+    ],
+    "so_term": "SO:0000139",
+    "so_label": "ribosome_entry_site",
+    "category": "regulatory",
+    "description": "A weak ribosome binding site (RBS) from the BioBrick standard parts collection. Used to tune translation initiation efficiency in synthetic gene circuits, particularly when low protein expression levels are desired.",
+    "mechanism": "Contains a Shine-Dalgarno sequence that base-pairs with the 16S rRNA of the 30S ribosomal subunit to recruit the ribosome to the mRNA and initiate translation.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      12,
+      20
+    ],
+    "expected_gc_fraction": [
+      0.15,
+      0.4
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_B0064"
+    ],
+    "known_variants": [],
+    "known_misannotations": [],
+    "notes": "Weak RBS; estimated relative translation strength ~0.07 compared to B0034 (strong RBS). Part of the BioBrick RBS characterization series alongside B0031, B0032, and B0034. Useful for fine-tuning gene expression in metabolic engineering and synthetic biology circuits.",
+    "_source_name": "B0064 RBS",
+    "_category_hint": "regulatory",
+    "_generated": true
+  },
+  {
+    "canonical_name": "L3S2P21 terminator",
+    "aliases": [
+      "BBa_K864300",
+      "L3S2P21",
+      "L3S2P21 terminator"
+    ],
+    "so_term": "SO:0000141",
+    "so_label": "terminator",
+    "category": "terminator",
+    "description": "Synthetic intrinsic transcriptional terminator from the L3S library designed by Chen et al. (2013) via computational design of hairpin-forming sequences. Widely used in synthetic biology circuits for robust, predictable transcription termination in E. coli.",
+    "mechanism": "Forms an RNA stem-loop (hairpin) structure followed by a poly-U tract that stalls RNA polymerase and triggers Rho-independent dissociation from the DNA template.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      47,
+      58
+    ],
+    "expected_gc_fraction": [
+      0.38,
+      0.55
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_K864300"
+    ],
+    "known_variants": [
+      "L3S2P11",
+      "L3S2P55",
+      "L3S3P21",
+      "L3S1P21"
+    ],
+    "known_misannotations": [
+      "Sometimes annotated simply as 'terminator' without the L3S family designation, losing information about its synthetic origin and characterized efficiency"
+    ],
+    "notes": "Part of a library of 582 characterized synthetic terminators (Chen et al. 2013, Nature Methods). L3S2P21 exhibits high termination efficiency (>95% in standard assays) and is a preferred choice for strong, constitutive termination. The 'L3' prefix denotes third-generation library; 'S2' indicates spacer variant 2; 'P21' indicates the specific sequence position/variant.",
+    "_source_name": "L3S2P21 terminator",
+    "_category_hint": "terminator",
+    "_generated": true
+  },
+  {
+    "canonical_name": "J61101 RBS",
+    "aliases": [
+      "BBa_J61101",
+      "J61101"
+    ],
+    "so_term": "SO:0000139",
+    "so_label": "ribosome_entry_site",
+    "category": "regulatory",
+    "description": "A medium-strength ribosome binding site (RBS) from the iGEM J61 series, used to tune translation initiation in synthetic genetic circuits. Commonly paired with Anderson promoters and BioBrick coding sequences in E. coli.",
+    "mechanism": "Contains a Shine-Dalgarno sequence that base-pairs with the 3' end of 16S rRNA to recruit the 30S ribosomal subunit and initiate translation.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      10,
+      20
+    ],
+    "expected_gc_fraction": [
+      0.2,
+      0.5
+    ],
+    "reference_accessions": [],
+    "reference_plasmids": [
+      "http://parts.igem.org/Part:BBa_J61101"
+    ],
+    "known_variants": [
+      "BBa_J61100",
+      "BBa_J61107",
+      "BBa_J61117",
+      "BBa_J61127",
+      "BBa_J61137"
+    ],
+    "known_misannotations": [],
+    "notes": "Part of the J61 constitutive RBS family; medium translation strength relative to B0034. Strength is sequence-context dependent \u2014 spacing to the ATG start codon affects efficiency.",
+    "_source_name": "J61101 RBS",
+    "_category_hint": "regulatory",
+    "_generated": true
   }
 ]

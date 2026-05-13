@@ -490,7 +490,9 @@ export function DigestPanel({ seq, topology, primerPair }: DigestPanelProps) {
 	// Build lane data for the gel
 	const gelLanes: LaneData[] = useMemo(() => {
 		const ls: LaneData[] = [{ label: "Digest 1", fragments: result1.fragments }];
-		if (showLane2 && lane2.size > 0) ls.push({ label: "Digest 2", fragments: result2.fragments });
+		// Always add Lane 2 column when toggled — even if empty, the column
+		// appears in the gel so users see they can select enzymes for it.
+		if (showLane2) ls.push({ label: "Digest 2", fragments: result2.fragments });
 		if (primerPair) {
 			ls.push({
 				label: "PCR",
@@ -594,7 +596,14 @@ export function DigestPanel({ seq, topology, primerPair }: DigestPanelProps) {
 						borderColor: showLane2 ? "rgba(26,71,49,0.4)" : "#ddd8ce",
 						background: showLane2 ? "rgba(26,71,49,0.06)" : "none",
 					}}
-					onClick={() => setShowLane2((v) => !v)}
+					onClick={() => {
+						setShowLane2((v) => {
+							// Pre-populate Lane 2 with Lane 1's selection so the gel
+							// immediately shows a second column the user can then modify.
+							if (!v) setLane2(new Set(lane1));
+							return !v;
+						});
+					}}
 				>
 					{showLane2 ? "− Lane 2" : "+ Lane 2"}
 				</button>
@@ -628,7 +637,7 @@ export function DigestPanel({ seq, topology, primerPair }: DigestPanelProps) {
 				style={{
 					flexShrink: 0,
 					overflowY: "auto",
-					maxHeight: showLane2 ? "140px" : "180px",
+					maxHeight: showLane2 ? "220px" : "180px",
 					borderBottom: "1px solid #ddd8ce",
 				}}
 			>
@@ -722,13 +731,13 @@ export function DigestPanel({ seq, topology, primerPair }: DigestPanelProps) {
 						>
 							{result1.fragments.length} fragment{result1.fragments.length !== 1 ? "s" : ""} ·{" "}
 							{result1.cutSites.length} cut{result1.cutSites.length !== 1 ? "s" : ""}
-							{showLane2 && lane2.size > 0 && ` · Lane 2: ${result2.fragments.length} fragments`}
+							{showLane2 && ` · Lane 2: ${result2.fragments.length} fragments`}
 							{primerPair && ` · PCR: ${primerPair.productSize} bp`}
 						</div>
 						<FragmentTable
 							lanes={[
 								{ label: "Digest 1", fragments: result1.fragments },
-								...(showLane2 && lane2.size > 0
+								...(showLane2
 									? [{ label: "Digest 2", fragments: result2.fragments }]
 									: []),
 							]}

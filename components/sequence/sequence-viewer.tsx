@@ -2,6 +2,7 @@
 
 import type { PrimerPair } from "@shandley/primd";
 import SeqViz from "seqviz";
+import { useRef } from "react";
 import type { ParsedSequence } from "@/lib/bio/parse-genbank";
 import { AccessibilityTrack } from "./accessibility-track";
 import { LinearMap } from "./linear-map";
@@ -62,11 +63,22 @@ export function SequenceViewer({
 			: []),
 	];
 
-	// For linear sequences, position clicks from the overview map scroll SeqViz
-	// by setting a selection at that position (SeqViz will scroll to show it).
+	// Ref to the SeqViz wrapper so we can query its internal DOM
+	const seqvizWrapRef = useRef<HTMLDivElement>(null);
+
+	// For linear sequences, clicking the overview map scrolls SeqViz's internal
+	// scroller (class "la-vz-linear-scroller") to the proportional position.
 	const handleLinearMapClick = (pos: number) => {
+		// Visual: set selection for cursor feedback in both views
 		if (onSelection) {
 			onSelection({ start: pos, end: pos + 1, sequence: "", length: 1 });
+		}
+		// Scroll: find SeqViz's internal scrollable container and scroll it
+		const scroller = seqvizWrapRef.current?.querySelector(".la-vz-linear-scroller");
+		if (scroller && parsed.seq.length > 0) {
+			const ratio = pos / parsed.seq.length;
+			const target = ratio * (scroller.scrollHeight - scroller.clientHeight);
+			scroller.scrollTo({ top: target, behavior: "smooth" });
 		}
 	};
 
@@ -133,7 +145,7 @@ export function SequenceViewer({
 			)}
 
 			{/* Sequence map — takes all remaining height */}
-			<div style={{ flex: 1, overflow: "hidden" }}>
+			<div ref={seqvizWrapRef} style={{ flex: 1, overflow: "hidden" }}>
 				<SeqViz
 					name={parsed.name}
 					seq={parsed.seq}

@@ -377,7 +377,7 @@ export function SequenceViewerWithPanel({
 							annotationName={annotationName}
 						/>
 					)}
-					{activeTab === "digest" && <DigestPanel seq={parsed.seq} topology={topology} />}
+					{activeTab === "digest" && <DigestPanel seq={parsed.seq} topology={topology} primerPair={bestPair} />}
 					{activeTab === "orfs" && <ORFPanel seq={parsed.seq} topology={topology} />}
 					{activeTab === "search" && (
 						<SearchPanel seq={parsed.seq} topology={topology} onMatches={handleSearchMatches} />

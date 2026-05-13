@@ -12987,5 +12987,1354 @@
     "_source_name": "J61101 RBS",
     "_category_hint": "regulatory",
     "_generated": true
+  },
+  {
+    "canonical_name": "LuxI",
+    "aliases": [
+      "luxI",
+      "AHL synthase",
+      "autoinducer synthase",
+      "N-acyl homoserine lactone synthase",
+      "3OC6-HSL synthase",
+      "BBa_C0061",
+      "lux autoinducer synthetase"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "LuxI is the acyl-homoserine lactone (AHL) synthase from Vibrio fischeri that produces N-(3-oxohexanoyl)-L-homoserine lactone (3OC6-HSL), the primary quorum sensing autoinducer in V. fischeri. It is one of the most widely used components in synthetic biology for engineering quorum sensing circuits, population-level communication, and density-dependent gene expression.",
+    "mechanism": "LuxI catalyzes the synthesis of 3OC6-HSL by transferring the acyl group from 3-oxohexanoyl-ACP to S-adenosyl-L-methionine (SAM), releasing the AHL signal and 5'-methylthioadenosine. Secreted AHL accumulates in proportion to cell density and activates LuxR at threshold concentrations.",
+    "expression_systems": [
+      "e_coli",
+      "vibrio_fischeri",
+      "pseudomonas_putida",
+      "bacillus_subtilis",
+      "saccharomyces_cerevisiae"
+    ],
+    "expected_length_bp": [
+      570,
+      600
+    ],
+    "expected_gc_fraction": [
+      0.33,
+      0.44
+    ],
+    "reference_accessions": [
+      "M19039",
+      "CP000020"
+    ],
+    "reference_plasmids": [
+      "BBa_C0061",
+      "BBa_K091117",
+      "pSB1C3-LuxI"
+    ],
+    "known_variants": [
+      "V. fischeri MJ1 LuxI (original cloned variant)",
+      "V. fischeri ES114 LuxI (sequenced strain reference)",
+      "EsaI \u2014 homolog from Erwinia stewartii producing 3OC6-HSL",
+      "codon-optimized E. coli variants for improved expression"
+    ],
+    "known_misannotations": [
+      "Confused with LasI (P. aeruginosa homolog producing 3OC12-HSL) \u2014 different acyl chain specificity",
+      "Sometimes annotated as luxM in older literature (luxM is a separate OHHL synthase in V. harveyi)",
+      "Occasionally mislabeled as luxA due to proximity in the lux operon"
+    ],
+    "notes": "Origin: Vibrio fischeri (strain MJ1/ES114). LuxI is the founding member of the LuxI/LuxR quorum sensing family. In circuits, it is typically paired with LuxR and the pLux promoter to create an AHL-responsive transcriptional switch. Commonly used in band-detector circuits, synchronized oscillators, and population-level logic gates. AHL signal (3OC6-HSL) is membrane-permeable and freely diffuses between cells, making LuxI/LuxR a canonical intercellular communication module.",
+    "_source_name": "LuxI (AHL synthase)",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "LuxR (AHL receptor)",
+    "aliases": [
+      "luxR",
+      "LuxR",
+      "BBa_C0062",
+      "BBa_C0079",
+      "N-acyl homoserine lactone receptor",
+      "quorum sensing transcriptional activator",
+      "3OC6-HSL receptor"
+    ],
+    "so_term": "SO:0001217",
+    "so_label": "protein_coding_gene",
+    "category": "cds",
+    "description": "LuxR is the AHL-responsive transcriptional activator from Aliivibrio fischeri that drives quorum sensing-dependent bioluminescence. It binds N-(3-oxohexanoyl)-L-homoserine lactone (3OC6-HSL) produced by LuxI and activates transcription at lux box promoters. LuxR is one of the most widely used synthetic biology components for building population-density-responsive genetic circuits.",
+    "mechanism": "LuxR contains an N-terminal AHL-binding domain that sequesters it in an inactive conformation; binding of 3OC6-HSL induces dimerization and conformational change, enabling the C-terminal helix-turn-helix domain to bind the lux box and recruit RNA polymerase.",
+    "expression_systems": [
+      "e_coli",
+      "aliivibrio_fischeri",
+      "bacillus_subtilis",
+      "pseudomonas_putida",
+      "yeast"
+    ],
+    "expected_length_bp": [
+      720,
+      780
+    ],
+    "expected_gc_fraction": [
+      0.36,
+      0.46
+    ],
+    "reference_accessions": [
+      "M19039",
+      "U26658",
+      "CP000021"
+    ],
+    "reference_plasmids": [
+      "BBa_C0062",
+      "BBa_C0079",
+      "pSB1C3-C0062"
+    ],
+    "known_variants": [
+      "Codon-optimized luxR for E. coli expression",
+      "LuxR with C-terminal degradation tag (ssrA) for dynamic circuits",
+      "LuxR-VP16 fusion for eukaryotic activation",
+      "LuxR variants with altered AHL specificity",
+      "LuxR with N-terminal fluorescent protein fusions"
+    ],
+    "known_misannotations": [
+      "Confused with LuxR homologs (LasR, RhlR, TraR) which have different AHL specificities",
+      "Annotated as 'quorum sensing regulator' without specifying LuxR vs LuxI",
+      "Mislabeled as LuxI (the AHL synthase) in circuit diagrams",
+      "Annotated as activating pLas or pRhl promoters (requires LasR or RhlR respectively)"
+    ],
+    "notes": "Originating from Aliivibrio fischeri ES114, LuxR is the founding member of the LuxR-family of quorum sensing regulators, which now encompasses hundreds of homologs across proteobacteria. LuxR is unstable in the absence of AHL and is rapidly degraded, making it a useful sensor with low background. The standard iGEM part BBa_C0062 encodes the 759 bp luxR CDS without RBS. LuxR paired with LuxI and pLux constitutes the canonical quorum sensing circuit module used in synthetic biology toggle switches, oscillators, and population-level logic gates.",
+    "_source_name": "LuxR (AHL receptor)",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "LasI",
+    "aliases": [
+      "lasI",
+      "PA1432",
+      "N-(3-oxododecanoyl)-L-homoserine lactone synthase",
+      "3-oxo-C12-HSL synthase",
+      "PAI-1 synthase",
+      "autoinducer synthase LasI",
+      "BBa_C0079"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "LasI is the acyl-homoserine lactone (AHL) synthase of the las quorum sensing system in Pseudomonas aeruginosa, responsible for synthesizing the primary autoinducer N-(3-oxododecanoyl)-L-homoserine lactone (3-oxo-C12-HSL, PAI-1). At high cell densities, accumulated 3-oxo-C12-HSL binds and activates the LasR transcriptional regulator, inducing virulence gene expression and biofilm formation. In synthetic biology, LasI is used to build population-density-responsive genetic switches, cascaded quorum sensing circuits, and multi-signal AND gates.",
+    "mechanism": "LasI catalyzes transfer of a 3-oxo-C12 acyl group from a cognate acyl-acyl carrier protein (acyl-ACP) onto the amino group of S-adenosylmethionine (SAM), followed by lactonization of the methionine moiety to release 3-oxo-C12-HSL and 5'-methylthioadenosine (MTA).",
+    "expression_systems": [
+      "e_coli",
+      "pseudomonas_aeruginosa",
+      "bacillus_subtilis",
+      "yeast"
+    ],
+    "expected_length_bp": [
+      585,
+      615
+    ],
+    "expected_gc_fraction": [
+      0.62,
+      0.7
+    ],
+    "reference_accessions": [
+      "NC_002516",
+      "AE004091",
+      "AAG05093"
+    ],
+    "reference_plasmids": [
+      "BBa_C0079"
+    ],
+    "known_variants": [
+      "E. coli codon-optimized lasI (reduced GC content ~50%)",
+      "LasI L37H \u2014 altered acyl chain specificity",
+      "Truncated N-terminal variants with retained activity"
+    ],
+    "known_misannotations": [
+      "Confused with RhlI, which produces C4-HSL rather than 3-oxo-C12-HSL",
+      "Labeled generically as 'AHL synthase' without species qualification, obscuring signal specificity",
+      "Occasionally misassigned to the rhl operon in annotation pipelines due to operon proximity"
+    ],
+    "notes": "Encoded by PA1432 in P. aeruginosa PAO1 (196 aa, 591 bp ORF); native GC content ~66% due to P. aeruginosa genome composition. The 3-oxo-C12-HSL signal diffuses freely across membranes and is active at nanomolar concentrations. Paired cognate receptor is LasR (PA1430). Widely used in synthetic quorum sensing circuits alongside the lower-affinity rhl system (RhlI/RhlR) for hierarchical or threshold-gated logic. E. coli heterologous expression is functional but requires codon optimization for optimal yield.",
+    "_source_name": "LasI",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "LasR",
+    "aliases": [
+      "lasR",
+      "Las R",
+      "LasR regulator",
+      "BBa_C0079",
+      "PA1430"
+    ],
+    "so_term": "SO:0001217",
+    "so_label": "protein_coding_gene",
+    "category": "cds",
+    "description": "LasR is the transcriptional regulator of the las quorum sensing system in Pseudomonas aeruginosa. It binds the AHL signal 3-oxo-C12-HSL produced by LasI and activates expression of virulence genes and the downstream rhl quorum sensing circuit. In synthetic biology, LasR is used to build density-dependent gene circuits and AND gates that respond to population density.",
+    "mechanism": "LasR contains an N-terminal autoinducer-binding domain (ABD) and a C-terminal helix-turn-helix DNA-binding domain. Binding of 3-oxo-C12-HSL stabilizes LasR, promotes homodimerization, and enables binding to las box promoter elements (CT-N12-AG) to activate transcription.",
+    "expression_systems": [
+      "e_coli",
+      "pseudomonas_aeruginosa",
+      "yeast",
+      "mammalian"
+    ],
+    "expected_length_bp": [
+      700,
+      740
+    ],
+    "expected_gc_fraction": [
+      0.58,
+      0.7
+    ],
+    "reference_accessions": [
+      "NC_002516.2",
+      "AAG08013.1",
+      "NP_250121.1"
+    ],
+    "reference_plasmids": [
+      "BBa_C0079",
+      "BBa_F2620"
+    ],
+    "known_variants": [
+      "LasR R61W \u2014 reduced AHL binding, constitutively active variant found in clinical isolates",
+      "LasR V208M \u2014 altered ligand specificity",
+      "Codon-optimized LasR for E. coli expression (reduced GC content)"
+    ],
+    "known_misannotations": [
+      "Confused with LuxR (V. fischeri) \u2014 different AHL specificity (C12 vs C6 HSL)",
+      "Sometimes labeled as 'LasR/RhlR' when referencing entire P. aeruginosa QS system",
+      "PA1430 locus tag sometimes omitted, leading to ambiguity with other LuxR-family members in PAO1"
+    ],
+    "notes": "Origin: Pseudomonas aeruginosa PAO1 (locus PA1430). Responds specifically to 3-oxo-C12-HSL (not C6-HSL). Requires AHL ligand for stability in E. coli \u2014 apo-LasR is rapidly degraded by ClpXP. Widely used in synthetic quorum sensing circuits, population-based logic gates, and co-culture communication systems. The cognate promoter pLas (las box) is used as the output element.",
+    "_source_name": "LasR",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "RhlI",
+    "aliases": [
+      "rhlI",
+      "N-butyryl-HSL synthase",
+      "C4-HSL synthase",
+      "RhlI acyl-HSL synthase",
+      "butyryl-homoserine lactone synthase",
+      "BBa_C0171"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "RhlI is an acyl-homoserine lactone (AHL) synthase from Pseudomonas aeruginosa PAO1 that produces N-butyryl-L-homoserine lactone (C4-HSL), the autoinducer of the rhl quorum sensing system. It controls expression of virulence factors, rhamnolipid biosynthesis, and biofilm maturation in P. aeruginosa. In synthetic biology, RhlI is paired with its cognate receptor RhlR to engineer population-density-dependent gene circuits, often as an orthogonal channel alongside LuxI/LuxR in multi-input logic systems.",
+    "mechanism": "RhlI catalyzes transfer of a butyryl group from butyryl-acyl carrier protein (butyryl-ACP) to S-adenosylmethionine (SAM), lactonizing the homoserine moiety to produce C4-HSL, which diffuses freely across membranes and binds RhlR to activate target promoters.",
+    "expression_systems": [
+      "e_coli",
+      "p_aeruginosa",
+      "p_putida",
+      "b_subtilis"
+    ],
+    "expected_length_bp": [
+      690,
+      750
+    ],
+    "expected_gc_fraction": [
+      0.6,
+      0.7
+    ],
+    "reference_accessions": [
+      "NC_002516",
+      "AAB09736.1",
+      "U11859"
+    ],
+    "reference_plasmids": [
+      "BBa_C0171",
+      "BBa_K081013"
+    ],
+    "known_variants": [
+      "Codon-optimized RhlI for E. coli expression",
+      "RhlI from P. aeruginosa PA14 (minor sequence variation)",
+      "Catalytically inactive RhlI point mutants (R30A) used as negative controls"
+    ],
+    "known_misannotations": [
+      "Confused with LasI (the other P. aeruginosa AHL synthase that produces 3OC12-HSL)",
+      "Product sometimes incorrectly listed as N-butanoyl-HSL vs C4-HSL (same molecule, different nomenclature)",
+      "Occasionally annotated as producing 3OC4-HSL instead of unacylated C4-HSL"
+    ],
+    "notes": "Native to P. aeruginosa PAO1 (PA3476 locus). C4-HSL has minimal cross-reactivity with LuxR at physiological concentrations, making RhlI/RhlR a commonly used orthogonal second channel in multi-node quorum sensing circuits. The rhl system operates downstream of the las system in P. aeruginosa's QS hierarchy, but this hierarchy is not maintained in heterologous hosts. RhlI is approximately 240 amino acids and requires no cofactors beyond SAM and acyl-ACP substrates.",
+    "_source_name": "RhlI",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "RhlR",
+    "aliases": [
+      "rhlR",
+      "PA3477",
+      "RhlR transcriptional regulator",
+      "N-butyryl-HSL receptor",
+      "C4-HSL receptor",
+      "BBa_C0078"
+    ],
+    "so_term": "SO:0001217",
+    "so_label": "protein_coding_gene",
+    "category": "cds",
+    "description": "RhlR is a LuxR-family quorum sensing transcriptional regulator from Pseudomonas aeruginosa that responds to N-butyryl-L-homoserine lactone (C4-HSL) produced by its cognate synthase RhlI. When bound to C4-HSL, RhlR activates transcription of genes controlling rhamnolipid biosynthesis, biofilm formation, and secondary metabolite production. In synthetic biology, RhlR is used to build quorum sensing circuits that activate gene expression in a cell-density-dependent manner, often paired with RhlI and the pRhl promoter.",
+    "mechanism": "RhlR contains an N-terminal ligand-binding domain that binds C4-HSL and a C-terminal helix-turn-helix DNA-binding domain; ligand binding induces dimerization and conformational changes that enable high-affinity binding to rhl box sequences upstream of target promoters, activating transcription.",
+    "expression_systems": [
+      "e_coli",
+      "pseudomonas_aeruginosa",
+      "pseudomonas_putida",
+      "bacillus_subtilis",
+      "yeast"
+    ],
+    "expected_length_bp": [
+      700,
+      730
+    ],
+    "expected_gc_fraction": [
+      0.58,
+      0.7
+    ],
+    "reference_accessions": [
+      "AE004091",
+      "NC_002516",
+      "U11811"
+    ],
+    "reference_plasmids": [
+      "BBa_C0078",
+      "BBa_F2621"
+    ],
+    "known_variants": [
+      "RhlR PA14 variant (from P. aeruginosa PA14, minor sequence differences)",
+      "RhlR codon-optimized for E. coli expression",
+      "RhlR point mutants with altered HSL specificity or constitutive activity (e.g., W57A ligand-independent mutant)"
+    ],
+    "known_misannotations": [
+      "Confused with LuxR (V. fischeri) due to shared LuxR family domain \u2014 they have different HSL specificities (C4-HSL vs 3OC6-HSL)",
+      "Sometimes annotated as 'transcriptional regulator' without specifying quorum sensing function",
+      "rhlR vs rhlI confusion \u2014 rhlI encodes the synthase, rhlR encodes the receptor/activator"
+    ],
+    "notes": "RhlR originates from Pseudomonas aeruginosa PAO1 (locus tag PA3477) and is part of the rhl quorum sensing system, one of two interlocked QS systems in P. aeruginosa (the other being las). The rhl system is hierarchically subordinate to las \u2014 LasR-3OC12-HSL complexes activate rhlR expression. RhlR can also bind C4-HSL analogs with reduced affinity. In synthetic circuits, RhlR/RhlI/pRhl is commonly used as an orthogonal quorum sensing module alongside LuxR/LuxI/pLux for two-channel population communication or layered logic gates.",
+    "_source_name": "RhlR",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "pLux",
+    "aliases": [
+      "lux box promoter",
+      "plux",
+      "P_lux",
+      "luxR-regulated promoter",
+      "BBa_R0062",
+      "BBa_R0065",
+      "lux promoter"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "pLux is the quorum sensing-responsive promoter from the Vibrio fischeri lux operon, activated by the LuxR transcription factor complexed with its cognate N-acyl-homoserine lactone (3OC6-HSL). It is one of the most widely used quorum sensing promoters in synthetic biology, enabling cell-density-dependent gene expression in engineered circuits. Its well-characterized input-output behavior and compatibility with E. coli make it a standard component for building population-level logic and synchronized genetic oscillators.",
+    "mechanism": "The LuxR protein dimerizes upon binding 3OC6-HSL (produced by LuxI) and the resulting complex binds an 18 bp palindromic lux box centered near -42 relative to the transcription start site, activating sigma-70-dependent transcription via a class II activation mechanism.",
+    "expression_systems": [
+      "e_coli",
+      "vibrio_fischeri",
+      "pseudomonas_putida",
+      "other_gram_negative"
+    ],
+    "expected_length_bp": [
+      40,
+      165
+    ],
+    "expected_gc_fraction": [
+      0.28,
+      0.45
+    ],
+    "reference_accessions": [
+      "M19039",
+      "CP000021"
+    ],
+    "reference_plasmids": [
+      "BBa_R0062",
+      "BBa_R0065",
+      "pLux-GFP"
+    ],
+    "known_variants": [
+      "Minimal lux box only (40-55 bp core)",
+      "Full upstream context including -35/-10 and flanking sequence",
+      "Synthetic pLux variants with altered lux box spacing for tuned activation thresholds",
+      "pLux hybrid promoters fused to other regulatory elements"
+    ],
+    "known_misannotations": [
+      "Confused with pLas (las box promoter) from P. aeruginosa \u2014 different AHL specificity",
+      "Annotated as constitutive promoter when luxR/AHL context is missing in sequence record",
+      "lux box sequence sometimes annotated as a separate protein_bind feature rather than part of the promoter",
+      "Incorrect strand annotation when extracted from reverse-complement context"
+    ],
+    "notes": "Origin: Vibrio fischeri MJ-1. The lux box (ACCTGTAGGATCGTACAGGT) is the defining regulatory element. Activation requires both LuxR protein and exogenous 3OC6-HSL; without these, pLux is nearly silent. Commonly paired with luxI and luxR in two-component quorum sensing circuits. BBa_R0062 is the canonical iGEM part (55 bp). Used in synchronized oscillators, population controllers, and AHL biosensors.",
+    "_source_name": "pLux (lux box promoter)",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "pLas (las box promoter)",
+    "aliases": [
+      "pLas",
+      "P_las",
+      "las box promoter",
+      "LasR-responsive promoter",
+      "pLasB",
+      "BBa_R0079"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "The pLas promoter is a quorum sensing-responsive regulatory element from Pseudomonas aeruginosa that drives gene expression in response to high cell density. It is activated by the LasR transcriptional regulator bound to its cognate acyl-homoserine lactone signal (3-oxo-C12-HSL), making it a widely used tool for engineering population-density-dependent gene circuits in synthetic biology. The promoter is commonly paired with LasI and LasR components to reconstitute functional quorum sensing in heterologous hosts such as E. coli.",
+    "mechanism": "LasR protein binds 3-oxo-C12-HSL (3OC12HSL) produced by LasI; the activated LasR-AHL complex dimerizes and binds the palindromic las box operator sequence (consensus ACCTGN5CAGG, centered near -42 relative to the TSS) to recruit RNA polymerase and activate transcription.",
+    "expression_systems": [
+      "e_coli",
+      "pseudomonas_aeruginosa",
+      "pseudomonas_putida"
+    ],
+    "expected_length_bp": [
+      100,
+      250
+    ],
+    "expected_gc_fraction": [
+      0.45,
+      0.65
+    ],
+    "reference_accessions": [
+      "AE004091"
+    ],
+    "reference_plasmids": [
+      "BBa_R0079",
+      "BBa_R0062"
+    ],
+    "known_variants": [
+      "pLasB (promoter of the elastase B gene, most studied natural pLas)",
+      "pLasI (autoregulatory promoter upstream of lasI)",
+      "synthetic pLas with consensus-optimized las box",
+      "hybrid pLas/pLux chimeric promoters for orthogonal QS circuits"
+    ],
+    "known_misannotations": [
+      "confused with pLux (V. fischeri lux box promoter, different AHL signal and LuxR family member)",
+      "labeled 'lasR promoter' when the element is a LasR-regulated (not LasR-encoding) promoter",
+      "mislabeled as pRhl when the QS system is not specified in P. aeruginosa dual-QS constructs",
+      "generic annotation as 'quorum sensing promoter' without specifying las vs. rhl system"
+    ],
+    "notes": "Responds specifically to 3-oxo-C12-HSL (long-chain AHL), distinguishing it from pRhl which responds to C4-HSL. In E. coli-based circuits, requires co-expression of LasR and either exogenous 3OC12HSL addition or co-expression of LasI. The las system sits atop the P. aeruginosa QS hierarchy and cross-activates the rhl system. Used extensively in synthetic multicellular systems, population-level logic gates, two-input quorum sensing circuits, and programmable biofilm control. The las box palindrome (ACCTGN5CAGG) is the key sequence feature for bioinformatic identification.",
+    "_source_name": "pLas (las box promoter)",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "pRhl (rhl box promoter)",
+    "aliases": [
+      "rhl promoter",
+      "rhlA promoter",
+      "rhl box",
+      "P_rhl",
+      "BBa_R0079",
+      "rhlAB promoter"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "pRhl is the quorum sensing-responsive promoter from the Pseudomonas aeruginosa rhlAB operon, which drives rhamnolipid biosynthesis. It is activated by the RhlR transcriptional regulator when bound to its cognate acyl-homoserine lactone signal C4-HSL (N-butanoyl-L-homoserine lactone). In synthetic biology, pRhl is widely used to build population-density-dependent gene circuits, AND-gate logic, and inter-species signaling systems.",
+    "mechanism": "The RhlR protein, loaded with C4-HSL, dimerizes and binds the rhl box \u2014 a conserved palindromic lux box-type sequence (ACCTGTAGGATCGTACAGGT) centered approximately 42 bp upstream of the transcription start site \u2014 and recruits RNA polymerase to activate transcription from the -10/-35 core promoter.",
+    "expression_systems": [
+      "e_coli",
+      "pseudomonas_aeruginosa",
+      "pseudomonas_putida",
+      "bacillus_subtilis"
+    ],
+    "expected_length_bp": [
+      100,
+      350
+    ],
+    "expected_gc_fraction": [
+      0.48,
+      0.68
+    ],
+    "reference_accessions": [
+      "AE004091",
+      "L08962",
+      "AF005404"
+    ],
+    "reference_plasmids": [
+      "BBa_R0079",
+      "BBa_K145015"
+    ],
+    "known_variants": [
+      "Minimal rhl box only (30-40 bp palindrome without core promoter)",
+      "Hybrid rhl box fused to E. coli sigma70 -10/-35 for improved activity in E. coli",
+      "rhl box upstream of PlacZ core promoter"
+    ],
+    "known_misannotations": [
+      "Confused with pLux due to similar lux box palindrome \u2014 sequences differ; RhlR does not activate pLux and LuxR does not activate pRhl",
+      "Sometimes annotated as 'rhl promoter' referring only to the rhl box element rather than the full promoter including core -10/-35",
+      "C4-HSL vs C6-HSL specificity occasionally swapped in annotations (C4-HSL is the cognate ligand for RhlR, not C6-HSL which is LasR-preferred)"
+    ],
+    "notes": "Origin: Pseudomonas aeruginosa PAO1 rhl quorum sensing system. The rhl system is one of two hierarchical QS systems in P. aeruginosa (the other being las). pRhl requires both RhlR protein (BBa_C0171) and exogenous or endogenously produced C4-HSL to activate. In E. coli circuits, both RhlI (C4-HSL synthase) and RhlR must be co-expressed. Widely used in synthetic biology for population-density-responsive expression, multi-input logic gates (combined with pLux or pLas), and inter-kingdom signaling. The rhl box consensus (ACCTGT-N4-ACAGGT) is closely related to the lux box but has sufficient divergence to maintain orthogonality.",
+    "_source_name": "pRhl (rhl box promoter)",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
+  },
+  {
+    "canonical_name": "sfGFP",
+    "aliases": [
+      "superfolder GFP",
+      "super-folder GFP",
+      "sfgfp",
+      "BBa_I746916",
+      "BBa_K515005",
+      "BBa_E0040_SF"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "reporter",
+    "description": "sfGFP (superfolder GFP) is an engineered variant of Aequorea victoria GFP containing mutations that dramatically improve folding efficiency and stability, enabling robust fluorescence even when fused to aggregation-prone proteins. It is one of the most widely used reporters in synthetic biology for quantifying gene expression, characterizing genetic circuits, and tracking protein localization. Its superior folding properties make it the preferred GFP variant for N- and C-terminal fusion experiments.",
+    "mechanism": "sfGFP forms an 11-stranded beta-barrel that autocatalytically generates a chromophore from the internal Ser65-Tyr66-Gly67 tripeptide via cyclization and oxidation. The superfolder mutations (including F64L, S65T, F99S, M153T, V163A, S175G, and additional stabilizing substitutions relative to wtGFP) lower the activation energy of folding, yielding faster maturation and higher fluorescent protein yield than EGFP.",
+    "expression_systems": [
+      "e_coli",
+      "s_cerevisiae",
+      "b_subtilis",
+      "p_putida",
+      "mammalian",
+      "a_thaliana"
+    ],
+    "expected_length_bp": [
+      714,
+      726
+    ],
+    "expected_gc_fraction": [
+      0.44,
+      0.58
+    ],
+    "reference_accessions": [
+      "KJ541426",
+      "EU498759",
+      "DQ190844"
+    ],
+    "reference_plasmids": [
+      "BBa_I746916",
+      "BBa_K515005",
+      "pRSET-sfGFP",
+      "pBAD-sfGFP"
+    ],
+    "known_variants": [
+      "msfGFP (monomeric superfolder GFP, A206K mutation to prevent dimerization)",
+      "sfGFP-ssrA (with C-terminal degradation tag for dynamic circuits)",
+      "codon-optimized sfGFP for yeast (scsfGFP)",
+      "codon-optimized sfGFP for mammalian cells",
+      "sfGFP split fragments (for protein complementation assays)"
+    ],
+    "known_misannotations": [
+      "annotated as GFP or EGFP without specifying superfolder variant",
+      "confused with cycle3 GFP or other stability-enhanced GFP variants",
+      "missing start codon in partial CDS deposits",
+      "some sequences include upstream ribosome binding site within the annotated CDS"
+    ],
+    "notes": "Described by Pedeacq et al. 2006 (Nat Biotechnol 24:79-88); 20 mutations relative to wtGFP confer superfolder properties. Excitation max ~485 nm, emission max ~510 nm. Preferred over EGFP for fusion proteins because it rescues folding of otherwise insoluble fusion partners. Commonly used in FACS-based characterization of genetic circuits and as a reference standard in the iGEM Registry. Monomeric variant (msfGFP) is preferred when dimerization artifacts must be avoided.",
+    "_source_name": "sfGFP",
+    "_category_hint": "reporter",
+    "_generated": true
+  },
+  {
+    "canonical_name": "dTomato",
+    "aliases": [
+      "dTom",
+      "Tomato",
+      "dTomato fluorescent protein",
+      "BBa_K1323009"
+    ],
+    "so_term": "SO:0001527",
+    "so_label": "fluorescent_protein_gene",
+    "category": "reporter",
+    "description": "dTomato is a dimeric red-orange fluorescent protein derived from DsRed of Discosoma sp., with excitation maximum at 554 nm and emission maximum at 581 nm. It was engineered by Shaner et al. (2004) as part of the mFruit series and is widely used as a transcriptional reporter, fusion tag, and FRET partner in synthetic biology circuits.",
+    "mechanism": "The beta-barrel chromophore spontaneously forms from an internal Gln-Tyr-Gly tripeptide via autocatalytic cyclization and oxidation, producing a fluorescent species without exogenous cofactors. As a dimer, dTomato requires careful consideration when used as a fusion tag due to potential forced dimerization of target proteins.",
+    "expression_systems": [
+      "e_coli",
+      "s_cerevisiae",
+      "mammalian",
+      "b_subtilis",
+      "p_putida"
+    ],
+    "expected_length_bp": [
+      690,
+      720
+    ],
+    "expected_gc_fraction": [
+      0.45,
+      0.6
+    ],
+    "reference_accessions": [
+      "AY678264",
+      "DQ092360"
+    ],
+    "reference_plasmids": [
+      "pRSET-dTomato",
+      "BBa_K1323009",
+      "Addgene_54653"
+    ],
+    "known_variants": [
+      "tdTomato \u2014 tandem dimer fusion (~1416 bp), behaves as monomer, brighter, preferred for fusions",
+      "dTomato-4xTandem \u2014 four-copy tandem for ultra-bright puncta labeling",
+      "codon-optimized versions for mammalian, yeast, or bacterial expression"
+    ],
+    "known_misannotations": [
+      "Confused with tdTomato \u2014 tdTomato is a tandem dimer (~1416 bp) while dTomato is the shorter dimer (~711 bp)",
+      "Sometimes annotated as mCherry or DsRed due to shared spectral range and Discosoma origin",
+      "Fusion constructs may be annotated as monomeric when dTomato's obligate dimer nature causes target protein dimerization"
+    ],
+    "notes": "Derived from Discosoma sp. DsRed; developed by Shaner et al. 2004 (Nature Biotechnology). dTomato is an obligate dimer and is typically superseded by tdTomato for most applications requiring monomeric behavior. Quantum yield ~0.69, extinction coefficient ~69,500 M-1 cm-1. matures relatively quickly at 37\u00b0C. Useful as a FRET acceptor paired with cyan/green donors.",
+    "_source_name": "dTomato",
+    "_category_hint": "reporter",
+    "_generated": true
+  },
+  {
+    "canonical_name": "Bxb1 integrase",
+    "aliases": [
+      "Bxb1 Int",
+      "mycobacteriophage Bxb1 integrase",
+      "serine integrase Bxb1",
+      "Bxb1 large serine recombinase",
+      "BBa_K1319000"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "Bxb1 integrase is a large serine integrase from mycobacteriophage Bxb1 that catalyzes unidirectional, site-specific recombination between attB and attP sequences, generating attL and attR hybrid sites. It is widely used in synthetic biology for stable genomic integration, Boolean logic circuits, and DNA-based computing because its reaction is irreversible without the separate recombination directionality factor (RDF). Its orthogonality to other serine integrases (phiC31, TP901-1) makes it suitable for multiplexed circuits.",
+    "mechanism": "Bxb1 integrase binds attB and attP sites and executes concerted strand exchange via a covalent serine-phosphodiester intermediate, producing attL and attR hybrid sites. Without the RDF cofactor (gp47), the attL/attR products are not substrates for excision, making integration effectively unidirectional.",
+    "expression_systems": [
+      "e_coli",
+      "mammalian",
+      "yeast",
+      "mycobacteria"
+    ],
+    "expected_length_bp": [
+      1497,
+      1560
+    ],
+    "expected_gc_fraction": [
+      0.45,
+      0.65
+    ],
+    "reference_accessions": [
+      "NC_004684",
+      "AF271693"
+    ],
+    "reference_plasmids": [
+      "BBa_K1319000",
+      "BBa_K1742001",
+      "Addgene #51261"
+    ],
+    "known_variants": [
+      "E. coli codon-optimized version",
+      "mammalian codon-optimized version",
+      "catalytic mutants (e.g. S10A \u2014 inactive control)"
+    ],
+    "known_misannotations": [
+      "confused with phiC31 integrase (distinct large serine integrase with different att site sequences)",
+      "attB and attP labels swapped in depositor annotations",
+      "RDF (gp47) omitted from circuit diagrams, leading to misinterpretation of directionality"
+    ],
+    "notes": "Origin: mycobacteriophage Bxb1. Encodes a 500 aa protein (1,500 bp CDS). Member of the large serine recombinase family; orthogonal to phiC31 and TP901-1 integrases. Commonly used in mammalian synthetic biology for stable landing-pad integration and in bacterial Boolean logic circuits (e.g., state machines). Native GC content ~63% (mycobacteriophage); codon-optimized versions shift this significantly.",
+    "_source_name": "Bxb1 integrase",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "attB Bxb1",
+    "aliases": [
+      "attB",
+      "Bxb1 attB",
+      "attB site Bxb1",
+      "BBa_K592011",
+      "Bxb1 bacterial attachment site"
+    ],
+    "so_term": "SO:0000299",
+    "so_label": "recombinase_binding_site",
+    "category": "recombination_site",
+    "description": "The bacterial attachment site (attB) recognized by the Bxb1 serine integrase from Mycobacteriophage Bxb1. It recombines with the phage attachment site (attP) in a unidirectional reaction catalyzed by Bxb1 integrase to produce hybrid attL and attR sites. Widely used in synthetic biology for stable genomic integration, Boolean logic gates, and DNA memory devices.",
+    "mechanism": "Bxb1 integrase catalyzes site-specific recombination between attB (~38 bp) and attP (~50 bp) sites via a staggered double-strand break at a conserved 2-bp overlap sequence (GT), forming a covalent protein-DNA intermediate. The reaction is unidirectional without a recombination directionality factor (RDF); excision requires the Bxb1 RDF protein (gp47).",
+    "expression_systems": [
+      "e_coli",
+      "mammalian",
+      "yeast",
+      "bacillus",
+      "mycobacterium"
+    ],
+    "expected_length_bp": [
+      38,
+      60
+    ],
+    "expected_gc_fraction": [
+      0.38,
+      0.55
+    ],
+    "reference_accessions": [
+      "NC_002670",
+      "AY129334"
+    ],
+    "reference_plasmids": [
+      "BBa_K592011",
+      "BBa_K904005",
+      "pSAT-attB",
+      "pCMV-Bxb1-attB"
+    ],
+    "known_variants": [
+      "Minimal 38 bp core attB (overlap region only)",
+      "Extended attB with flanking arm sequences (~50-100 bp)",
+      "Codon-optimized attB constructs for mammalian genomic safe harbors (AAVS1 locus)"
+    ],
+    "known_misannotations": [
+      "Confusion with attP Bxb1 \u2014 attB is the shorter bacterial site (~38 bp), attP is the phage site (~50 bp)",
+      "Mislabeled as lambda attB \u2014 Bxb1 and lambda sites are not interchangeable",
+      "Annotated as attL or attR (post-recombination hybrid sites) in plasmids already integrated",
+      "Truncated annotations that omit the critical 2-bp GT overlap, rendering the site non-functional"
+    ],
+    "notes": "Derived from Mycobacteriophage Bxb1. The 2-bp GT overlap sequence is essential for recombination; mutations here abolish activity. attB \u00d7 attP \u2192 attL + attR is irreversible without RDF. Commonly used in INTEGRATE systems, synthetic gene circuits, and stable genomic landing pads. Orthogonal to PhiC31, PhiRv1, and other serine integrases, enabling multiplexed integration. Popular in mammalian synthetic biology for targeting AAVS1 safe harbor loci.",
+    "_source_name": "attB Bxb1",
+    "_category_hint": "recombination_site",
+    "_generated": true
+  },
+  {
+    "canonical_name": "attP Bxb1",
+    "aliases": [
+      "attP",
+      "Bxb1 attP",
+      "phage attachment site Bxb1",
+      "attP_Bxb1",
+      "BBa_K907000"
+    ],
+    "so_term": "SO:0000296",
+    "so_label": "attP_site",
+    "category": "recombination_site",
+    "description": "The phage attachment site (attP) recognized by the Bxb1 serine integrase from Mycobacteriophage Bxb1. It recombines with the bacterial attachment site (attB) to produce attL and attR hybrid sites, enabling precise, directional integration of DNA cargo. It is widely used in synthetic biology for stable genomic integration, Boolean logic gates, and memory element construction.",
+    "mechanism": "Bxb1 integrase binds attP and attB sites and catalyzes a concerted strand exchange within a central overlap region, producing attL and attR. The reaction is unidirectional without the accessory recombination directionality factor (RDF/gp47), making integration irreversible under standard conditions.",
+    "expression_systems": [
+      "e_coli",
+      "mammalian",
+      "yeast",
+      "bacillus_subtilis",
+      "mycobacterium"
+    ],
+    "expected_length_bp": [
+      38,
+      250
+    ],
+    "expected_gc_fraction": [
+      0.45,
+      0.68
+    ],
+    "reference_accessions": [
+      "AF271693",
+      "AY129332"
+    ],
+    "reference_plasmids": [
+      "BBa_K907000",
+      "BBa_K517000",
+      "pSK43 (Bxb1 integrating vector)",
+      "pMK4-attP"
+    ],
+    "known_variants": [
+      "Minimal attP core (~38 bp, sufficient for recombination in vitro)",
+      "Extended attP with P-arm sequences (~50-250 bp, higher efficiency in vivo)",
+      "Synthetic attP optimized for mammalian codon context"
+    ],
+    "known_misannotations": [
+      "Confused with attB Bxb1 (attP is the phage-side site; attB is the host-side site)",
+      "attL or attR hybrid sites mislabeled as attP after recombination has occurred",
+      "Generic 'recombination site' annotation that does not distinguish integrase family or directionality"
+    ],
+    "notes": "Derived from Mycobacteriophage Bxb1 (Streptomyces lividans host range). The Bxb1 system is orthogonal to Cre/lox, Flp/FRT, and PhiC31 systems, enabling multiplexed recombination. The minimal core overlap sequence is GTTCGGCACCCGCAACC. Used extensively in mammalian synthetic gene circuits for state-memory devices and single-copy genomic landing pads.",
+    "_source_name": "attP Bxb1",
+    "_category_hint": "recombination_site",
+    "_generated": true
+  },
+  {
+    "canonical_name": "lambda CI repressor",
+    "aliases": [
+      "cI",
+      "CI repressor",
+      "lambda cI",
+      "lambda repressor",
+      "BBa_C0051",
+      "BBa_C0052",
+      "cI857"
+    ],
+    "so_term": "SO:0001217",
+    "so_label": "protein_coding_gene",
+    "category": "cds",
+    "description": "The lambda CI repressor is the master regulator of lysogeny in bacteriophage lambda, binding operator sequences OR1, OR2, and OL1-OL3 to repress lytic genes and maintain the integrated prophage state. It is one of the most widely used programmable repressors in synthetic genetic circuits, enabling construction of bistable switches, logic gates, and cascaded gene networks. The temperature-sensitive CI857 variant allows thermal induction of the lytic cycle, making it a classic inducible expression tool.",
+    "mechanism": "CI repressor binds as a dimer to 17-bp operator half-sites (OR1, OR2, OR3, OL1-OL3) via an N-terminal helix-turn-helix domain, sterically blocking RNA polymerase to repress transcription of lytic genes. During SOS response, activated RecA stimulates autocleavage at the Ala111-Gly112 bond, dissociating dimers and derepressing the lytic cycle.",
+    "expression_systems": [
+      "e_coli",
+      "bacillus_subtilis",
+      "cell_free"
+    ],
+    "expected_length_bp": [
+      690,
+      730
+    ],
+    "expected_gc_fraction": [
+      0.44,
+      0.52
+    ],
+    "reference_accessions": [
+      "NC_001416.1",
+      "M17270",
+      "V00622"
+    ],
+    "reference_plasmids": [
+      "BBa_C0051",
+      "BBa_C0052",
+      "pCI857",
+      "pZA31-cI"
+    ],
+    "known_variants": [
+      "CI857 \u2014 temperature-sensitive Ser->Phe mutation, inactive at 42\u00b0C, active at 30-32\u00b0C",
+      "CI-LVA \u2014 C-terminal ssrA (LVA) degradation tag for faster derepression kinetics",
+      "CI-ind- \u2014 non-cleavable mutant (Ala111Gly) resistant to RecA-mediated induction",
+      "truncated N-terminal DNA binding domain only (residues 1-92)"
+    ],
+    "known_misannotations": [
+      "Confusion between cI (repressor) and cro (antagonist repressor) \u2014 they bind the same operators with different affinities",
+      "Mislabeling CI857 as wild-type CI when the temperature-sensitive phenotype is not documented",
+      "Annotating the cII or cIII genes as cI due to adjacent genomic position in lambda",
+      "Incorrect length from inclusion of upstream regulatory sequences in CDS annotation"
+    ],
+    "notes": "Origin: bacteriophage lambda (Escherichia coli phage). CI is the defining example of a genetic switch and bistable memory element; the Gardner et al. 2000 Nature toggle switch used cI and lacI as mutually repressing partners. CI857 is the standard variant for thermal induction of T7-based expression systems (e.g., BL21(DE3) derivatives with a chromosomal CI857 copy). Operator sequences pR and pL are the cognate promoters repressed by CI. CI autoregulates its own promoter (pRM) at low concentrations (positive) and high concentrations (negative), creating an ultrasensitive switch.",
+    "_source_name": "lambda CI repressor",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "AraC",
+    "aliases": [
+      "araC",
+      "AraC regulator",
+      "arabinose regulatory protein",
+      "AraC transcriptional dual regulator",
+      "BBa_C0062",
+      "pBAD regulator"
+    ],
+    "so_term": "SO:0001217",
+    "so_label": "protein_coding_gene",
+    "category": "cds",
+    "description": "AraC is the transcriptional dual regulator controlling arabinose catabolism in E. coli. In synthetic biology it is paired with the pBAD promoter to create tightly regulated, arabinose-inducible expression systems. The off state is stringently repressed, making it useful for expressing toxic or growth-inhibitory proteins.",
+    "mechanism": "In the absence of arabinose, AraC dimers loop DNA between O2 and I1 half-sites to repress pBAD. Arabinose binding shifts the N-terminal arm, disrupting the loop and allowing AraC to bind adjacent I1/I2 half-sites and recruit RNA polymerase as an activator.",
+    "expression_systems": [
+      "e_coli",
+      "other_gram_negative"
+    ],
+    "expected_length_bp": [
+      870,
+      900
+    ],
+    "expected_gc_fraction": [
+      0.48,
+      0.55
+    ],
+    "reference_accessions": [
+      "U00096.3",
+      "NP_415794.1",
+      "V00273.1"
+    ],
+    "reference_plasmids": [
+      "BBa_C0062",
+      "pBAD18",
+      "pBAD24",
+      "pBAD/HisA",
+      "pBAD/HisB",
+      "pBAD-TOPO"
+    ],
+    "known_variants": [
+      "AraC-L1: altered ligand specificity toward non-native sugars",
+      "Truncated DNA-binding domain only (dimerization domain removed)",
+      "AraC fusions with alternative DBDs for orthogonal regulators",
+      "Constitutively active variants lacking arabinose-sensing arm"
+    ],
+    "known_misannotations": [
+      "Labeled as 'transcriptional regulator' without specifying arabinose-responsive or dual-function nature",
+      "Confused with the araC/araBAD operon region (gene vs. locus)",
+      "Annotated as repressor only, missing activator function in presence of arabinose",
+      "araC gene sometimes mistakenly annotated on the wrong strand relative to pBAD"
+    ],
+    "notes": "Origin: E. coli K-12. AraC is a member of the AraC/XylS family of helix-turn-helix transcriptional regulators. It encodes 292 amino acids (~33 kDa). The pBAD/araC system is the most widely used titratable expression system in E. coli, with induction linear across 0.0002-0.2% arabinose. iGEM part BBa_C0062 is the canonical registry entry and is commonly used in genetic circuits requiring arabinose-gated control.",
+    "_source_name": "AraC regulator",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "OmpR response regulator",
+    "aliases": [
+      "ompR",
+      "OmpR",
+      "osmotic pressure response regulator OmpR",
+      "KdpE homolog",
+      "BBa_C0082"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "OmpR is the response regulator of the EnvZ/OmpR two-component signal transduction system in Escherichia coli, controlling expression of outer membrane porins OmpF and OmpC in response to osmolarity. It is widely used in synthetic biology to build osmosensing circuits, signal-responsive promoter systems, and analog gene expression controllers. Its well-characterized dose-response behavior makes it a valuable component for building genetic circuits with graded transcriptional outputs.",
+    "mechanism": "EnvZ sensor kinase autophosphorylates at a conserved histidine and transfers the phosphoryl group to Asp55 of OmpR, converting it to OmpR-P. Phosphorylated OmpR dimerizes and binds tandem sites upstream of ompF and ompC promoters; low [OmpR-P] activates ompF while high [OmpR-P] represses ompF and activates ompC.",
+    "expression_systems": [
+      "e_coli",
+      "salmonella",
+      "klebsiella"
+    ],
+    "expected_length_bp": [
+      720,
+      735
+    ],
+    "expected_gc_fraction": [
+      0.47,
+      0.54
+    ],
+    "reference_accessions": [
+      "NC_000913",
+      "M13463",
+      "X05360",
+      "U00096"
+    ],
+    "reference_plasmids": [
+      "BBa_C0082"
+    ],
+    "known_variants": [
+      "OmpR D55E \u2014 phosphomimetic constitutively active mutant",
+      "OmpR D55N \u2014 non-phosphorylatable dominant negative mutant",
+      "OmpR V203M \u2014 increased ompC activation",
+      "OmpR R42A \u2014 DNA-binding defective mutant used in mechanistic studies"
+    ],
+    "known_misannotations": [
+      "Confused with KdpE (a paralogous response regulator) due to shared receiver domain homology",
+      "Annotated as 'transcriptional regulator' without specifying two-component system membership",
+      "Phosphorylation site Asp55 sometimes mis-annotated as Asp59 in older records"
+    ],
+    "notes": "Encoded by the ompR gene in E. coli K-12; 239 amino acids (717 bp CDS). Contains an N-terminal receiver domain (phosphorylated at Asp55 by EnvZ) and a C-terminal winged helix-turn-helix DNA-binding domain. Functions as a transcriptional activator at low phosphorylation levels and a repressor at high levels, enabling analog control of gene expression. Commonly co-expressed with EnvZ in synthetic two-component circuits for osmosensing biosensors and genetic signal processing.",
+    "_source_name": "OmpR response regulator",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "EnvZ sensor kinase",
+    "aliases": [
+      "envZ",
+      "ompB",
+      "OmpB",
+      "EnvZ histidine kinase",
+      "osmosensor EnvZ",
+      "tppB"
+    ],
+    "so_term": "SO:0001024",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "EnvZ is a transmembrane histidine sensor kinase in E. coli that forms a canonical two-component signaling system with its cognate response regulator OmpR. It senses changes in osmolarity and membrane stress, making it one of the most studied signal transduction modules in bacteria. In synthetic biology it is used as a modular signal input domain that can be chimericized with heterologous sensing domains to redirect signaling.",
+    "mechanism": "EnvZ autophosphorylates at His243 in its DHp domain in response to osmotic stress, then transfers the phosphoryl group to Asp59 of OmpR; it also acts as a phosphatase for OmpR~P, giving it dual kinase/phosphatase activity that sets the steady-state OmpR~P level.",
+    "expression_systems": [
+      "e_coli"
+    ],
+    "expected_length_bp": [
+      1320,
+      1380
+    ],
+    "expected_gc_fraction": [
+      0.49,
+      0.56
+    ],
+    "reference_accessions": [
+      "NC_000913.3",
+      "NP_417836.1",
+      "P0AEJ4"
+    ],
+    "reference_plasmids": [
+      "BBa_K733002",
+      "BBa_K098997"
+    ],
+    "known_variants": [
+      "Taz chimeras \u2014 periplasmic domain replaced by Tar aspartate receptor domain for chemoreceptor-linked signaling",
+      "EnvZ(Q229R) \u2014 gain-of-function kinase-biased allele with elevated OmpR~P",
+      "EnvZ(T247R) \u2014 phosphatase-deficient allele",
+      "EnvZ(L254R) \u2014 kinase-null, phosphatase-only allele used to dissect dual activity",
+      "Truncated cytoplasmic domain only (residues 180-450) for in vitro reconstitution"
+    ],
+    "known_misannotations": [
+      "Historical gene symbol ompB refers to the envZ-ompR operon, not envZ alone \u2014 avoid using ompB to mean only EnvZ",
+      "tppB locus tag sometimes annotated as a separate gene but is the same locus",
+      "Chimeric Taz constructs occasionally mis-annotated as wild-type envZ"
+    ],
+    "notes": "Organism of origin: Escherichia coli K-12. EnvZ (450 aa) is encoded in the envZ-ompR operon at min 74 on the E. coli chromosome. Its periplasmic loop senses osmolarity; the cytoplasmic HAMP-DHp-CA domain architecture is the canonical histidine kinase fold. The kinase/phosphatase ratio is tunable by osmolarity, making this system useful for building osmosensing or dose-response circuits. Chimeric EnvZ sensors created by domain swapping are a classic tool for studying signal transduction specificity.",
+    "_source_name": "EnvZ sensor kinase",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "CheY",
+    "aliases": [
+      "cheY",
+      "CheY chemotaxis regulator",
+      "chemotaxis protein Y",
+      "response regulator CheY",
+      "BBa_C0051"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "CheY is the central response regulator of the bacterial chemotaxis two-component signaling system. Upon phosphorylation by the sensor kinase CheA, CheY-P binds the flagellar motor switch protein FliM to bias rotation toward clockwise (tumbling) motion. In synthetic biology it is used to build motility-based biosensors and to study phosphorylation-dependent protein-protein interactions.",
+    "mechanism": "CheA autophosphorylates on His48 in response to chemorepellent signals, then transfers the phosphoryl group to Asp57 of CheY. Phospho-CheY diffuses to the flagellar motor and interacts with FliM, switching rotation from counterclockwise (smooth swimming) to clockwise (tumbling).",
+    "expression_systems": [
+      "e_coli",
+      "salmonella",
+      "bacillus_subtilis",
+      "caulobacter_crescentus"
+    ],
+    "expected_length_bp": [
+      375,
+      400
+    ],
+    "expected_gc_fraction": [
+      0.5,
+      0.57
+    ],
+    "reference_accessions": [
+      "NC_000913.3",
+      "U00096.3",
+      "P0AE67"
+    ],
+    "reference_plasmids": [
+      "BBa_C0051"
+    ],
+    "known_variants": [
+      "CheY D57N \u2014 phosphorylation-dead, used as dominant negative",
+      "CheY D57E \u2014 phosphomimetic, partially constitutively active",
+      "CheY13DK106YW \u2014 constitutively active, motor-binding without phosphorylation",
+      "CheY F111S \u2014 reduced FliM affinity",
+      "CheY from Salmonella typhimurium (95% identity to E. coli)"
+    ],
+    "known_misannotations": [
+      "Confused with CheB (methylesterase) or CheZ (phosphatase) in poorly annotated genomes",
+      "Sometimes annotated as 'response regulator' without cheY gene name, leading to missed matches",
+      "The phosphorylation site Asp57 occasionally annotated as Asp56 due to off-by-one errors in older annotations"
+    ],
+    "notes": "Origin: Escherichia coli K-12. 129 amino acids, ~14 kDa. Contains the receiver domain (REC) with conserved Asp57 phosphorylation site. Half-life of CheY-P is ~10 seconds, enabling rapid adaptation. CheZ phosphatase accelerates dephosphorylation. Used in synthetic circuits to link two-component signaling to motility outputs, and as a model system for studying phosphotransfer kinetics. The D57N variant is widely used as a phosphorylation-incompetent control.",
+    "_source_name": "CheY chemotaxis regulator",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "vioA",
+    "aliases": [
+      "vioA",
+      "VioA",
+      "tryptophan 2-monooxygenase",
+      "L-tryptophan oxidase",
+      "IPA imine synthase",
+      "BBa_K274002",
+      "BBa_K592009"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "vioA encodes the first enzyme in the violacein biosynthesis pathway from Chromobacterium violaceum, catalyzing oxidative deamination of L-tryptophan to indole-3-pyruvic acid imine (IPA imine). It is widely used in synthetic biology as part of a colorimetric (purple pigment) reporter system that provides a visible, non-toxic readout of pathway activity. The full vioABCDE operon converts tryptophan to violacein, a deep purple compound visible to the naked eye.",
+    "mechanism": "VioA is an FAD-dependent L-amino acid oxidase that converts L-tryptophan to indole-3-pyruvic acid imine via oxidative deamination, consuming O2 and releasing H2O2 as a byproduct. The IPA imine product is then channeled into downstream pathway enzymes (VioB, VioC, VioD, VioE) to produce violacein.",
+    "expression_systems": [
+      "e_coli",
+      "chromobacterium_violaceum",
+      "saccharomyces_cerevisiae",
+      "bacillus_subtilis"
+    ],
+    "expected_length_bp": [
+      1180,
+      1230
+    ],
+    "expected_gc_fraction": [
+      0.6,
+      0.7
+    ],
+    "reference_accessions": [
+      "AF172851",
+      "AY219897",
+      "NC_005085"
+    ],
+    "reference_plasmids": [
+      "BBa_K274002",
+      "BBa_K592009",
+      "BBa_K1152000"
+    ],
+    "known_variants": [
+      "Codon-optimized vioA for E. coli expression",
+      "Native C. violaceum ATCC 12472 sequence (high GC, ~65%)",
+      "Truncated variants lacking signal peptide used in heterologous systems"
+    ],
+    "known_misannotations": [
+      "Confused with unrelated tryptophan 2-monooxygenase from Pseudomonas (iaaM gene, IAA biosynthesis pathway)",
+      "Sometimes annotated as 'oxidoreductase' without pathway context, losing violacein association",
+      "vioA and vioB occasionally swapped in operon annotations from incomplete assemblies"
+    ],
+    "notes": "Originates from Chromobacterium violaceum ATCC 12472, a gram-negative soil bacterium. High genomic GC content (~65%) means native vioA is poorly expressed in E. coli without codon optimization. Violacein pigmentation is used as a genetic logic gate readout, metabolic flux reporter, and biosensor output in synthetic circuits. Must be co-expressed with vioB and vioE at minimum for pigment production; vioC and vioD modulate the purple/green pigment ratio (deoxyviolacein vs. violacein).",
+    "_source_name": "vioA (violacein biosynthesis)",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "vioB",
+    "aliases": [
+      "vioB",
+      "violacein biosynthesis protein B",
+      "IPA imine dimer synthase",
+      "BBa_K274002"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "vioB encodes a large flavoenzyme that catalyzes a central condensation step in violacein biosynthesis in Chromobacterium violaceum, producing a dimeric intermediate from two iminophenylpyruvic acid (IPA) imine molecules. It is used in synthetic biology as part of the five-gene vioABCDE pathway, which converts L-tryptophan to a visible purple pigment in E. coli and other hosts. The pathway serves as a colorimetric reporter for gene expression, metabolic flux, and genetic circuit characterization.",
+    "mechanism": "VioB condenses two molecules of the IPA imine intermediate generated by VioA from L-tryptophan, forming a dimeric protoviolaceinic acid precursor. VioB functions as a flavoprotein and is thought to form a channeling complex with VioA to transfer reactive intermediates directly between active sites.",
+    "expression_systems": [
+      "e_coli",
+      "saccharomyces_cerevisiae",
+      "bacillus_subtilis",
+      "pseudomonas_putida"
+    ],
+    "expected_length_bp": [
+      3300,
+      3600
+    ],
+    "expected_gc_fraction": [
+      0.58,
+      0.7
+    ],
+    "reference_accessions": [
+      "AF172851",
+      "AE016825"
+    ],
+    "reference_plasmids": [
+      "BBa_K274002",
+      "BBa_K592009"
+    ],
+    "known_variants": [
+      "Chromobacterium violaceum ATCC 12472 wild-type (~3462 bp, 1154 aa)",
+      "codon-optimized variants for E. coli expression",
+      "truncated constructs used to probe domain function"
+    ],
+    "known_misannotations": [
+      "annotated as hypothetical protein in early incomplete genome submissions",
+      "sometimes misassigned as vioA in partial operon annotations",
+      "confused with oxidoreductase homologs lacking biosynthetic activity"
+    ],
+    "notes": "Origin: Chromobacterium violaceum ATCC 12472. VioB is the largest gene in the vioABCDE operon (~1154 aa, ~130 kDa). The high GC content of C. violaceum (~65%) makes codon optimization important for robust E. coli expression. Partial pathway expression (vioABE, omitting vioCD) diverts flux to deoxyviolacein (green pigment), enabling color-based circuit logic. The full pathway is a popular visual reporter in metabolic engineering and genetic circuit design due to its visible output without instrumentation.",
+    "_source_name": "vioB (violacein biosynthesis)",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "vioC",
+    "aliases": [
+      "vioC",
+      "violacein biosynthesis protein C",
+      "chromopyrrolic acid oxygenase C",
+      "BBa_K274004",
+      "BBa_K1378006"
+    ],
+    "so_term": "SO:0000316",
+    "so_label": "CDS",
+    "category": "cds",
+    "description": "vioC encodes a non-heme iron(II)- and alpha-ketoglutarate-dependent dioxygenase in the violacein biosynthesis pathway of Chromobacterium violaceum. It catalyzes an oxidative step acting on chromopyrrolic acid-derived intermediates, contributing to the branch point that determines whether violacein or deoxyviolacein is produced. The vioABCDE operon is widely used in synthetic biology as a colorimetric reporter system, with the ratio of purple violacein to green deoxyviolacein serving as a quantitative readout.",
+    "mechanism": "VioC is an alpha-ketoglutarate-dependent dioxygenase that uses non-heme Fe(II) and molecular oxygen to hydroxylate its substrate intermediate in the violacein pathway; without VioC, the pathway produces predominantly green deoxyviolacein rather than purple violacein.",
+    "expression_systems": [
+      "e_coli",
+      "s_cerevisiae",
+      "bacillus_subtilis",
+      "chromobacterium_violaceum"
+    ],
+    "expected_length_bp": [
+      780,
+      900
+    ],
+    "expected_gc_fraction": [
+      0.58,
+      0.7
+    ],
+    "reference_accessions": [
+      "AE016825",
+      "AF172851",
+      "AAQ58719"
+    ],
+    "reference_plasmids": [
+      "BBa_K274004",
+      "BBa_K1378006",
+      "BBa_K274002"
+    ],
+    "known_variants": [
+      "codon-optimized vioC for E. coli expression",
+      "C. violaceum ATCC 12472 wild-type",
+      "truncated variants used to produce specific pathway intermediates"
+    ],
+    "known_misannotations": [
+      "sometimes annotated as a generic oxidoreductase without pathway context",
+      "confused with vioD (also a non-heme iron oxygenase in the same pathway)",
+      "GenBank records occasionally omit vioC from incomplete operon deposits"
+    ],
+    "notes": "Originates from Chromobacterium violaceum ATCC 12472. Part of the vioABCDE operon which produces a distinctive purple pigment (violacein) visible by eye. Omitting vioC from the pathway shifts production toward green deoxyviolacein, making the intact vs. partial operon a useful two-color reporter. Commonly expressed as a synthetic operon in E. coli for biosensor and genetic circuit applications.",
+    "_source_name": "vioC (violacein biosynthesis)",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "vioD",
+    "aliases": [
+      "vioD",
+      "violacein biosynthesis protein D",
+      "VioD monooxygenase",
+      "BBa_K274003",
+      "BBa_K1486006"
+    ],
+    "so_term": "SO:0001217",
+    "so_label": "protein_coding_gene",
+    "category": "cds",
+    "description": "vioD encodes a flavin-dependent monooxygenase from Chromobacterium violaceum that catalyzes the hydroxylation of deoxyviolacein to produce violacein, the penultimate step in the violacein biosynthesis pathway. The entire vio operon (vioABCDE) produces a purple pigment widely used in synthetic biology as a colorimetric reporter and biosensor readout. vioD expression in E. coli yields a visually distinct purple colony phenotype useful for reporting circuit activity.",
+    "mechanism": "VioD is a flavoprotein monooxygenase that uses FAD and NADH/NADPH as cofactors to hydroxylate the C5 position of deoxyviolacein (or prodeoxyviolacein), introducing a hydroxyl group that produces the fully pigmented violacein end product. The reaction requires molecular oxygen and the flavin reductase activity of VioC for FMNH2 supply.",
+    "expression_systems": [
+      "e_coli",
+      "s_cerevisiae",
+      "b_subtilis"
+    ],
+    "expected_length_bp": [
+      1020,
+      1200
+    ],
+    "expected_gc_fraction": [
+      0.58,
+      0.68
+    ],
+    "reference_accessions": [
+      "AE016825.1",
+      "AAQ59232.1",
+      "AF172851.1"
+    ],
+    "reference_plasmids": [
+      "BBa_K274003",
+      "BBa_K1486006",
+      "pVioABCDE"
+    ],
+    "known_variants": [
+      "codon-optimized E. coli variant",
+      "C. violaceum ATCC 12472 wild-type"
+    ],
+    "known_misannotations": [
+      "sometimes labeled as violacein synthase (that role belongs to vioE)",
+      "confused with vioC (both are oxygenases acting on pathway intermediates)",
+      "hydroxylation step occasionally attributed to vioE instead of vioD"
+    ],
+    "notes": "Originates from Chromobacterium violaceum ATCC 12472. vioD is required for violacein production but not for deoxyviolacein; omitting vioD while expressing vioABCE produces green deoxyviolacein instead of purple violacein, which is useful for generating color diversity in reporter circuits. The vioABCDE operon has been used as a multi-output reporter for Boolean logic gates and pathway engineering demonstrations in E. coli.",
+    "_source_name": "vioD (violacein biosynthesis)",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "vioE",
+    "aliases": [
+      "vioE",
+      "violacein biosynthesis protein E",
+      "VioE",
+      "BBa_K274004"
+    ],
+    "so_term": "SO:0001217",
+    "so_label": "protein_coding_gene",
+    "category": "cds",
+    "description": "vioE encodes a substrate isomerase that catalyzes a key step in the violacein biosynthesis pathway, converting the VioD-modified intermediate to produce the chromopyrrolic acid scaffold. It is used in synthetic biology as part of the five-gene violacein operon (vioABCDE) to produce the purple pigment violacein, which serves as a colorimetric reporter for pathway activity and gene expression studies.",
+    "mechanism": "VioE acts as an oxidative rearrangement enzyme, catalyzing the conversion of the VioD product (5-hydroxy-L-tryptophan-derived intermediate) through a radical-mediated isomerization to yield the chromopyrrolic acid intermediate. This step is required for the final ring closure steps leading to violacein.",
+    "expression_systems": [
+      "e_coli",
+      "s_cerevisiae",
+      "bacillus_subtilis",
+      "pseudomonas_putida"
+    ],
+    "expected_length_bp": [
+      390,
+      450
+    ],
+    "expected_gc_fraction": [
+      0.55,
+      0.7
+    ],
+    "reference_accessions": [
+      "AY268068",
+      "AF172851",
+      "NP_950994"
+    ],
+    "reference_plasmids": [
+      "BBa_K274004",
+      "BBa_K1152006",
+      "pVioABCDE"
+    ],
+    "known_variants": [
+      "Chromobacterium violaceum ATCC 12472 wild-type",
+      "codon-optimized E. coli variant",
+      "truncated variants lacking full activity"
+    ],
+    "known_misannotations": [
+      "sometimes annotated as a putative oxidase rather than isomerase",
+      "confused with vioD in older annotations due to adjacency in operon",
+      "occasionally mis-labeled as vioC in automated pipelines"
+    ],
+    "notes": "Originates from Chromobacterium violaceum. Functions only in the context of the full vioABCDE operon; vioE alone produces no visible pigment. The pathway produces purple violacein and green deoxyviolacein depending on expression levels of other vio genes. Widely used as a multi-gene pathway reporter in synthetic biology and metabolic engineering to test promoter strength, ribosome binding site libraries, and operon organization.",
+    "_source_name": "vioE (violacein biosynthesis)",
+    "_category_hint": "cds",
+    "_generated": true
+  },
+  {
+    "canonical_name": "pRecA",
+    "aliases": [
+      "RecA promoter",
+      "recA promoter",
+      "PrecA",
+      "SOS promoter",
+      "BBa_K112706",
+      "BBa_K233305",
+      "pRecA-SOS"
+    ],
+    "so_term": "SO:0000167",
+    "so_label": "promoter",
+    "category": "promoter_bacterial",
+    "description": "The pRecA promoter drives expression of the recA gene in E. coli and is transcriptionally induced by the SOS DNA damage response. It contains a LexA-binding SOS box and is widely used in synthetic biology as a DNA damage biosensor and stress-responsive regulatory element.",
+    "mechanism": "Under normal conditions, the LexA repressor binds the SOS box within pRecA, blocking transcription. DNA damage generates single-stranded DNA that activates RecA coprotease activity, stimulating LexA autocleavage and derepressing pRecA-driven transcription.",
+    "expression_systems": [
+      "e_coli",
+      "enterobacteriaceae"
+    ],
+    "expected_length_bp": [
+      150,
+      450
+    ],
+    "expected_gc_fraction": [
+      0.4,
+      0.56
+    ],
+    "reference_accessions": [
+      "NC_000913",
+      "U00096",
+      "M13939",
+      "V00617"
+    ],
+    "reference_plasmids": [
+      "BBa_K112706",
+      "BBa_K233305",
+      "BBa_K1334003"
+    ],
+    "known_variants": [
+      "Minimal pRecA (~80 bp, SOS box + core -10/-35 only)",
+      "Extended pRecA (~300-400 bp, includes upstream regulatory elements)",
+      "Mutated SOS box variants (constitutive derepressed)",
+      "Synthetic SOS-responsive promoters with optimized LexA binding sites"
+    ],
+    "known_misannotations": [
+      "Misidentified as constitutive promoter when LexA regulation is not appreciated",
+      "Confused with other SOS-regulated promoters such as pSulA, pUmuD, or pDinB",
+      "Fragment length mislabeled \u2014 minimal vs. extended versions have different regulatory properties",
+      "Occasionally mislabeled as recA coding sequence when annotation spans into the gene"
+    ],
+    "notes": "Derived from E. coli K-12. Induction is proportional to the degree of DNA damage (e.g., UV, mitomycin C, nalidixic acid), making it useful for graded biosensor applications. Commonly paired with reporter genes (GFP, LacZ) for genotoxicity assays. Response kinetics are relatively slow (30-90 min) compared to synthetic inducible promoters. Part of the canonical SOS regulon controlled by the LexA/RecA two-component system.",
+    "_source_name": "pRecA (SOS response promoter)",
+    "_category_hint": "promoter_bacterial",
+    "_generated": true
   }
 ]

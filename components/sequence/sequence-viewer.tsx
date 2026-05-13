@@ -2,10 +2,8 @@
 
 import type { PrimerPair } from "@shandley/primd";
 import SeqViz from "seqviz";
-import { useRef } from "react";
 import type { ParsedSequence } from "@/lib/bio/parse-genbank";
 import { AccessibilityTrack } from "./accessibility-track";
-import { LinearMap } from "./linear-map";
 
 export interface SeqVizSelection {
 	start: number;
@@ -63,89 +61,10 @@ export function SequenceViewer({
 			: []),
 	];
 
-	// Ref to the SeqViz wrapper so we can query its internal DOM
-	const seqvizWrapRef = useRef<HTMLDivElement>(null);
-
-	// For linear sequences, clicking the overview map scrolls SeqViz's internal
-	// scroller (class "la-vz-linear-scroller") to the proportional position.
-	const handleLinearMapClick = (pos: number) => {
-		// Visual: set selection for cursor feedback in both views
-		if (onSelection) {
-			onSelection({ start: pos, end: pos + 1, sequence: "", length: 1 });
-		}
-		// Scroll: find SeqViz's internal scrollable container and scroll it
-		const scroller = seqvizWrapRef.current?.querySelector(".la-vz-linear-scroller");
-		if (scroller && parsed.seq.length > 0) {
-			const ratio = pos / parsed.seq.length;
-			const target = ratio * (scroller.scrollHeight - scroller.clientHeight);
-			scroller.scrollTo({ top: target, behavior: "smooth" });
-		}
-	};
-
 	return (
 		<div style={{ height: "100%", width: "100%", display: "flex", flexDirection: "column" }}>
-			{/* Linear map panel — visually distinct overview for linear sequences */}
-			{topology === "linear" && (
-				<div
-					style={{
-						flexShrink: 0,
-						borderBottom: "2px solid #ddd8ce",
-						background: "#fff",
-					}}
-				>
-					{/* Panel header */}
-					<div
-						style={{
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "space-between",
-							padding: "4px 12px",
-							background: "#f5f0e8",
-							borderBottom: "1px solid #ddd8ce",
-						}}
-					>
-						<span
-							style={{
-								fontFamily: "var(--font-courier)",
-								fontSize: "8px",
-								letterSpacing: "0.12em",
-								textTransform: "uppercase",
-								color: "#5a5648",
-							}}
-						>
-							Linear Map
-						</span>
-						<span
-							style={{
-								fontFamily: "var(--font-courier)",
-								fontSize: "8px",
-								color: "#9a9284",
-							}}
-						>
-							{parsed.seq.length >= 1000
-								? `${(parsed.seq.length / 1000).toFixed(1)} kb`
-								: `${parsed.seq.length} bp`}
-						</span>
-					</div>
-					<LinearMap
-						seq={parsed.seq}
-						annotations={seqvizAnnotations.map((a) => ({
-							start: a.start,
-							end: a.end,
-							name: a.name,
-							color: a.color ?? "#6b7280",
-							direction: (a.direction ?? 1) as 1 | -1,
-							type: "misc_feature",
-						}))}
-						selectionStart={selection?.start}
-						selectionEnd={selection?.end}
-						onPositionSelect={handleLinearMapClick}
-					/>
-				</div>
-			)}
-
 			{/* Sequence map — takes all remaining height */}
-			<div ref={seqvizWrapRef} style={{ flex: 1, overflow: "hidden" }}>
+			<div style={{ flex: 1, overflow: "hidden" }}>
 				<SeqViz
 					name={parsed.name}
 					seq={parsed.seq}

@@ -5,6 +5,7 @@ import { DeleteSequenceButton } from "@/components/sequence/delete-sequence-butt
 import { SequenceDescriptionEditor } from "@/components/sequence/sequence-description-editor";
 import { SequenceNameEditor } from "@/components/sequence/sequence-name-editor";
 import { SequenceViewerWithPanel } from "@/components/sequence/sequence-viewer-with-panel";
+import { ShareButton } from "@/components/sequence/share-button";
 import { TopologyToggle } from "@/components/sequence/topology-toggle";
 import { createClient } from "@/lib/supabase/server";
 import type { Sequence } from "@/types/database";
@@ -148,6 +149,8 @@ export default async function SequencePage({ params }: { params: Promise<{ id: s
 					</div>
 
 					<div style={{ width: "1px", height: "16px", background: "#ddd8ce", flexShrink: 0 }} />
+
+					<ShareButton sequenceId={seq.id} />
 
 					{fileUrl && (
 						<a

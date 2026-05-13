@@ -3,6 +3,28 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
 	public: {
 		Tables: {
+			sequence_shares: {
+				Row: {
+					id: string;
+					token: string;
+					sequence_id: string;
+					created_by: string;
+					created_at: string;
+					view_count: number;
+				};
+				Insert: {
+					id?: string;
+					token: string;
+					sequence_id: string;
+					created_by: string;
+					created_at?: string;
+					view_count?: number;
+				};
+				Update: {
+					view_count?: number;
+				};
+				Relationships: [];
+			};
 			sequences: {
 				Row: {
 					id: string;

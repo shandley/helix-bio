@@ -1,38 +1,36 @@
 # Ori
 
-**Open-source molecular biology workbench for the web**
+Open-source, browser-based molecular biology workbench.
 
-Ori is a browser-based alternative to SnapGene — a plasmid editor and analysis tool with AI-assisted primer design, restriction enzyme mapping, cloning simulation, and a natural language co-pilot.
+**[ori-bio.vercel.app](https://ori-bio.vercel.app)**
 
-**Live:** [ori-bio.app](https://ori-bio.app)
+Try the demo account: `demo@ori.bio` / `plasmids2025` — pre-loaded with pUC19, pBR322, pACYC184, pGEX-4T-1, and pEGFP-N1.
 
 ---
 
-## What you can do
+## What it does
 
-### Sequence analysis
-- Upload GenBank, FASTA, SnapGene (.dna), or EMBL files
-- Circular and linear plasmid maps with annotation colors and labels
-- Restriction enzyme cut-site mapping (single and double digests)
-- ORF detection across all 6 reading frames with protein translation
-- Sequence search with ambiguous base support (IUPAC codes)
+Upload a plasmid file (GenBank, FASTA, SnapGene .dna, or EMBL) and the app gives you a circular or linear sequence map with all annotated features. From there:
 
-### Primer design
-Powered by [primd](https://github.com/shandley/primd) — a thermodynamically-accurate TypeScript library using SantaLucia 1998 nearest-neighbor parameters and Owczarzy 2008 Mg²⁺ salt correction.
+**Restriction enzymes** — cut-site mapping for any combination of enzymes, shown on the map and in a sortable panel. Single-cutters highlighted.
 
-- Click any annotation on the map → primers auto-designed for that feature
-- Ranked primer pairs with amplicon size, ΔTm, and 3′ dimer ΔG
-- Per-primer template accessibility score (Boltzmann model — see if your primer lands in a hairpin)
-- Parameter controls: Tm target, primer length range, GC% range
-- Primer positions visualized on the sequence map and on a template accessibility heat map
+**Gel digest simulation** — pick an enzyme set and generate a virtual gel with 1kb or 100bp ladder. Add a second lane to compare two digests side by side, or add a PCR lane if you have primer pairs designed. Export the gel as PNG.
 
-### Cloning simulation
-- Restriction enzyme cloning (digest + ligate preview)
-- Gibson Assembly
-- Gateway recombination
+**Primer design** — click any annotation to auto-design primers for that feature. Rankings include amplicon size, Tm, GC content, 3' dimer free energy, and a template accessibility score that estimates whether the primer landing site is buried in secondary structure. The underlying thermodynamics use SantaLucia 1998 nearest-neighbor parameters with Owczarzy 2008 Mg2+ correction.
 
-### AI co-pilot
-Natural language Q&A about the loaded construct, powered by Claude. Ask about features, mechanisms, and experimental design.
+**Sanger alignment** — drag in one or more `.ab1` or `.fasta` files and align them to the loaded sequence. Each read shows strand, position, identity, and any mismatches. Click TRACE to open the chromatogram viewer: fluorescence curves for all four channels, base calls colored by Phred quality score, and mismatch positions highlighted. Handles both forward and reverse-complement alignments correctly.
+
+**Feature auto-detection** — when you load a sequence, the app scans it against a library of common molecular biology features (promoters, resistance genes, origins, tags, terminators) and highlights any it finds, even if they are not annotated in the original file.
+
+**ORF detection** — all 6 reading frames, filterable by minimum length, with protein translation.
+
+**Sequence search** — supports IUPAC ambiguity codes. Matches shown on the map.
+
+**Cloning simulation** — restriction enzyme cloning, Gibson Assembly, and Gateway recombination previews.
+
+**AI co-pilot** — natural language Q&A about the loaded construct. Ask what a feature does, how to clone it, or what primers to order.
+
+**Sharing** — share a read-only link to any sequence with a single click.
 
 ---
 
@@ -50,7 +48,7 @@ Create `.env.local`:
 ```
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-ANTHROPIC_API_KEY=your_key          # optional — only needed for Ask Ori panel
+ANTHROPIC_API_KEY=your_key
 ```
 
 ```bash
@@ -61,23 +59,19 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Tech
+## Stack
 
 | Layer | Choice |
 |-------|--------|
 | Framework | Next.js 16, TypeScript strict, Turbopack |
-| Auth + storage | Supabase (SSR) |
+| Auth + storage | Supabase |
 | Sequence viewer | [SeqViz](https://github.com/Lattice-Automation/seqviz) |
-| Primer design | [primd](https://github.com/shandley/primd) |
+| Primer design | [@shandley/primd](https://github.com/shandley/primd) |
+| ABIF parsing | [@shandley/abif-ts](https://github.com/shandley/abif-ts) |
+| Alignment | Smith-Waterman with affine gap penalties (Web Worker) |
 | AI | Claude API via Vercel AI SDK |
 | UI | shadcn/ui (@base-ui/react) |
 | Deployment | Vercel |
-
----
-
-## Roadmap
-
-The primary strategic advantage over existing tools is automatic sequence annotation using profile HMMs trained on Addgene, iGEM, and NCBI plasmid databases — catching codon-optimized and mutant variants that BLAST-based tools miss. This pipeline is under development.
 
 ---
 

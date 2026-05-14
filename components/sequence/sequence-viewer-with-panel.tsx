@@ -11,6 +11,7 @@ import type { SearchMatch } from "@/lib/bio/search";
 import { AIPanel } from "./ai-panel";
 import { AlignPanel } from "./align-panel";
 import type { AlignRead } from "./align-panel";
+import { Chromatogram } from "./chromatogram";
 import { DigestPanel } from "./digest-panel";
 import { EnzymePanel } from "./enzyme-panel";
 import { ORFPanel } from "./orf-panel";
@@ -53,7 +54,8 @@ export function SequenceViewerWithPanel({
 	const [searchMatches, setSearchMatches] = useState<SearchMatch[]>([]);
 	const [bestPair, setBestPair] = useState<PrimerPair | null>(null);
 	const [annotationName, setAnnotationName] = useState<string | null>(null);
-	const [alignedReads, setAlignedReads] = useState<AlignRead[]>([]);
+	const [alignedReads, setAlignedReads]       = useState<AlignRead[]>([]);
+	const [selectedAlignRead, setSelectedAlignRead] = useState<AlignRead | null>(null);
 	const [autoAnnotations, setAutoAnnotations] = useState<Annotation[]>([]);
 	const [annotating, setAnnotating] = useState(false);
 	const annotationWorkerRef = useRef<Worker | null>(null);
@@ -235,7 +237,8 @@ export function SequenceViewerWithPanel({
 	const parsedWithSearch = parsedWithAll;
 
 	return (
-		<div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
+		<div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+		<div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
 			{/* Sequence viewer */}
 			<div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
 				<SequenceViewer
@@ -416,6 +419,7 @@ export function SequenceViewerWithPanel({
 							seq={parsed.seq}
 							topology={topology}
 							onAlignmentResults={setAlignedReads}
+							onReadSelect={setSelectedAlignRead}
 						/>
 					)}
 					{activeTab === "orfs" && <ORFPanel seq={parsed.seq} topology={topology} />}
@@ -425,6 +429,21 @@ export function SequenceViewerWithPanel({
 					{activeTab === "ai" && <AIPanel context={aiContext} />}
 				</div>
 			</aside>
+		</div>
+
+		{/* Chromatogram drawer — full width, slides in at bottom */}
+		{selectedAlignRead?.traces && selectedAlignRead.peakPositions && selectedAlignRead.traceLength != null && (
+			<Chromatogram
+				name={selectedAlignRead.name}
+				sequence={selectedAlignRead.sequence}
+				quality={selectedAlignRead.quality}
+				peakPositions={selectedAlignRead.peakPositions}
+				traceLength={selectedAlignRead.traceLength}
+				traces={selectedAlignRead.traces}
+				result={selectedAlignRead.result}
+				onClose={() => setSelectedAlignRead(null)}
+			/>
+		)}
 		</div>
 	);
 }

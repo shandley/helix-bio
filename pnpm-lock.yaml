@@ -18,8 +18,8 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@shandley/abif-ts':
-        specifier: file:../abif-ts
-        version: file:../abif-ts
+        specifier: ^0.1.0
+        version: 0.1.0
       '@shandley/primd':
         specifier: ^0.3.0
         version: 0.3.0
@@ -777,8 +777,8 @@ packages:
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
 
-  '@shandley/abif-ts@file:../abif-ts':
-    resolution: {directory: ../abif-ts, type: directory}
+  '@shandley/abif-ts@0.1.0':
+    resolution: {integrity: sha512-2xEUU2IgZV7kFPrxqfDSettlgkmGvHL7NVAztRRYtMv7PCC3MTyz1+H1NsVxMUR1L/ONr+FM1DVDuFkzBZ42XQ==}
 
   '@shandley/primd@0.3.0':
     resolution: {integrity: sha512-h3Zyu2gnqvvAzHp08vsnU2NlbORlpelyrLh4d8fMl86kF5WlTlFa8U7JdlEoxMhpQwxrtAoEr8JFYuI3B+qTNQ==}
@@ -3935,7 +3935,7 @@ snapshots:
 
   '@sec-ant/readable-stream@0.4.1': {}
 
-  '@shandley/abif-ts@file:../abif-ts': {}
+  '@shandley/abif-ts@0.1.0': {}
 
   '@shandley/primd@0.3.0': {}
 

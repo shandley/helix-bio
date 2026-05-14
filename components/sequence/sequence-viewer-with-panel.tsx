@@ -9,6 +9,8 @@ import { DEFAULT_ENZYMES } from "@/lib/bio/enzymes";
 import { type ParsedSequence, parseGenBank } from "@/lib/bio/parse-genbank";
 import type { SearchMatch } from "@/lib/bio/search";
 import { AIPanel } from "./ai-panel";
+import { AlignPanel } from "./align-panel";
+import type { AlignRead } from "./align-panel";
 import { DigestPanel } from "./digest-panel";
 import { EnzymePanel } from "./enzyme-panel";
 import { ORFPanel } from "./orf-panel";
@@ -24,15 +26,16 @@ interface SequenceViewerWithPanelProps {
 	gcContent: number | null;
 }
 
-type PanelTab = "enzymes" | "primers" | "digest" | "orfs" | "search" | "ai";
+type PanelTab = "enzymes" | "primers" | "digest" | "orfs" | "search" | "ai" | "align";
 
 const TAB_LABELS: Record<PanelTab, string> = {
 	enzymes: "Enzymes",
 	primers: "Primers",
-	digest: "Digest",
-	orfs: "ORFs",
-	search: "Search",
-	ai: "Ask Ori",
+	digest:  "Digest",
+	orfs:    "ORFs",
+	search:  "Search",
+	ai:      "Ask Ori",
+	align:   "Align",
 };
 
 export function SequenceViewerWithPanel({
@@ -50,6 +53,7 @@ export function SequenceViewerWithPanel({
 	const [searchMatches, setSearchMatches] = useState<SearchMatch[]>([]);
 	const [bestPair, setBestPair] = useState<PrimerPair | null>(null);
 	const [annotationName, setAnnotationName] = useState<string | null>(null);
+	const [alignedReads, setAlignedReads] = useState<AlignRead[]>([]);
 	const [autoAnnotations, setAutoAnnotations] = useState<Annotation[]>([]);
 	const [annotating, setAnnotating] = useState(false);
 	const annotationWorkerRef = useRef<Worker | null>(null);
@@ -175,11 +179,40 @@ export function SequenceViewerWithPanel({
 	});
 
 	// Merge search hit annotations into the parsed sequence for highlighting
+	// Aligned reads as annotations (coverage region + mismatch markers)
+	const alignAnnotations = alignedReads.flatMap((r) => {
+		if (!r.visible || !r.result) return [];
+		const { refStart, refEnd, strand, identity, mismatches } = r.result;
+		const anns = [
+			{
+				start: refStart,
+				end: refEnd,
+				name: `${r.name} (${(identity * 100).toFixed(1)}%)`,
+				color: r.color,
+				direction: (strand === "+" ? 1 : -1) as 1 | -1,
+				type: "alignment",
+			},
+		];
+		// Mismatch markers as 1-bp red annotations
+		for (const m of mismatches) {
+			anns.push({
+				start: m.refPos,
+				end: m.refPos + 1,
+				name: `${m.refBase}→${m.queryBase}`,
+				color: "#dc2626",
+				direction: 1 as const,
+				type: "mismatch",
+			});
+		}
+		return anns;
+	});
+
 	// Build the annotation-merged parsed object (GenBank + auto + search hits)
 	const parsedWithAll = {
 		...parsed,
 		annotations: [
 			...parsed.annotations,
+			...alignAnnotations,
 			...dedupedAuto.map((a) => ({
 				start: a.start,
 				end: a.end,
@@ -290,7 +323,7 @@ export function SequenceViewerWithPanel({
 				<div style={{ flexShrink: 0, background: "#f5f0e8", borderBottom: "1px solid #ddd8ce" }}>
 					{[
 						["enzymes", "primers", "digest"] as PanelTab[],
-						["orfs", "search", "ai"] as PanelTab[],
+						["align", "orfs", "search", "ai"] as PanelTab[],
 					].map((row, rowIdx) => (
 						<div
 							key={rowIdx}
@@ -378,6 +411,13 @@ export function SequenceViewerWithPanel({
 						/>
 					)}
 					{activeTab === "digest" && <DigestPanel seq={parsed.seq} topology={topology} primerPair={bestPair} />}
+					{activeTab === "align" && (
+						<AlignPanel
+							seq={parsed.seq}
+							topology={topology}
+							onAlignmentResults={setAlignedReads}
+						/>
+					)}
 					{activeTab === "orfs" && <ORFPanel seq={parsed.seq} topology={topology} />}
 					{activeTab === "search" && (
 						<SearchPanel seq={parsed.seq} topology={topology} onMatches={handleSearchMatches} />

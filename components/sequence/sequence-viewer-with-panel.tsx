@@ -9,8 +9,8 @@ import { DEFAULT_ENZYMES } from "@/lib/bio/enzymes";
 import { type ParsedSequence, parseGenBank } from "@/lib/bio/parse-genbank";
 import type { SearchMatch } from "@/lib/bio/search";
 import { AIPanel } from "./ai-panel";
-import { AlignPanel } from "./align-panel";
 import type { AlignRead } from "./align-panel";
+import { AlignPanel } from "./align-panel";
 import { Chromatogram } from "./chromatogram";
 import { DigestPanel } from "./digest-panel";
 import { EnzymePanel } from "./enzyme-panel";
@@ -18,6 +18,7 @@ import { ORFPanel } from "./orf-panel";
 import { PrimerPanel } from "./primer-panel";
 import { SearchPanel } from "./search-panel";
 import { SequenceViewer, type SeqVizSelection } from "./sequence-viewer";
+import { type TranslationTarget, TranslationView } from "./translation-view";
 
 interface SequenceViewerWithPanelProps {
 	fileUrl: string;
@@ -32,11 +33,11 @@ type PanelTab = "enzymes" | "primers" | "digest" | "orfs" | "search" | "ai" | "a
 const TAB_LABELS: Record<PanelTab, string> = {
 	enzymes: "Enzymes",
 	primers: "Primers",
-	digest:  "Digest",
-	orfs:    "ORFs",
-	search:  "Search",
-	ai:      "Ask Ori",
-	align:   "Align",
+	digest: "Digest",
+	orfs: "ORFs",
+	search: "Search",
+	ai: "Ask Ori",
+	align: "Align",
 };
 
 export function SequenceViewerWithPanel({
@@ -54,8 +55,9 @@ export function SequenceViewerWithPanel({
 	const [searchMatches, setSearchMatches] = useState<SearchMatch[]>([]);
 	const [bestPair, setBestPair] = useState<PrimerPair | null>(null);
 	const [annotationName, setAnnotationName] = useState<string | null>(null);
-	const [alignedReads, setAlignedReads]       = useState<AlignRead[]>([]);
+	const [alignedReads, setAlignedReads] = useState<AlignRead[]>([]);
 	const [selectedAlignRead, setSelectedAlignRead] = useState<AlignRead | null>(null);
+	const [translationTarget, setTranslationTarget] = useState<TranslationTarget | null>(null);
 	const [autoAnnotations, setAutoAnnotations] = useState<Annotation[]>([]);
 	const [annotating, setAnnotating] = useState(false);
 	const annotationWorkerRef = useRef<Worker | null>(null);
@@ -64,16 +66,42 @@ export function SequenceViewerWithPanel({
 		setSearchMatches(matches);
 	}, []);
 
-	const handleSelection = useCallback((sel: SeqVizSelection | null) => {
-		setSelection(sel);
-		if (sel?.type === "ANNOTATION" && sel.name) {
-			// Annotation clicked — jump to Primers tab and pass the name for auto-design
-			setActiveTab("primers");
-			setAnnotationName(sel.name);
-		} else {
-			setAnnotationName(null);
-		}
-	}, []);
+	// Feature types that should show translation instead of primer design
+	const CDS_TYPES = new Set(["CDS", "mat_peptide", "sig_peptide", "transit_peptide"]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: CDS_TYPES is stable; eslint comment preserved from prior session
+	const handleSelection = useCallback(
+		(sel: SeqVizSelection | null) => {
+			setSelection(sel);
+			if (sel?.type === "ANNOTATION" && sel.name) {
+				// Look up the annotation — prefer CDS-typed match when multiple share a name
+				const allAnns = [...(parsed?.annotations ?? []), ...autoAnnotations];
+				const matches = allAnns.filter((a) => a.name === sel.name);
+				const ann = matches.find((a) => CDS_TYPES.has(a.type)) ?? matches[0];
+
+				if (ann && CDS_TYPES.has(ann.type)) {
+					// CDS: show translation drawer, don't switch tabs
+					setTranslationTarget({
+						name: ann.name,
+						start: ann.start,
+						end: ann.end,
+						direction: ann.direction,
+						type: ann.type,
+					});
+					setSelectedAlignRead(null);
+				} else {
+					// Non-CDS: jump to Primers tab
+					setTranslationTarget(null);
+					setActiveTab("primers");
+					setAnnotationName(sel.name);
+				}
+			} else {
+				setAnnotationName(null);
+			}
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+		},
+		[parsed, autoAnnotations],
+	);
 
 	useEffect(() => {
 		fetch(fileUrl)
@@ -238,212 +266,231 @@ export function SequenceViewerWithPanel({
 
 	return (
 		<div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-		<div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
-			{/* Sequence viewer */}
-			<div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
-				<SequenceViewer
-					parsed={parsedWithSearch}
-					topology={topology}
-					enzymes={selectedEnzymes}
-					selection={selection}
-					onSelection={handleSelection}
-					primerPair={bestPair}
-				/>
-				{/* Annotation status badge */}
-				{(annotating || dedupedAuto.length > 0) && (
-					<div
-						style={{
-							position: "absolute",
-							top: "10px",
-							right: "12px",
-							display: "flex",
-							alignItems: "center",
-							gap: "5px",
-							background: "rgba(245,240,232,0.92)",
-							border: "1px solid #ddd8ce",
-							borderRadius: "3px",
-							padding: "3px 8px",
-							fontFamily: "var(--font-courier)",
-							fontSize: "8px",
-							letterSpacing: "0.06em",
-							color: annotating ? "#9a9284" : "#1a4731",
-							backdropFilter: "blur(4px)",
-							pointerEvents: "none",
-						}}
-					>
-						{annotating ? (
-							<>
-								<span
-									style={{
-										display: "inline-block",
-										width: "6px",
-										height: "6px",
-										borderRadius: "50%",
-										border: "1.5px solid #9a9284",
-										borderTopColor: "transparent",
-										animation: "spin 0.8s linear infinite",
-									}}
-								/>
-								detecting features
-							</>
-						) : (
-							<>
-								<span style={{ color: "#1a4731" }}>●</span>
-								{dedupedAuto.length} feature{dedupedAuto.length !== 1 ? "s" : ""} detected
-							</>
-						)}
-					</div>
-				)}
-			</div>
-
-			{/* Right panel */}
-			<aside
-				style={{
-					width: "244px",
-					flexShrink: 0,
-					borderLeft: "1px solid #ddd8ce",
-					background: "#faf7f2",
-					display: "flex",
-					flexDirection: "column",
-					overflow: "hidden",
-				}}
-			>
-				{/* Clone button */}
-				<div
-					style={{
-						padding: "8px 12px",
-						borderBottom: "1px solid #ddd8ce",
-						flexShrink: 0,
-						background: "#f5f0e8",
-						display: "flex",
-						justifyContent: "flex-end",
-					}}
-				>
-					<CloningModal seq={parsed.seq} seqName={name} topology={topology} />
-				</div>
-
-				{/* Tab bar — two rows of 3 tabs each */}
-				<div style={{ flexShrink: 0, background: "#f5f0e8", borderBottom: "1px solid #ddd8ce" }}>
-					{[
-						["enzymes", "primers", "digest"] as PanelTab[],
-						["align", "orfs", "search", "ai"] as PanelTab[],
-					].map((row, rowIdx) => (
+			<div style={{ display: "flex", flex: 1, overflow: "hidden", minHeight: 0 }}>
+				{/* Sequence viewer */}
+				<div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+					<SequenceViewer
+						parsed={parsedWithSearch}
+						topology={topology}
+						enzymes={selectedEnzymes}
+						selection={selection}
+						onSelection={handleSelection}
+						primerPair={bestPair}
+					/>
+					{/* Annotation status badge */}
+					{(annotating || dedupedAuto.length > 0) && (
 						<div
-							key={rowIdx}
 							style={{
+								position: "absolute",
+								top: "10px",
+								right: "12px",
 								display: "flex",
-								borderBottom: rowIdx === 0 ? "1px solid rgba(221,216,206,0.4)" : undefined,
+								alignItems: "center",
+								gap: "5px",
+								background: "rgba(245,240,232,0.92)",
+								border: "1px solid #ddd8ce",
+								borderRadius: "3px",
+								padding: "3px 8px",
+								fontFamily: "var(--font-courier)",
+								fontSize: "8px",
+								letterSpacing: "0.06em",
+								color: annotating ? "#9a9284" : "#1a4731",
+								backdropFilter: "blur(4px)",
+								pointerEvents: "none",
 							}}
 						>
-							{row.map((tab) => (
-								<button
-									type="button"
-									key={tab}
-									onClick={() => setActiveTab(tab)}
-									style={{
-										flex: 1,
-										padding: "8px 0",
-										fontFamily: "var(--font-courier)",
-										fontSize: "7.5px",
-										letterSpacing: "0.08em",
-										textTransform: "uppercase",
-										color: activeTab === tab ? "#1a4731" : "#9a9284",
-										background: activeTab === tab ? "rgba(26,71,49,0.05)" : "none",
-										border: "none",
-										borderBottom: activeTab === tab ? "2px solid #1a4731" : "2px solid transparent",
-										cursor: "pointer",
-										transition: "color 0.1s",
-										marginBottom: "-1px",
-										position: "relative",
-									}}
-								>
-									{TAB_LABELS[tab]}
-									{tab === "primers" && selection !== null && (
-										<span
-											style={{
-												display: "inline-block",
-												width: "4px",
-												height: "4px",
-												borderRadius: "50%",
-												background: "#b8933a",
-												marginLeft: "4px",
-												verticalAlign: "middle",
-												marginBottom: "1px",
-											}}
-										/>
-									)}
-									{tab === "search" && searchMatches.length > 0 && (
-										<span
-											style={{
-												display: "inline-block",
-												width: "4px",
-												height: "4px",
-												borderRadius: "50%",
-												background: "#f5a623",
-												marginLeft: "4px",
-												verticalAlign: "middle",
-												marginBottom: "1px",
-											}}
-										/>
-									)}
-								</button>
-							))}
+							{annotating ? (
+								<>
+									<span
+										style={{
+											display: "inline-block",
+											width: "6px",
+											height: "6px",
+											borderRadius: "50%",
+											border: "1.5px solid #9a9284",
+											borderTopColor: "transparent",
+											animation: "spin 0.8s linear infinite",
+										}}
+									/>
+									detecting features
+								</>
+							) : (
+								<>
+									<span style={{ color: "#1a4731" }}>●</span>
+									{dedupedAuto.length} feature{dedupedAuto.length !== 1 ? "s" : ""} detected
+								</>
+							)}
 						</div>
-					))}
+					)}
 				</div>
 
-				{/* Panel content */}
-				<div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-					{activeTab === "enzymes" && (
-						<EnzymePanel
-							seq={parsed.seq}
-							circular={topology === "circular"}
-							selected={selectedEnzymes}
-							onChange={setSelectedEnzymes}
-						/>
-					)}
-					{activeTab === "primers" && (
-						<PrimerPanel
-							seq={parsed.seq}
-							seqLen={parsed.seq.length}
-							topology={topology}
-							selectionStart={selection?.start}
-							selectionEnd={selection?.end}
-							onPrimersDesigned={setBestPair}
-							annotationName={annotationName}
-						/>
-					)}
-					{activeTab === "digest" && <DigestPanel seq={parsed.seq} topology={topology} primerPair={bestPair} />}
-					{activeTab === "align" && (
-						<AlignPanel
-							seq={parsed.seq}
-							topology={topology}
-							onAlignmentResults={setAlignedReads}
-							onReadSelect={setSelectedAlignRead}
-						/>
-					)}
-					{activeTab === "orfs" && <ORFPanel seq={parsed.seq} topology={topology} />}
-					{activeTab === "search" && (
-						<SearchPanel seq={parsed.seq} topology={topology} onMatches={handleSearchMatches} />
-					)}
-					{activeTab === "ai" && <AIPanel context={aiContext} />}
-				</div>
-			</aside>
-		</div>
+				{/* Right panel */}
+				<aside
+					style={{
+						width: "244px",
+						flexShrink: 0,
+						borderLeft: "1px solid #ddd8ce",
+						background: "#faf7f2",
+						display: "flex",
+						flexDirection: "column",
+						overflow: "hidden",
+					}}
+				>
+					{/* Clone button */}
+					<div
+						style={{
+							padding: "8px 12px",
+							borderBottom: "1px solid #ddd8ce",
+							flexShrink: 0,
+							background: "#f5f0e8",
+							display: "flex",
+							justifyContent: "flex-end",
+						}}
+					>
+						<CloningModal seq={parsed.seq} seqName={name} topology={topology} />
+					</div>
 
-		{/* Chromatogram drawer — full width, slides in at bottom */}
-		{selectedAlignRead?.traces && selectedAlignRead.peakPositions && selectedAlignRead.traceLength != null && (
-			<Chromatogram
-				name={selectedAlignRead.name}
-				sequence={selectedAlignRead.sequence}
-				quality={selectedAlignRead.quality}
-				peakPositions={selectedAlignRead.peakPositions}
-				traceLength={selectedAlignRead.traceLength}
-				traces={selectedAlignRead.traces}
-				result={selectedAlignRead.result}
-				onClose={() => setSelectedAlignRead(null)}
-			/>
-		)}
+					{/* Tab bar — two rows of 3 tabs each */}
+					<div style={{ flexShrink: 0, background: "#f5f0e8", borderBottom: "1px solid #ddd8ce" }}>
+						{[
+							["enzymes", "primers", "digest"] as PanelTab[],
+							["align", "orfs", "search", "ai"] as PanelTab[],
+						].map((row, rowIdx) => (
+							<div
+								key={rowIdx}
+								style={{
+									display: "flex",
+									borderBottom: rowIdx === 0 ? "1px solid rgba(221,216,206,0.4)" : undefined,
+								}}
+							>
+								{row.map((tab) => (
+									<button
+										type="button"
+										key={tab}
+										onClick={() => setActiveTab(tab)}
+										style={{
+											flex: 1,
+											padding: "8px 0",
+											fontFamily: "var(--font-courier)",
+											fontSize: "7.5px",
+											letterSpacing: "0.08em",
+											textTransform: "uppercase",
+											color: activeTab === tab ? "#1a4731" : "#9a9284",
+											background: activeTab === tab ? "rgba(26,71,49,0.05)" : "none",
+											border: "none",
+											borderBottom:
+												activeTab === tab ? "2px solid #1a4731" : "2px solid transparent",
+											cursor: "pointer",
+											transition: "color 0.1s",
+											marginBottom: "-1px",
+											position: "relative",
+										}}
+									>
+										{TAB_LABELS[tab]}
+										{tab === "primers" && selection !== null && (
+											<span
+												style={{
+													display: "inline-block",
+													width: "4px",
+													height: "4px",
+													borderRadius: "50%",
+													background: "#b8933a",
+													marginLeft: "4px",
+													verticalAlign: "middle",
+													marginBottom: "1px",
+												}}
+											/>
+										)}
+										{tab === "search" && searchMatches.length > 0 && (
+											<span
+												style={{
+													display: "inline-block",
+													width: "4px",
+													height: "4px",
+													borderRadius: "50%",
+													background: "#f5a623",
+													marginLeft: "4px",
+													verticalAlign: "middle",
+													marginBottom: "1px",
+												}}
+											/>
+										)}
+									</button>
+								))}
+							</div>
+						))}
+					</div>
+
+					{/* Panel content */}
+					<div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+						{activeTab === "enzymes" && (
+							<EnzymePanel
+								seq={parsed.seq}
+								circular={topology === "circular"}
+								selected={selectedEnzymes}
+								onChange={setSelectedEnzymes}
+							/>
+						)}
+						{activeTab === "primers" && (
+							<PrimerPanel
+								seq={parsed.seq}
+								seqLen={parsed.seq.length}
+								topology={topology}
+								selectionStart={selection?.start}
+								selectionEnd={selection?.end}
+								onPrimersDesigned={setBestPair}
+								annotationName={annotationName}
+							/>
+						)}
+						{activeTab === "digest" && (
+							<DigestPanel seq={parsed.seq} topology={topology} primerPair={bestPair} />
+						)}
+						{activeTab === "align" && (
+							<AlignPanel
+								seq={parsed.seq}
+								topology={topology}
+								onAlignmentResults={setAlignedReads}
+								onReadSelect={setSelectedAlignRead}
+							/>
+						)}
+						{activeTab === "orfs" && <ORFPanel seq={parsed.seq} topology={topology} />}
+						{activeTab === "search" && (
+							<SearchPanel seq={parsed.seq} topology={topology} onMatches={handleSearchMatches} />
+						)}
+						{activeTab === "ai" && <AIPanel context={aiContext} />}
+					</div>
+				</aside>
+			</div>
+
+			{/* Translation drawer — shown when a CDS annotation is clicked */}
+			{translationTarget && (
+				<TranslationView
+					seq={parsed.seq}
+					target={translationTarget}
+					onClose={() => setTranslationTarget(null)}
+					onDesignPrimers={() => {
+						setAnnotationName(translationTarget.name);
+						setActiveTab("primers");
+						setTranslationTarget(null);
+					}}
+				/>
+			)}
+
+			{/* Chromatogram drawer — full width, slides in at bottom */}
+			{selectedAlignRead?.traces &&
+				selectedAlignRead.peakPositions &&
+				selectedAlignRead.traceLength != null && (
+					<Chromatogram
+						name={selectedAlignRead.name}
+						sequence={selectedAlignRead.sequence}
+						quality={selectedAlignRead.quality}
+						peakPositions={selectedAlignRead.peakPositions}
+						traceLength={selectedAlignRead.traceLength}
+						traces={selectedAlignRead.traces}
+						result={selectedAlignRead.result}
+						onClose={() => setSelectedAlignRead(null)}
+					/>
+				)}
 		</div>
 	);
 }

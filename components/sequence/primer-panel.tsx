@@ -610,6 +610,7 @@ export function PrimerPanel({
 	const [assemblyMethod, setAssemblyMethod] = useState<"gibson" | "golden_gate">("gibson");
 	const [gibsonOverlap, setGibsonOverlap] = useState(20);
 	const [ggEnzyme, setGgEnzyme] = useState<"BsaI" | "BbsI" | "BsmBI">("BsaI");
+	const [assemblySearchExt, setAssemblySearchExt] = useState(200); // bp beyond region to search
 	const [pairs, setPairs] = useState<DesignPair[] | null>(null);
 	const [assemblyPairs, setAssemblyPairs] = useState<AssemblyPrimerPair[] | null>(null);
 	const [warning, setWarning] = useState<string | null>(null);
@@ -701,9 +702,14 @@ export function PrimerPanel({
 				},
 				...(mode === "assembly"
 					? {
+							// productSizeRange will be in AssemblyPrimerOptions after primd 0.3.2 — cast until then
 							assemblyOpts: {
 								method: assemblyMethod,
 								annealingLenRange: [minLen, maxLen] as [number, number],
+								productSizeRange: [
+									Math.max(100, regionLen + 10),
+									regionLen + assemblySearchExt,
+								] as [number, number],
 								...(assemblyMethod === "gibson"
 									? { gibsonOverlap }
 									: { ggEnzymeSite: GG_ENZYME_SITES[ggEnzyme] }),
@@ -771,6 +777,7 @@ export function PrimerPanel({
 			assemblyMethod,
 			gibsonOverlap,
 			ggEnzyme,
+			assemblySearchExt,
 		],
 	);
 
@@ -1008,6 +1015,57 @@ export function PrimerPanel({
 								</select>
 							</div>
 						)}
+					</div>
+				)}
+
+				{mode === "assembly" && (
+					<div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
+						<div
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "8px",
+								letterSpacing: "0.08em",
+								textTransform: "uppercase",
+								color: "#9a9284",
+								marginBottom: "4px",
+								whiteSpace: "nowrap",
+							}}
+						>
+							Search ±
+						</div>
+						<div style={{ flex: 1 }}>
+							<input
+								type="number"
+								value={assemblySearchExt}
+								min={100}
+								max={2000}
+								step={100}
+								onChange={(e) =>
+									setAssemblySearchExt(Math.max(100, Math.min(2000, Number(e.target.value))))
+								}
+								style={{
+									width: "100%",
+									padding: "5px 8px",
+									fontFamily: "var(--font-courier)",
+									fontSize: "11px",
+									color: "#1c1a16",
+									background: "#f5f0e8",
+									border: "1px solid #ddd8ce",
+									borderRadius: "3px",
+									outline: "none",
+								}}
+							/>
+						</div>
+						<span
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								color: "#9a9284",
+								whiteSpace: "nowrap",
+							}}
+						>
+							bp flanking
+						</span>
 					</div>
 				)}
 
@@ -1373,9 +1431,12 @@ export function PrimerPanel({
 							fontFamily: "var(--font-courier)",
 							fontSize: "9px",
 							color: "#b8933a",
+							lineHeight: 1.5,
 						}}
 					>
-						{warning}
+						{mode === "assembly" && warning.includes("no compatible pairs")
+							? `No primer sites found within ${assemblySearchExt} bp of the target boundaries — the flanking sequence may be AT-rich. Try increasing the Search ± range in Options.`
+							: warning}
 					</div>
 				)}
 

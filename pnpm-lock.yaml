@@ -21,8 +21,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       '@shandley/primd':
-        specifier: ^0.3.1
-        version: 0.3.1
+        specifier: ^0.3.2
+        version: 0.3.2
       '@supabase/ssr':
         specifier: ^0.10.2
         version: 0.10.2(@supabase/supabase-js@2.105.3)
@@ -780,8 +780,8 @@ packages:
   '@shandley/abif-ts@0.1.0':
     resolution: {integrity: sha512-2xEUU2IgZV7kFPrxqfDSettlgkmGvHL7NVAztRRYtMv7PCC3MTyz1+H1NsVxMUR1L/ONr+FM1DVDuFkzBZ42XQ==}
 
-  '@shandley/primd@0.3.1':
-    resolution: {integrity: sha512-auzzVBegDMj+jT9CaTOA5s7GkQhzI9hjHWlNQCqk5MUDrQbnUIKt4+ccV1Pv43i0OYLOFPkQFCf3c/oTv6Vi0g==}
+  '@shandley/primd@0.3.2':
+    resolution: {integrity: sha512-q+Wzaif5X7PJS8YTd2ogKM+jXEcbXDTQqkeEIGyBQbRMixOUvb2MBcbCI5Uv0Uuo/GK9Rrl87VF+/gilxohQxw==}
 
   '@sindresorhus/merge-streams@4.0.0':
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
@@ -3937,7 +3937,7 @@ snapshots:
 
   '@shandley/abif-ts@0.1.0': {}
 
-  '@shandley/primd@0.3.1': {}
+  '@shandley/primd@0.3.2': {}
 
   '@sindresorhus/merge-streams@4.0.0': {}
 

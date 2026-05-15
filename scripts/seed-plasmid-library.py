@@ -260,6 +260,11 @@ def main():
                 skip += 1
                 continue
 
+            if len(seq) > 50000:
+                print(f"SKIP (too large: {len(seq):,} bp — not a typical cloning vector)")
+                skip += 1
+                continue
+
             name = rec.name or gb_path.stem
             slug = make_slug(gb_path.stem)
             key_features = extract_key_features(rec)

@@ -10,13 +10,15 @@ Open-source, web-based, LLM-powered molecular biology platform.
 - `app/actions/` — Next.js server actions (auth, sequences, seed)
 - `supabase/migrations/` — Database schema
 
-## primd — local primer design library
-Published on npm as **`@shandley/primd`** (unscoped `primd` rejected by npm — too similar to `prisma`).
-Lives at `../primd` (sibling directory). Linked locally via `file:../primd` in package.json as `@shandley/primd`.
-- **Use `file:` not `link:`** — `link:` creates a symlink outside the project root which Turbopack rejects. `file:` copies dist into `.pnpm/` store within the project tree.
-- After changing primd source: `cd ../primd && npx tsc --project tsconfig.build.json && cd ../snapgene-alternative && pnpm install`
-- Exports: `designPCR`, `designLAMP`, `calcAccessibilityProfile`, `calcTm`, `reverseComplement`, and thermodynamic utilities
-- Web Worker: `components/sequence/primer-design.worker.ts` runs designPCR off the main thread
+## primd — primer design library
+Published on npm as **`@shandley/primd`** v0.3.2. Lives at `../primd` (sibling). Ori uses `^0.3.2` from npm.
+- After changing primd source: build → bump version → `npm publish --access public` → update `package.json` version → `pnpm install`
+- Exports: `designPCR`, `designLAMP`, `designQPCR`, `designAssembly` (Gibson + Golden Gate), thermodynamic utilities
+- Web Worker: `components/sequence/primer-design.worker.ts` runs all design modes off the main thread
+
+## abif-ts — ABIF parser
+Published on npm as **`@shandley/abif-ts`** v0.1.0. Lives at `../abif-ts` (sibling). Same publish workflow as primd.
+- Parses `.ab1` Sanger files: sequence, quality scores, peak positions, all 4 fluorescence trace channels, metadata
 
 ## Critical Next.js / shadcn gotchas
 - **No `asChild` prop** — shadcn here uses `@base-ui/react`, not Radix UI. Never use `<Button asChild>`. Use `<Link className={buttonVariants({...})}>` instead.
@@ -112,60 +114,36 @@ conda activate confphylo
 
 ## Feature annotation database
 
-**Goal**: Automatically annotate any uploaded plasmid by scanning it against a library of
-profile HMMs built from every depositor-annotated feature in public databases. This is
-Ori's core moat vs SnapGene's proprietary BLAST feature library.
+**Architecture**: The HTCF pipeline is an OFFLINE CURATION TOOL, not a runtime service.
+Users never send sequences to HTCF. All annotation runs client-side in a Web Worker.
+The pipeline produces a static feature library that ships with the app.
 
-**Why HMMs over BLAST**: Profile HMMs capture sequence variation across a gene family,
-tolerate divergent homologs, and produce calibrated confidence scores. A single HMM for
-"CMV promoter" covers all variants; BLAST requires exact matches to stored examples.
+**Do not suggest wiring hmmscan or any HPC tool into the user-facing Ori pipeline.**
 
-### Pipeline (scripts in `/scratch/sahlab/shandley/helix-feature-db/scripts/`)
+### How it works
+1. HTCF pipeline (offline, our work): collect plasmid GenBanks → extract features → cluster → build HMMs
+2. Export step: cluster representative sequences → `data/features.json` (shipped with app)
+3. Ori annotation worker: k-mer matching against `features.json`, runs in browser, no server needed
 
-```
-01_fetch_addgene.py      → raw/addgene/*.gb         (requires Addgene credentials)
-02_fetch_igem.py         → raw/igem/*.gb             (iGEM Registry REST API, public)
-06_fetch_snapgene.py     → raw/snapgene/*.gb         (public SnapGene plasmid library)
-run_refseq_download.sh   → raw/refseq/*.gbff.gz      (NCBI FTP, public)
+### HTCF pipeline status (as of 2026-05-14) — COMPLETE
+All jobs finished successfully. No jobs currently running.
 
-03_extract_features.py   → features/all_features.fna + metadata.tsv
-04_cluster.sh            → clusters/ (MMseqs2 at 80% identity)
-05_build_hmms.sh         → hmm/ (MAFFT MSA → hmmbuild → hmmpress)
+| Source | Files | Status |
+|--------|-------|--------|
+| SnapGene | 2,550 .gb | ✅ Complete |
+| iGEM Registry | 15,673 with sequences | ✅ Complete (finished 2026-05-09) |
+| RefSeq | 8 .gbff.gz | ❌ Unusable — WGS annotation-only, no actual bases |
+| Addgene | catalog only | ❌ Needs login credentials |
 
-Annotation query: hmmscan --domtblout against compressed hmm/features.hmm
-```
+| Step | Status | Output |
+|------|--------|--------|
+| Feature extraction | ✅ Done | 113,529 features, `all_features.fna` |
+| MMseqs2 clustering | ✅ Done | 31,020 clusters, `clusterDB_rep_seq.fasta` (36 MB) |
+| MAFFT + hmmbuild | ✅ Done | 26,832 HMM profiles |
+| hmmpress | ✅ Done | 14 GB database at `/scratch/sahlab/shandley/helix-feature-db/db/helix_features.hmm` |
 
-### Data source status (as of 2026-05-08)
-
-| Source | Files | Records | Status | Notes |
-|--------|-------|---------|--------|-------|
-| SnapGene | 2,550 .gb | ~2,550 | ✅ Complete | Public library, high quality |
-| NCBI RefSeq plasmids | 8 .gbff.gz | 123,661 | ❌ Unusable | WGS annotation-only records — sequence length stored but no actual bases. `str(rec.seq)` raises `UndefinedSequenceError` on every record. Wrong file type. See note below. |
-| iGEM Registry | 11,395 .gb | ~11,000 | 🔄 Re-downloading | 110,879 total parts; job 39960873 running, ~11% done |
-| Addgene | 0 | ~200,000 | ❌ Not started | Requires login credentials; script: 01_fetch_addgene.py |
-
-### Downstream pipeline status
-
-| Step | Status | Blocker |
-|------|--------|---------|
-| Feature extraction | ❌ Broken | RefSeq: script passed `all_plasmids.gbff` (12 GB merged file) — BioPython UndefinedSequenceError. Fix: process individual `.gbff.gz` files directly with gzip support |
-| MMseqs2 clustering | ❌ Not started | Needs feature extraction |
-| MAFFT + hmmbuild | ❌ Not started | Needs clusters |
-| hmmpress (final DB) | ❌ Not started | Needs HMMs |
-
-### Key decisions & constraints
-- **RefSeq files**: Always process `raw/refseq/plasmid.*.genomic.gbff.gz` directly via gzip — never the merged `all_plasmids.gbff` (12 GB, causes BioPython to crash)
-- **Addgene auth**: `01_fetch_addgene.py` needs `ADDGENE_SESSION_ID` env var (browser cookie) or `--email`/`--password`. Without auth it falls back to catalog metadata only (IDs, no sequences). Catalog saved to `raw/addgene/catalog.tsv`.
-- **iGEM completeness**: iGEM API is slow (~2 min/100 parts), 110k parts total. Expect ~24h for full download. Many parts have no sequence (expected, ~10%).
-- **Feature deduplication**: `03_extract_features.py` deduplicates by `{accession}_{start}_{end}_{strand}` ID. Safe to re-run.
-- **Min feature length**: 20 bp. Max: 50,000 bp. Skips: source, gap, assembly_gap, primer_bind, variation.
-- **Target scale**: ~5–10M features extracted → cluster to ~100k–500k representative sequences → ~100k–500k HMM profiles
-
-### Next steps (in order)
-1. ✅ Fix `03_extract_features.py` for `.gz` RefSeq files
-2. Check iGEM download job status on HTCF (was ~11% done, job 39960873)
-3. Get Addgene credentials and run `01_fetch_addgene.py`
-4. Run feature extraction (SnapGene done; iGEM + Addgene after data lands)
-5. Run `04_cluster.sh` (MMseqs2 at 80% identity)
-6. Run `05_build_hmms.sh` (MAFFT + hmmbuild + hmmpress)
-7. Wire HMMscan into Ori upload pipeline
+### Remaining work
+- Export filtered cluster rep seqs from HTCF → update `data/features.json` in Ori
+- Filter strategy: keep clusters with multiple members, recognizable feature types, size ≥ 2
+- Target: ~500–2000 high-confidence features (compact enough to ship in browser)
+- Addgene expansion: if credentials obtained, re-run pipeline to add ~200k more sequences

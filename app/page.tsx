@@ -35,7 +35,6 @@ export default function LandingPage() {
 				<nav className="flex items-center gap-8">
 					{[
 						["#features", "Features"],
-						["#database", "Database"],
 						["https://github.com/shandley/ori-bio", "GitHub"],
 					].map(([href, label]) => (
 						<Link
@@ -493,9 +492,9 @@ export default function LandingPage() {
 							},
 							{
 								num: "02",
-								title: "Feature Annotation",
-								desc: "Curated reference library of 1,400+ canonical features from the SnapGene public plasmid collection. Resistance markers, origins, promoters, reporters, and CRISPR elements — detected instantly in the browser.",
-								tag: "1,472 canonical features",
+								title: "Sanger Alignment",
+								desc: "Drop .ab1 or FASTA files to align sequencing reads against your construct. Smith-Waterman alignment on both strands with mismatch markers, identity scores, and a full chromatogram viewer.",
+								tag: ".ab1 · FASTA",
 							},
 							{
 								num: "03",
@@ -623,8 +622,8 @@ export default function LandingPage() {
 				</section>
 			</main>
 
-			{/* DATABASE SECTION */}
-			<section
+			{/* DATABASE SECTION — removed. Was internal infrastructure detail, not user-facing value. */}
+			{false && <section
 				id="database"
 				style={{
 					padding: "80px 56px",
@@ -905,7 +904,7 @@ export default function LandingPage() {
 						))}
 					</div>
 				</div>
-			</section>
+			</section>}
 
 			{/* CTA */}
 			<section

@@ -104,6 +104,7 @@ const TYPE_COLOR: Record<string, string> = {
   terminator: "#dc2626",
   ori: "#d97706",
   marker: "#7c3aed",
+  cds: "#1d4ed8",
   CDS: "#1d4ed8",
 };
 
@@ -262,20 +263,22 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
   const router = useRouter();
   const [step, setStep] = useState<Step>("input");
   const [insertSeq, setInsertSeq] = useState("");
-  const [insertName, setInsertName] = useState("MyGene");
+  const [insertName, setInsertName] = useState("");
   const [goal, setGoal] = useState("");
+  const [showInsert, setShowInsert] = useState(false);
   const [result, setResult] = useState<DesignResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const runDesign = useCallback(async () => {
-    const seq = insertSeq.replace(/\s/g, "").toUpperCase();
-    if (!seq || seq.length < 9) {
-      setError("Paste a DNA sequence for your insert (minimum 9 bp).");
-      return;
-    }
     if (!goal.trim()) {
       setError("Describe your expression goal.");
+      return;
+    }
+    const seq = insertSeq.replace(/\s/g, "").toUpperCase();
+    // Mode A: insert provided — validate it
+    if (showInsert && seq.length > 0 && seq.length < 9) {
+      setError("Insert sequence is too short (minimum 9 bp). Clear it to let Ori pick a CDS from its library.");
       return;
     }
 
@@ -288,7 +291,11 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
       const res = await fetch("/api/design-construct", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ insertSeq: seq, insertName: insertName.trim() || "MyGene", goal }),
+        body: JSON.stringify({
+          insertSeq: showInsert ? seq : "",
+          insertName: insertName.trim() || "MyGene",
+          goal,
+        }),
         signal: abortRef.current.signal,
       });
 
@@ -298,7 +305,10 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
       }
 
       const design = (await res.json()) as ConstructDesign;
-      const insertInfo = { name: insertName.trim() || "MyGene", seq };
+      const hasUserInsert = design.parts.some((p) => p.partId === "INSERT");
+      const insertInfo = hasUserInsert
+        ? { name: insertName.trim() || "MyGene", seq }
+        : undefined;
       const assembled = assembleConstruct(design, insertInfo);
 
       const gcCount = assembled.seq.split("").filter((c) => c === "G" || c === "C").length;
@@ -392,7 +402,7 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
               margin: "5px 0 0",
             }}
           >
-            Paste your gene, describe the goal — Ori assembles the plasmid.
+            Describe what you want to build — Ori designs and assembles the plasmid.
           </p>
         </div>
 
@@ -400,66 +410,79 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
         <div style={S.body}>
           {(step === "input" || step === "designing") && (
             <>
-              {/* Insert name */}
+              {/* Goal — primary input, always visible */}
               <div style={{ marginBottom: "14px" }}>
-                <label style={S.label}>Insert name</label>
-                <input
-                  type="text"
-                  value={insertName}
-                  onChange={(e) => setInsertName(e.target.value)}
-                  placeholder="e.g. mCherry, GFP, Cas9"
-                  style={{
-                    ...S.textarea,
-                    resize: "none",
-                    height: "36px",
-                    padding: "7px 10px",
-                  }}
-                />
-              </div>
-
-              {/* Insert sequence */}
-              <div style={{ marginBottom: "14px" }}>
-                <label style={S.label}>
-                  Insert sequence{" "}
-                  <span style={{ color: "#b8b0a4", fontWeight: 400 }}>
-                    (FASTA or raw DNA)
-                  </span>
-                </label>
-                <textarea
-                  value={insertSeq}
-                  onChange={(e) => setInsertSeq(e.target.value)}
-                  placeholder={">MyGene\nATGAGTATTCAACATTTCCGTGTCGCC..."}
-                  rows={6}
-                  style={S.textarea}
-                />
-                {insertSeq.replace(/\s|>/g, "").length > 0 && (
-                  <div
-                    style={{
-                      fontFamily: "var(--font-courier)",
-                      fontSize: "9px",
-                      color: "#9a9284",
-                      marginTop: "4px",
-                    }}
-                  >
-                    {insertSeq
-                      .replace(/>[^\n]*\n?/g, "")
-                      .replace(/\s/g, "")
-                      .length.toLocaleString()}{" "}
-                    bp
-                  </div>
-                )}
-              </div>
-
-              {/* Goal */}
-              <div style={{ marginBottom: "10px" }}>
-                <label style={S.label}>Expression goal</label>
+                <label style={S.label}>What do you want to build?</label>
                 <textarea
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
-                  placeholder="e.g. Express in E. coli with IPTG induction for protein purification. High yield is more important than tight control."
+                  placeholder={"e.g. \"Express GFP in E. coli with IPTG induction\"\nor \"CRISPR construct for mammalian delivery via AAV\"\nor \"Luciferase reporter for promoter activity assay\""}
                   rows={3}
                   style={S.textarea}
                 />
+                <div style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284", marginTop: "4px" }}>
+                  Leave the insert blank to let Ori select a gene from its library, or expand below to paste your own.
+                </div>
+              </div>
+
+              {/* Optional insert — collapsible */}
+              <div style={{ marginBottom: "10px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowInsert((v) => !v)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    background: "none",
+                    border: "1px solid #ddd8ce",
+                    borderRadius: "2px",
+                    cursor: "pointer",
+                    padding: "5px 10px",
+                    fontFamily: "var(--font-courier)",
+                    fontSize: "8px",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase" as const,
+                    color: showInsert ? "#1a4731" : "#9a9284",
+                    marginBottom: showInsert ? "10px" : 0,
+                  }}
+                >
+                  <span style={{ transition: "transform 0.15s", display: "inline-block", transform: showInsert ? "rotate(90deg)" : "rotate(0)" }}>▶</span>
+                  I have my own gene sequence
+                </button>
+
+                {showInsert && (
+                  <>
+                    <div style={{ marginBottom: "10px" }}>
+                      <label style={S.label}>Gene name</label>
+                      <input
+                        type="text"
+                        value={insertName}
+                        onChange={(e) => setInsertName(e.target.value)}
+                        placeholder="e.g. mCherry, MyProtein"
+                        style={{ ...S.textarea, resize: "none" as const, height: "36px", padding: "7px 10px" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={S.label}>
+                        Gene sequence{" "}
+                        <span style={{ color: "#b8b0a4", fontWeight: 400 }}>(FASTA or raw DNA)</span>
+                      </label>
+                      <textarea
+                        value={insertSeq}
+                        onChange={(e) => setInsertSeq(e.target.value)}
+                        placeholder={">MyGene\nATGAGTATTCAACATTTCCGTGTCGCC..."}
+                        rows={5}
+                        style={S.textarea}
+                      />
+                      {insertSeq.replace(/\s|>/g, "").length > 0 && (
+                        <div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", marginTop: "4px" }}>
+                          {insertSeq.replace(/>[^\n]*\n?/g, "").replace(/\s/g, "").length.toLocaleString()} bp
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               {error && (

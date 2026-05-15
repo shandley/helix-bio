@@ -2,6 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function proxy(request: NextRequest) {
+	// Skip auth check in dev when Supabase env vars aren't available (e.g. no vercel env pull)
+	if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+		return NextResponse.next({ request });
+	}
+
 	let supabaseResponse = NextResponse.next({ request });
 
 	const supabase = createServerClient(

@@ -5,6 +5,12 @@ import { useCallback, useRef, useState } from "react";
 import { saveDesignedConstruct } from "@/app/actions/sequences";
 import type { ConstructDesign } from "@/lib/bio/assemble-construct";
 import { assembleConstruct, validateDesign } from "@/lib/bio/assemble-construct";
+import {
+  type CodonOptOrganism,
+  optimizeCodon,
+  parseProteinSeq,
+  validateProtein,
+} from "@/lib/bio/codon-optimize";
 import { serializeGenBank } from "@/lib/bio/serialize-genbank";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -266,6 +272,11 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
   const [insertName, setInsertName] = useState("");
   const [goal, setGoal] = useState("");
   const [showInsert, setShowInsert] = useState(false);
+  // "dna" = user pastes DNA; "protein" = user pastes AA sequence → codon-optimized
+  const [insertMode, setInsertMode] = useState<"dna" | "protein">("dna");
+  const [proteinSeq, setProteinSeq] = useState("");
+  const [codonOptOrganism, setCodonOptOrganism] = useState<CodonOptOrganism>("ecoli");
+  const [codonOptPreview, setCodonOptPreview] = useState<{ cai: number; gc: number; len: number } | null>(null);
   const [result, setResult] = useState<DesignResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -275,7 +286,27 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
       setError("Describe your expression goal.");
       return;
     }
-    const seq = insertSeq.replace(/\s/g, "").toUpperCase();
+    // If protein mode: codon-optimize first, use result as the DNA insert
+    let dnaInsertSeq = insertSeq.replace(/\s/g, "").toUpperCase();
+    let dnaInsertName = insertName.trim() || "MyGene";
+
+    if (showInsert && insertMode === "protein") {
+      const parsed = parseProteinSeq(proteinSeq);
+      if (parsed.length < 3) {
+        setError("Paste a protein sequence (minimum 3 amino acids).");
+        return;
+      }
+      const { valid, unknown } = validateProtein(parsed);
+      if (!valid) {
+        setError(`Unknown amino acid codes: ${unknown.join(", ")}`);
+        return;
+      }
+      const result = optimizeCodon(parsed, codonOptOrganism);
+      dnaInsertSeq = result.seq;
+      dnaInsertName = insertName.trim() || "CodonOptimized";
+    }
+
+    const seq = dnaInsertSeq;
     // Mode A: insert provided — validate it
     if (showInsert && seq.length > 0 && seq.length < 9) {
       setError("Insert sequence is too short (minimum 9 bp). Clear it to let Ori pick a CDS from its library.");
@@ -293,7 +324,7 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           insertSeq: showInsert ? seq : "",
-          insertName: insertName.trim() || "MyGene",
+          insertName: dnaInsertName,
           goal,
         }),
         signal: abortRef.current.signal,
@@ -453,6 +484,7 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
 
                 {showInsert && (
                   <>
+                    {/* Gene name */}
                     <div style={{ marginBottom: "10px" }}>
                       <label style={S.label}>Gene name</label>
                       <input
@@ -463,24 +495,121 @@ export function ConstructDesignerModal({ onClose }: ConstructDesignerModalProps)
                         style={{ ...S.textarea, resize: "none" as const, height: "36px", padding: "7px 10px" }}
                       />
                     </div>
-                    <div>
-                      <label style={S.label}>
-                        Gene sequence{" "}
-                        <span style={{ color: "#b8b0a4", fontWeight: 400 }}>(FASTA or raw DNA)</span>
-                      </label>
-                      <textarea
-                        value={insertSeq}
-                        onChange={(e) => setInsertSeq(e.target.value)}
-                        placeholder={">MyGene\nATGAGTATTCAACATTTCCGTGTCGCC..."}
-                        rows={5}
-                        style={S.textarea}
-                      />
-                      {insertSeq.replace(/\s|>/g, "").length > 0 && (
-                        <div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", marginTop: "4px" }}>
-                          {insertSeq.replace(/>[^\n]*\n?/g, "").replace(/\s/g, "").length.toLocaleString()} bp
-                        </div>
-                      )}
+
+                    {/* DNA / Protein toggle */}
+                    <div style={{ display: "flex", gap: "0", marginBottom: "8px", border: "1px solid #ddd8ce", borderRadius: "3px", overflow: "hidden" }}>
+                      {(["dna", "protein"] as const).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => setInsertMode(m)}
+                          style={{
+                            flex: 1,
+                            fontFamily: "var(--font-courier)",
+                            fontSize: "8px",
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase" as const,
+                            background: insertMode === m ? "#1a4731" : "transparent",
+                            color: insertMode === m ? "white" : "#9a9284",
+                            border: "none",
+                            cursor: "pointer",
+                            padding: "6px 0",
+                          }}
+                        >
+                          {m === "dna" ? "DNA sequence" : "Protein → codon-optimize"}
+                        </button>
+                      ))}
                     </div>
+
+                    {/* DNA input */}
+                    {insertMode === "dna" && (
+                      <div>
+                        <label style={S.label}>
+                          DNA sequence{" "}
+                          <span style={{ color: "#b8b0a4", fontWeight: 400 }}>(FASTA or raw)</span>
+                        </label>
+                        <textarea
+                          value={insertSeq}
+                          onChange={(e) => setInsertSeq(e.target.value)}
+                          placeholder={">MyGene\nATGAGTATTCAACATTTCCGTGTCGCC..."}
+                          rows={5}
+                          style={S.textarea}
+                        />
+                        {insertSeq.replace(/\s|>/g, "").length > 0 && (
+                          <div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", marginTop: "4px" }}>
+                            {insertSeq.replace(/>[^\n]*\n?/g, "").replace(/\s/g, "").length.toLocaleString()} bp
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Protein input */}
+                    {insertMode === "protein" && (
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "4px" }}>
+                          <label style={{ ...S.label, margin: 0 }}>
+                            Protein sequence{" "}
+                            <span style={{ color: "#b8b0a4", fontWeight: 400 }}>(FASTA or single-letter AA codes)</span>
+                          </label>
+                          <select
+                            value={codonOptOrganism}
+                            onChange={(e) => {
+                              setCodonOptOrganism(e.target.value as CodonOptOrganism);
+                              setCodonOptPreview(null);
+                            }}
+                            style={{
+                              fontFamily: "var(--font-courier)",
+                              fontSize: "8px",
+                              background: "#f5f0e8",
+                              border: "1px solid #ddd8ce",
+                              borderRadius: "2px",
+                              padding: "2px 5px",
+                              color: "#1c1a16",
+                            }}
+                          >
+                            <option value="ecoli">E. coli</option>
+                            <option value="human">Human</option>
+                            <option value="yeast">Yeast</option>
+                          </select>
+                        </div>
+                        <textarea
+                          value={proteinSeq}
+                          onChange={(e) => {
+                            setProteinSeq(e.target.value);
+                            setCodonOptPreview(null);
+                            // Live preview
+                            try {
+                              const parsed = parseProteinSeq(e.target.value);
+                              if (parsed.length >= 3 && validateProtein(parsed).valid) {
+                                const result = optimizeCodon(parsed, codonOptOrganism);
+                                setCodonOptPreview({ cai: result.cai, gc: result.gcContent, len: result.length });
+                              } else {
+                                setCodonOptPreview(null);
+                              }
+                            } catch { setCodonOptPreview(null); }
+                          }}
+                          placeholder={"MVSKGEEDNMAIIKEFMRFKVHMEGSVNG...\nor >mCherry\nMVSKGEEDNMAI..."}
+                          rows={5}
+                          style={S.textarea}
+                        />
+                        {codonOptPreview && (
+                          <div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
+                            {[
+                              { label: "length", value: `${codonOptPreview.len} aa → ${codonOptPreview.len * 3 + 3} bp` },
+                              { label: "CAI", value: codonOptPreview.cai.toFixed(2) },
+                              { label: "GC", value: `${(codonOptPreview.gc * 100).toFixed(0)}%` },
+                            ].map(({ label, value }) => (
+                              <span key={label} style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#5a5648" }}>
+                                <span style={{ color: "#9a9284" }}>{label} </span>{value}
+                              </span>
+                            ))}
+                            <span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#1a4731" }}>
+                              ✓ {codonOptOrganism} codon tables
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </div>

@@ -1,70 +1,241 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export interface Database {
+export type Database = {
+	// Allows to automatically instantiate createClient with right options
+	// instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+	__InternalSupabase: {
+		PostgrestVersion: "14.5";
+	};
+	graphql_public: {
+		Tables: {
+			[_ in never]: never;
+		};
+		Views: {
+			[_ in never]: never;
+		};
+		Functions: {
+			graphql: {
+				Args: {
+					extensions?: Json;
+					operationName?: string;
+					query?: string;
+					variables?: Json;
+				};
+				Returns: Json;
+			};
+		};
+		Enums: {
+			[_ in never]: never;
+		};
+		CompositeTypes: {
+			[_ in never]: never;
+		};
+	};
 	public: {
 		Tables: {
-			sequence_shares: {
+			feature_registry: {
 				Row: {
+					aliases: string[] | null;
+					canonical_name: string;
+					category: string | null;
+					created_at: string | null;
+					description: string | null;
+					expected_gc_max: number | null;
+					expected_gc_min: number | null;
+					expected_length_max: number | null;
+					expected_length_min: number | null;
+					expression_systems: string[] | null;
 					id: string;
-					token: string;
-					sequence_id: string;
-					created_by: string;
-					created_at: string;
-					view_count: number;
+					known_misannotations: string[] | null;
+					known_variants: string[] | null;
+					mechanism: string | null;
+					notes: string | null;
+					reference_accessions: string[] | null;
+					reference_plasmids: string[] | null;
+					seq_count: number | null;
+					so_label: string | null;
+					so_term: string | null;
+					updated_at: string | null;
 				};
 				Insert: {
-					id?: string;
-					token: string;
-					sequence_id: string;
-					created_by: string;
-					created_at?: string;
-					view_count?: number;
+					aliases?: string[] | null;
+					canonical_name: string;
+					category?: string | null;
+					created_at?: string | null;
+					description?: string | null;
+					expected_gc_max?: number | null;
+					expected_gc_min?: number | null;
+					expected_length_max?: number | null;
+					expected_length_min?: number | null;
+					expression_systems?: string[] | null;
+					id: string;
+					known_misannotations?: string[] | null;
+					known_variants?: string[] | null;
+					mechanism?: string | null;
+					notes?: string | null;
+					reference_accessions?: string[] | null;
+					reference_plasmids?: string[] | null;
+					seq_count?: number | null;
+					so_label?: string | null;
+					so_term?: string | null;
+					updated_at?: string | null;
 				};
 				Update: {
-					view_count?: number;
+					aliases?: string[] | null;
+					canonical_name?: string;
+					category?: string | null;
+					created_at?: string | null;
+					description?: string | null;
+					expected_gc_max?: number | null;
+					expected_gc_min?: number | null;
+					expected_length_max?: number | null;
+					expected_length_min?: number | null;
+					expression_systems?: string[] | null;
+					id?: string;
+					known_misannotations?: string[] | null;
+					known_variants?: string[] | null;
+					mechanism?: string | null;
+					notes?: string | null;
+					reference_accessions?: string[] | null;
+					reference_plasmids?: string[] | null;
+					seq_count?: number | null;
+					so_label?: string | null;
+					so_term?: string | null;
+					updated_at?: string | null;
 				};
 				Relationships: [];
 			};
-			sequences: {
+			plasmid_library: {
 				Row: {
-					id: string;
-					user_id: string;
-					name: string;
-					description: string;
-					topology: "circular" | "linear";
-					length: number | null;
-					gc_content: number | null;
-					file_path: string | null;
-					file_format: "genbank" | "fasta" | "dna" | "embl";
+					accession: string | null;
+					categories: string[];
 					created_at: string;
-					updated_at: string;
-					deleted_at: string | null;
+					description: string;
+					file_path: string;
+					gc_content: number | null;
+					id: string;
+					is_featured: boolean;
+					key_features: string[];
+					length: number;
+					name: string;
+					search_vector: unknown;
+					slug: string;
+					source: string;
+					topology: string;
 				};
 				Insert: {
-					id?: string;
-					user_id: string;
-					name: string;
-					description?: string;
-					topology?: "circular" | "linear";
-					length?: number | null;
-					gc_content?: number | null;
-					file_path?: string | null;
-					file_format?: "genbank" | "fasta" | "dna" | "embl";
+					accession?: string | null;
+					categories?: string[];
 					created_at?: string;
-					updated_at?: string;
+					description?: string;
+					file_path: string;
+					gc_content?: number | null;
+					id?: string;
+					is_featured?: boolean;
+					key_features?: string[];
+					length: number;
+					name: string;
+					search_vector?: unknown;
+					slug: string;
+					source?: string;
+					topology: string;
 				};
 				Update: {
-					id?: string;
-					user_id?: string;
-					name?: string;
+					accession?: string | null;
+					categories?: string[];
+					created_at?: string;
 					description?: string;
-					topology?: "circular" | "linear";
-					length?: number | null;
+					file_path?: string;
 					gc_content?: number | null;
-					file_path?: string | null;
-					file_format?: "genbank" | "fasta" | "dna" | "embl";
-					updated_at?: string;
+					id?: string;
+					is_featured?: boolean;
+					key_features?: string[];
+					length?: number;
+					name?: string;
+					search_vector?: unknown;
+					slug?: string;
+					source?: string;
+					topology?: string;
+				};
+				Relationships: [];
+			};
+			sequence_shares: {
+				Row: {
+					created_at: string;
+					created_by: string;
+					id: string;
+					sequence_id: string;
+					token: string;
+					view_count: number;
+				};
+				Insert: {
+					created_at?: string;
+					created_by: string;
+					id?: string;
+					sequence_id: string;
+					token: string;
+					view_count?: number;
+				};
+				Update: {
+					created_at?: string;
+					created_by?: string;
+					id?: string;
+					sequence_id?: string;
+					token?: string;
+					view_count?: number;
+				};
+				Relationships: [
+					{
+						foreignKeyName: "sequence_shares_sequence_id_fkey";
+						columns: ["sequence_id"];
+						isOneToOne: false;
+						referencedRelation: "sequences";
+						referencedColumns: ["id"];
+					},
+				];
+			};
+			sequences: {
+				Row: {
+					created_at: string;
+					deleted_at: string | null;
+					description: string;
+					file_format: string;
+					file_path: string | null;
+					gc_content: number | null;
+					id: string;
+					length: number | null;
+					name: string;
+					topology: "circular" | "linear";
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					created_at?: string;
 					deleted_at?: string | null;
+					description?: string;
+					file_format?: string;
+					file_path?: string | null;
+					gc_content?: number | null;
+					id?: string;
+					length?: number | null;
+					name: string;
+					topology?: "circular" | "linear";
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					created_at?: string;
+					deleted_at?: string | null;
+					description?: string;
+					file_format?: string;
+					file_path?: string | null;
+					gc_content?: number | null;
+					id?: string;
+					length?: number | null;
+					name?: string;
+					topology?: string;
+					updated_at?: string;
+					user_id?: string;
 				};
 				Relationships: [];
 			};
@@ -82,6 +253,131 @@ export interface Database {
 			[_ in never]: never;
 		};
 	};
-}
+};
 
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
+
+export type Tables<
+	DefaultSchemaTableNameOrOptions extends
+		| keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+		| { schema: keyof DatabaseWithoutInternals },
+	TableName extends DefaultSchemaTableNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+				DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+		: never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+	schema: keyof DatabaseWithoutInternals;
+}
+	? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+			DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+			Row: infer R;
+		}
+		? R
+		: never
+	: DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+		? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+				Row: infer R;
+			}
+			? R
+			: never
+		: never;
+
+export type TablesInsert<
+	DefaultSchemaTableNameOrOptions extends
+		| keyof DefaultSchema["Tables"]
+		| { schema: keyof DatabaseWithoutInternals },
+	TableName extends DefaultSchemaTableNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+		: never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+	schema: keyof DatabaseWithoutInternals;
+}
+	? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+			Insert: infer I;
+		}
+		? I
+		: never
+	: DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+		? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+				Insert: infer I;
+			}
+			? I
+			: never
+		: never;
+
+export type TablesUpdate<
+	DefaultSchemaTableNameOrOptions extends
+		| keyof DefaultSchema["Tables"]
+		| { schema: keyof DatabaseWithoutInternals },
+	TableName extends DefaultSchemaTableNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+		: never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+	schema: keyof DatabaseWithoutInternals;
+}
+	? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+			Update: infer U;
+		}
+		? U
+		: never
+	: DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+		? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+				Update: infer U;
+			}
+			? U
+			: never
+		: never;
+
+export type Enums<
+	DefaultSchemaEnumNameOrOptions extends
+		| keyof DefaultSchema["Enums"]
+		| { schema: keyof DatabaseWithoutInternals },
+	EnumName extends DefaultSchemaEnumNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+		: never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+	schema: keyof DatabaseWithoutInternals;
+}
+	? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+	: DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+		? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+		: never;
+
+export type CompositeTypes<
+	PublicCompositeTypeNameOrOptions extends
+		| keyof DefaultSchema["CompositeTypes"]
+		| { schema: keyof DatabaseWithoutInternals },
+	CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+		schema: keyof DatabaseWithoutInternals;
+	}
+		? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+		: never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+	schema: keyof DatabaseWithoutInternals;
+}
+	? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+	: PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+		? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+		: never;
+
+export const Constants = {
+	graphql_public: {
+		Enums: {},
+	},
+	public: {
+		Enums: {},
+	},
+} as const;
+
+// Convenience alias for the sequences table row type
 export type Sequence = Database["public"]["Tables"]["sequences"]["Row"];

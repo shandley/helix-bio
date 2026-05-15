@@ -94,6 +94,61 @@ export default async function DashboardPage() {
 			{/* Upload zone */}
 			<SequenceUploader />
 
+			{/* Reference library CTA */}
+			<Link
+				href="/library"
+				style={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "space-between",
+					marginTop: "16px",
+					padding: "12px 16px",
+					background: "rgba(26,71,49,0.04)",
+					border: "1px solid rgba(26,71,49,0.15)",
+					borderRadius: "3px",
+					textDecoration: "none",
+					gap: "12px",
+				}}
+			>
+				<div>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							color: "#1a4731",
+							letterSpacing: "0.08em",
+							textTransform: "uppercase",
+							display: "block",
+							marginBottom: "2px",
+						}}
+					>
+						Reference Library
+					</span>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							color: "#5a5648",
+							letterSpacing: "0.03em",
+						}}
+					>
+						Browse 179 common plasmids — pUC19, pET vectors, CRISPR tools, lentiviral backbones and
+						more
+					</span>
+				</div>
+				<span
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "9px",
+						color: "#1a4731",
+						letterSpacing: "0.06em",
+						flexShrink: 0,
+					}}
+				>
+					Browse →
+				</span>
+			</Link>
+
 			{/* Library or empty state */}
 			{sequences.length > 0 ? (
 				<SequenceLibrary sequences={sequences} />

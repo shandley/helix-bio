@@ -2,7 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SaveToLibraryButton } from "@/components/library/save-to-library-button";
 import { SequenceViewerWithPanel } from "@/components/sequence/sequence-viewer-with-panel";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 
 export async function generateMetadata({
 	params,
@@ -41,13 +43,18 @@ export default async function LibraryPlasmidPage({
 		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 	);
 
-	const { data: plasmid } = await supabase
-		.from("plasmid_library")
-		.select("*")
-		.eq("slug", slug)
-		.maybeSingle();
+	// Check auth in parallel with plasmid fetch
+	const [{ data: plasmid }, authClient] = await Promise.all([
+		supabase.from("plasmid_library").select("*").eq("slug", slug).maybeSingle(),
+		createServerClient(),
+	]);
 
 	if (!plasmid) notFound();
+
+	const {
+		data: { user },
+	} = await authClient.auth.getUser();
+	const isLoggedIn = !!user;
 
 	// Public bucket URL — no signing needed
 	const fileUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/plasmid-library/${plasmid.file_path}`;
@@ -147,22 +154,7 @@ export default async function LibraryPlasmidPage({
 					>
 						Download
 					</a>
-					<Link
-						href="/signup"
-						style={{
-							fontFamily: "var(--font-courier)",
-							fontSize: "9px",
-							letterSpacing: "0.08em",
-							textTransform: "uppercase",
-							color: "white",
-							background: "#1a4731",
-							textDecoration: "none",
-							padding: "4px 10px",
-							borderRadius: "2px",
-						}}
-					>
-						Save to my library →
-					</Link>
+					<SaveToLibraryButton slug={plasmid.slug} isLoggedIn={isLoggedIn} />
 				</div>
 			</div>
 

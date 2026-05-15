@@ -27,6 +27,8 @@ import {
 	saveOverrides,
 } from "./annotation-editor";
 import { Chromatogram } from "./chromatogram";
+import type { PrimerPlotsData } from "@/components/primer-viz/primer-plots-drawer";
+import { PrimerPlotsDrawer } from "@/components/primer-viz/primer-plots-drawer";
 import { DigestPanel } from "./digest-panel";
 import { EnzymePanel } from "./enzyme-panel";
 import { ORFPanel } from "./orf-panel";
@@ -76,6 +78,7 @@ export function SequenceViewerWithPanel({
 	const [alignedReads, setAlignedReads] = useState<AlignRead[]>([]);
 	const [selectedAlignRead, setSelectedAlignRead] = useState<AlignRead | null>(null);
 	const [translationTarget, setTranslationTarget] = useState<TranslationTarget | null>(null);
+	const [primerPlotsData, setPrimerPlotsData] = useState<PrimerPlotsData | null>(null);
 	const [selectedAnnotation, setSelectedAnnotation] = useState<AnnotationLike | null>(null);
 	const [overrides, setOverrides] = useState<OverrideMap>({});
 	const [autoAnnotations, setAutoAnnotations] = useState<Annotation[]>([]);
@@ -546,6 +549,7 @@ export function SequenceViewerWithPanel({
 								selectionEnd={selection?.end}
 								onPrimersDesigned={setBestPair}
 								annotationName={annotationName}
+								onShowPlots={setPrimerPlotsData}
 							/>
 						)}
 						{activeTab === "digest" && (
@@ -599,6 +603,14 @@ export function SequenceViewerWithPanel({
 						onClose={() => setSelectedAlignRead(null)}
 					/>
 				)}
+
+			{/* Primer plots drawer — melt curve, amplicon structure, pair overview */}
+			{primerPlotsData && (
+				<PrimerPlotsDrawer
+					data={primerPlotsData}
+					onClose={() => setPrimerPlotsData(null)}
+				/>
+			)}
 		</div>
 	);
 }

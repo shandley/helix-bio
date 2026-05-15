@@ -2,6 +2,7 @@
 
 import type { AssemblyPrimerPair, PrimerCandidate, PrimerPair } from "@shandley/primd";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { PrimerPlotsData } from "@/components/primer-viz/primer-plots-drawer";
 import type { PrimerWorkerRequest, PrimerWorkerResponse } from "./primer-design.worker";
 
 // Golden Gate enzyme recognition sites (Type IIS)
@@ -29,6 +30,8 @@ interface PrimerPanelProps {
 	annotationName?: string | null;
 	/** Plasmid name sent as context to the PCR diagnosis endpoint. */
 	sequenceName?: string;
+	/** Called when user opens the Plots drawer. */
+	onShowPlots?: (data: PrimerPlotsData) => void;
 }
 
 function Badge({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
@@ -833,6 +836,7 @@ export function PrimerPanel({
 	onPrimersDesigned,
 	annotationName,
 	sequenceName,
+	onShowPlots,
 }: PrimerPanelProps) {
 	const [start, setStart] = useState<string>(
 		selectionStart !== undefined ? String(selectionStart + 1) : String(Math.floor(seqLen / 3) + 1),
@@ -2116,25 +2120,55 @@ export function PrimerPanel({
 							← Back to primers
 						</button>
 					) : (
-						<button
-							type="button"
-							onClick={() => void runDiagnosis()}
-							title="AI-powered PCR failure analysis"
-							style={{
-								fontFamily: "var(--font-courier)",
-								fontSize: "9px",
-								letterSpacing: "0.08em",
-								textTransform: "uppercase",
-								background: "#2d4a7a",
-								color: "white",
-								border: "none",
-								borderRadius: "2px",
-								cursor: "pointer",
-								padding: "5px 12px",
-							}}
-						>
-							Diagnose
-						</button>
+						<>
+							<button
+								type="button"
+								onClick={() => void runDiagnosis()}
+								title="AI-powered PCR failure analysis"
+								style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "9px",
+									letterSpacing: "0.08em",
+									textTransform: "uppercase",
+									background: "#2d4a7a",
+									color: "white",
+									border: "none",
+									borderRadius: "2px",
+									cursor: "pointer",
+									padding: "5px 12px",
+								}}
+							>
+								Diagnose
+							</button>
+							{onShowPlots && (
+								<button
+									type="button"
+									onClick={() =>
+										onShowPlots({
+											pairs: pairs ?? [],
+											seq,
+											mode: mode as "pcr" | "qpcr",
+											tmTarget,
+										})
+									}
+									title="View melt curve, amplicon structure, and pair overview"
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "9px",
+										letterSpacing: "0.08em",
+										textTransform: "uppercase",
+										background: "none",
+										border: "1px solid #ddd8ce",
+										borderRadius: "2px",
+										color: "#5a5648",
+										cursor: "pointer",
+										padding: "5px 10px",
+									}}
+								>
+									Plots
+								</button>
+							)}
+						</>
 					)}
 				</div>
 			)}

@@ -1901,22 +1901,85 @@ export function PrimerPanel({
 				)}
 
 				{warning && (
-					<div
-						style={{
-							margin: "10px 12px 0",
-							padding: "6px 10px",
-							background: "rgba(184,147,58,0.08)",
-							border: "1px solid rgba(184,147,58,0.25)",
-							borderRadius: "3px",
-							fontFamily: "var(--font-courier)",
-							fontSize: "9px",
-							color: "#b8933a",
-							lineHeight: 1.5,
-						}}
-					>
-						{mode === "assembly" && warning.includes("no compatible pairs")
-							? `No primer sites found within ${assemblySearchExt} bp of the target boundaries — the flanking sequence may be AT-rich. Try increasing the Search ± range in Options.`
-							: warning}
+					<div style={{ margin: "10px 12px 0" }}>
+						<div
+							style={{
+								padding: "6px 10px",
+								background: "rgba(184,147,58,0.08)",
+								border: "1px solid rgba(184,147,58,0.25)",
+								borderRadius: "3px",
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								color: "#b8933a",
+								lineHeight: 1.5,
+							}}
+						>
+							{mode === "assembly" && warning.includes("no compatible pairs")
+								? `No primer sites found within ${assemblySearchExt} bp of the target boundaries — the flanking sequence may be AT-rich. Try increasing the Search ± range in Options.`
+								: mode === "qpcr" && warning.includes("product size range")
+									? warning
+											.replace("maxTmDiff", "Max ΔTm")
+											.replace("product size range", "Amplicon size range")
+									: warning}
+						</div>
+						{/* qPCR quick-fix buttons — appear when primd can't find compatible pairs */}
+						{mode === "qpcr" && warning.includes("no compatible pairs") && (
+							<div
+								style={{
+									display: "flex",
+									gap: "6px",
+									marginTop: "6px",
+								}}
+							>
+								<button
+									type="button"
+									onClick={() => {
+										setMaxTmDiff(maxTmDiff + 1);
+										design();
+									}}
+									style={{
+										flex: 1,
+										fontFamily: "var(--font-courier)",
+										fontSize: "8px",
+										letterSpacing: "0.06em",
+										textTransform: "uppercase",
+										background: "rgba(184,147,58,0.1)",
+										border: "1px solid rgba(184,147,58,0.35)",
+										borderRadius: "2px",
+										color: "#b8933a",
+										cursor: "pointer",
+										padding: "4px 0",
+									}}
+									title={`Increase Max ΔTm from ${maxTmDiff}° to ${maxTmDiff + 1}° and retry`}
+								>
+									Relax ΔTm (+1°)
+								</button>
+								<button
+									type="button"
+									onClick={() => {
+										setQpcrAmpliconMin(Math.max(50, qpcrAmpliconMin - 20));
+										setQpcrAmpliconMax(Math.min(300, qpcrAmpliconMax + 50));
+										design();
+									}}
+									style={{
+										flex: 1,
+										fontFamily: "var(--font-courier)",
+										fontSize: "8px",
+										letterSpacing: "0.06em",
+										textTransform: "uppercase",
+										background: "rgba(184,147,58,0.1)",
+										border: "1px solid rgba(184,147,58,0.35)",
+										borderRadius: "2px",
+										color: "#b8933a",
+										cursor: "pointer",
+										padding: "4px 0",
+									}}
+									title={`Widen amplicon range to ${Math.max(50, qpcrAmpliconMin - 20)}–${Math.min(300, qpcrAmpliconMax + 50)} bp and retry`}
+								>
+									Widen Amplicon
+								</button>
+							</div>
+						)}
 					</div>
 				)}
 

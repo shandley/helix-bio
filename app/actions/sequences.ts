@@ -113,3 +113,44 @@ export async function saveClonedSequence(
 	revalidatePath("/dashboard");
 	return { id: (data as { id: string }).id };
 }
+
+/** Save an AI-designed construct as a GenBank file so annotations are preserved. */
+export async function saveDesignedConstruct(
+	gbContent: string,
+	name: string,
+	seqLength: number,
+	gcContent: number,
+): Promise<{ id?: string; error?: string }> {
+	const supabase = await createClient();
+	const {
+		data: { user },
+		error: authError,
+	} = await supabase.auth.getUser();
+	if (authError || !user) return { error: "Not authenticated" };
+
+	const blob = new Blob([gbContent], { type: "text/plain" });
+	const fileName = `${user.id}/${randomUUID()}.gb`;
+
+	const { error: uploadError } = await supabase.storage.from("sequences").upload(fileName, blob);
+	if (uploadError) return { error: uploadError.message };
+
+	const { data, error: insertError } = await supabase
+		.from("sequences")
+		.insert({
+			user_id: user.id,
+			name,
+			description: "Designed with Ori AI Construct Designer",
+			topology: "circular",
+			length: seqLength,
+			gc_content: Math.round(gcContent * 10) / 10,
+			file_path: fileName,
+			file_format: "genbank",
+		})
+		.select("id")
+		.single();
+
+	if (insertError) return { error: insertError.message };
+
+	revalidatePath("/dashboard");
+	return { id: (data as { id: string }).id };
+}

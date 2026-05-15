@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DesignButton } from "@/components/construct-designer/design-button";
 import { SequenceLibrary } from "@/components/sequence/sequence-library";
 import { LoadExamplesButton } from "@/components/upload/load-examples-button";
 import { SequenceUploader } from "@/components/upload/sequence-uploader";
@@ -87,6 +88,7 @@ export default async function DashboardPage() {
 							Trash ({trashCount})
 						</Link>
 					)}
+					<DesignButton />
 					<LoadExamplesButton />
 				</div>
 			</div>

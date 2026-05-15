@@ -6,9 +6,13 @@ Open-source, web-based, LLM-powered molecular biology platform.
 - `app/` — Next.js 16 App Router (TypeScript strict), Turbopack bundler
 - `components/` — React UI components (shadcn/ui using @base-ui/react, NOT Radix)
 - `components/sequence/` — Sequence viewer, primer panel, accessibility heat map, enzyme/ORF/digest/search panels
-- `lib/bio/` — GenBank parser, restriction enzymes, ORF finder, cloning simulations (Gibson, Gateway, RE)
+- `components/construct-designer/` — AI Construct Designer modal + Design button
+- `components/primer-viz/` — Primer diagnostic plots (melt curve, amplicon heatmap, pair scatter) — pure canvas components, reusable in primd web app
+- `lib/bio/` — GenBank parser, restriction enzymes, ORF finder, cloning simulations (Gibson, Gateway, RE), verify-clone, assemble-construct, parts-catalog, codon-optimize
 - `app/actions/` — Next.js server actions (auth, sequences, seed)
 - `supabase/migrations/` — Database schema
+- `data/parts-sequences.json` — Generated part sequences for the Construct Designer (run `scripts/update-parts-catalog.py` to refresh from features.json)
+- `scripts/update-parts-catalog.py` — Fetches real sequences from features.json for the parts catalog; re-run after Addgene expansion
 
 ## primd — primer design library
 Published on npm as **`@shandley/primd`** v0.3.2. Lives at `../primd` (sibling). Ori uses `^0.3.2` from npm.
@@ -115,7 +119,7 @@ conda activate confphylo
 ## Testing
 
 ```bash
-pnpm test          # vitest — runs lib/bio/verify-clone.test.ts (31 tests)
+pnpm test          # vitest — 54 tests across lib/bio/verify-clone.test.ts + lib/bio/codon-optimize.test.ts
 pnpm exec tsc --noEmit   # type check
 pnpm exec biome check .  # lint
 ```
@@ -139,6 +143,40 @@ Triggered from the PRIMERS tab after primer design runs. Single Claude layer (no
 - Severity ranking used in prompt: template structure > hetero-dimer > hairpin > ΔTm > GC
 - Model: `claude-haiku-4-5`, 512 tokens
 - UI: Diagnose button appears after design; explanation streams in; Back to primers returns to normal view
+
+### AI Construct Designer (`/api/design-construct`)
+Dashboard → + Design button opens a modal. Two modes:
+- **Mode A**: user pastes a DNA gene OR protein sequence (codon-optimized client-side via `lib/bio/codon-optimize.ts`) → Claude selects regulatory parts
+- **Mode C**: user describes goal only → Claude selects both CDS (from catalog) and regulatory parts
+- Uses `generateObject` with zod schema + `structuredOutputMode: "outputFormat"` (native Anthropic structured outputs, constrained sampling)
+- Parts catalog: `lib/bio/parts-catalog.ts` — E. coli (5 promoters, 2 RBS, 2 terminators, 2 ori, 2 markers), Mammalian (CMV/SV40 promoters, Kozak, bGH/SV40 polyA, NeoR/PuroR cassettes, SV40 ori), Yeast (GAL1/TEF1/ADH1 promoters, CYC1/ADH1 terminators, 2μ/CEN-ARS ori, LEU2/TRP1 markers), CDS library (EGFP, mVenus, tdTomato, Firefly luc, Renilla luc, GST tag, CjCas9, SpCas9)
+- All parts use real sequences from `public/data/features.json`. Update with `scripts/update-parts-catalog.py`
+- Assembly: `lib/bio/assemble-construct.ts` — deterministic assembly + validation (requires ori, marker, ATG, stop codon, strand consistency). Supports E. coli (Mode A/C), Mammalian (auto-includes ColE1+AmpR backbone, requires Kozak before CDS), Yeast (no prokaryotic RBS)
+- Save: `app/actions/sequences.ts → saveDesignedConstruct` — saves as GenBank to preserve annotations
+- Result navigates to sequence viewer showing fully annotated circular construct
+
+### Codon optimization (`lib/bio/codon-optimize.ts`)
+Client-side, no API call. Integrated into Construct Designer modal as a "Protein → codon-optimize" toggle.
+- CAI-based: picks highest-frequency synonymous codon per amino acid for target organism
+- Organisms: E. coli K-12, Homo sapiens, S. cerevisiae (CoCoPUTs-sourced tables)
+- Functions: `optimizeCodon`, `computeCAI`, `computeGC`, `parseProteinSeq`, `validateProtein`
+- 23 unit tests in `lib/bio/codon-optimize.test.ts`
+- Live preview in modal: shows predicted length, CAI, GC% as user types protein sequence
+
+### qPCR improvements (PRIMERS tab)
+- `productSizeRange` and `maxTmDiff` now passed to primd for qPCR (were missing — caused "no compatible pairs" with no fix path)
+- Options section: Max ΔTm control (default 3°C), Amplicon size range (default 70-200 bp, qPCR only)
+- Amplicon size label next to mode toggle is dynamic (shows current range)
+- Quick-fix buttons: "Relax ΔTm (+1°)" and "Widen Amplicon" appear when "no compatible pairs" error fires
+- Efficiency display: color-coded progress bar in pair cards for qPCR (replaces small badge)
+- Bug fixed: PCR Diagnosis result no longer persists after region change or mode switch
+
+### Primer diagnostic plots (`components/primer-viz/`)
+"Plots" button in PRIMERS tab bottom bar opens a full-width bottom drawer with three tabs:
+- **Melt Curve** (qPCR only): Simulated −dF/dT vs temperature using logistic approximation parameterized by amplicon Tm and GC content. Sharp symmetric peak = specific amplicon.
+- **Amplicon Structure**: Per-base accessibility heatmap of the amplicon at the annealing temperature (via `calcAccessibilityProfile` from primd). Green = open, red = structured.
+- **Pair Overview**: Scatter plot — qPCR: amplicon Tm vs efficiency; PCR: product size vs Tm match. Interactive hover.
+- Pure canvas components in `components/primer-viz/` — no Ori coupling, designed for reuse in future primd web app
 
 ## Feature annotation database
 
@@ -170,8 +208,9 @@ All jobs finished successfully. No jobs currently running.
 | MAFFT + hmmbuild | ✅ Done | 26,832 HMM profiles |
 | hmmpress | ✅ Done | 14 GB database at `/scratch/sahlab/shandley/helix-feature-db/db/helix_features.hmm` |
 
-### Remaining work
-- Export filtered cluster rep seqs from HTCF → update `data/features.json` in Ori
-- Filter strategy: keep clusters with multiple members, recognizable feature types, size ≥ 2
-- Target: ~500–2000 high-confidence features (compact enough to ship in browser)
-- Addgene expansion: if credentials obtained, re-run pipeline to add ~200k more sequences
+### Status: COMPLETE
+- `public/data/features.json` deployed with 6,518 high-confidence features
+- These features also power the Construct Designer parts catalog — `scripts/update-parts-catalog.py` extracts sequences for any named part from features.json
+
+### Future expansion
+- Addgene: ~200k more plasmids, needs login credentials. Once obtained: re-run HTCF pipeline → re-export features.json → run `scripts/update-parts-catalog.py` → improved annotation + parts catalog automatically

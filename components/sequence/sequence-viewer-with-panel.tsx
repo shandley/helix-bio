@@ -2,12 +2,17 @@
 
 import type { PrimerPair } from "@shandley/primd";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	loadAnnotationOverrides,
+	saveAnnotationOverrides,
+} from "@/app/actions/annotation-overrides";
 import type { SequenceContext } from "@/app/api/chat/route";
 import { CloningModal } from "@/components/cloning/cloning-modal";
 import type { Annotation } from "@/lib/bio/annotate";
 import { DEFAULT_ENZYMES } from "@/lib/bio/enzymes";
 import { type ParsedSequence, parseGenBank } from "@/lib/bio/parse-genbank";
 import type { SearchMatch } from "@/lib/bio/search";
+import { downloadGenBank, serializeGenBank } from "@/lib/bio/serialize-genbank";
 import { AIPanel } from "./ai-panel";
 import type { AlignRead } from "./align-panel";
 import { AlignPanel } from "./align-panel";
@@ -36,6 +41,8 @@ interface SequenceViewerWithPanelProps {
 	topology: "circular" | "linear";
 	fileFormat: string;
 	gcContent: number | null;
+	/** When provided, annotation overrides are persisted to Supabase instead of localStorage. */
+	sequenceId?: string | null;
 }
 
 type PanelTab = "enzymes" | "primers" | "digest" | "orfs" | "search" | "ai" | "align";
@@ -56,6 +63,7 @@ export function SequenceViewerWithPanel({
 	topology,
 	fileFormat,
 	gcContent,
+	sequenceId = null,
 }: SequenceViewerWithPanelProps) {
 	const [parsed, setParsed] = useState<ParsedSequence | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -74,10 +82,18 @@ export function SequenceViewerWithPanel({
 	const [annotating, setAnnotating] = useState(false);
 	const annotationWorkerRef = useRef<Worker | null>(null);
 
-	// Load persisted overrides on mount
+	// Load persisted overrides on mount — Supabase when sequenceId available, else localStorage
 	useEffect(() => {
-		setOverrides(loadOverrides(fileUrl));
-	}, [fileUrl]);
+		if (sequenceId) {
+			loadAnnotationOverrides(sequenceId)
+				.then(setOverrides)
+				.catch(() => {
+					setOverrides(loadOverrides(fileUrl));
+				});
+		} else {
+			setOverrides(loadOverrides(fileUrl));
+		}
+	}, [sequenceId, fileUrl]);
 
 	const handleSearchMatches = useCallback((matches: SearchMatch[]) => {
 		setSearchMatches(matches);
@@ -217,12 +233,19 @@ export function SequenceViewerWithPanel({
 	//   3. RC false positive: reverse-complement hit lands at a different position
 	//      with no overlap → NOT suppressed (correctly shown as a new find)
 	// Threshold 0.5: at least half of the shorter annotation must overlap.
-	// Override save/delete handlers
+	// Override save/delete — Supabase when sequenceId present, localStorage fallback
+	const persistOverrides = (next: OverrideMap) => {
+		if (sequenceId) {
+			void saveAnnotationOverrides(sequenceId, next);
+		} else {
+			saveOverrides(fileUrl, next);
+		}
+	};
+
 	const handleOverrideSave = (key: string, override: AnnotationOverride) => {
 		const next = { ...overrides, [key]: { ...overrides[key], ...override } };
 		setOverrides(next);
-		saveOverrides(fileUrl, next);
-		// Refresh selectedAnnotation with new name/color
+		persistOverrides(next);
 		if (selectedAnnotation && annKey(selectedAnnotation) === key) {
 			setSelectedAnnotation({ ...selectedAnnotation, ...override });
 		}
@@ -231,7 +254,7 @@ export function SequenceViewerWithPanel({
 	const handleOverrideDelete = (key: string) => {
 		const next = { ...overrides, [key]: { ...overrides[key], deleted: true } };
 		setOverrides(next);
-		saveOverrides(fileUrl, next);
+		persistOverrides(next);
 		setSelectedAnnotation(null);
 	};
 
@@ -377,7 +400,7 @@ export function SequenceViewerWithPanel({
 						overflow: "hidden",
 					}}
 				>
-					{/* Clone button */}
+					{/* Clone + Download annotated */}
 					<div
 						style={{
 							padding: "8px 12px",
@@ -385,9 +408,40 @@ export function SequenceViewerWithPanel({
 							flexShrink: 0,
 							background: "#f5f0e8",
 							display: "flex",
-							justifyContent: "flex-end",
+							alignItems: "center",
+							justifyContent: "space-between",
+							gap: "8px",
 						}}
 					>
+						<button
+							type="button"
+							title="Download GenBank with all detected and edited annotations"
+							onClick={() => {
+								const gb = serializeGenBank({
+									name,
+									seq: parsed.seq,
+									topology,
+									description: parsed.name,
+									annotations: baseAnnotations,
+									autoAnnotations: dedupedAuto,
+								});
+								downloadGenBank(gb, `${name}_annotated`);
+							}}
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "8px",
+								letterSpacing: "0.08em",
+								textTransform: "uppercase",
+								color: "#5a5648",
+								background: "none",
+								border: "1px solid #ddd8ce",
+								borderRadius: "2px",
+								cursor: "pointer",
+								padding: "4px 8px",
+							}}
+						>
+							↓ Annotated
+						</button>
 						<CloningModal seq={parsed.seq} seqName={name} topology={topology} />
 					</div>
 

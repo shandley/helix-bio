@@ -196,6 +196,7 @@ export type Database = {
 			};
 			sequences: {
 				Row: {
+					annotation_overrides: Json;
 					created_at: string;
 					deleted_at: string | null;
 					description: string;
@@ -210,6 +211,7 @@ export type Database = {
 					user_id: string;
 				};
 				Insert: {
+					annotation_overrides?: Json;
 					created_at?: string;
 					deleted_at?: string | null;
 					description?: string;
@@ -224,6 +226,7 @@ export type Database = {
 					user_id: string;
 				};
 				Update: {
+					annotation_overrides?: Json;
 					created_at?: string;
 					deleted_at?: string | null;
 					description?: string;

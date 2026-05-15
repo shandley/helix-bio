@@ -1,5 +1,5 @@
 /**
- * Parts catalog for the AI Construct Designer — E. coli v1.
+ * Parts catalog for the AI Construct Designer — E. coli, Mammalian, Yeast.
  *
  * All sequences are real and sourced from our annotation database
  * (public/data/features.json), which was built from SnapGene public plasmid
@@ -280,6 +280,211 @@ export const PARTS_CATALOG: Part[] = [
     seq: "CGCGGAACCCCTATTTGTTTATTTTTCTAAATACATTCAAATATGTATCCGCTCATGAGACAATAACCCTGATAAATGCTTCAATAATATTGAAAAAGGAAGAGTATGAGCCATATTCAACGGGAAACGTCTTGCTCGAGGCCGCGATTAAATTCCAACATGGATGCTGATTTATATGGGTATAAATGGGCTCGCGATAATGTCGGGCAATCAGGTGCGACAATCTATCGATTGTATGGGAAGCCCGATGCGCCAGAGTTGTTTCTGAAACATGGCAAAGGTAGCGTTGCCAATGATGTTACAGATGAGATGGTCAGGCTAAACTGGCTGACGGAATTTATGCCTCTTCCGACCATCAAGCATTTTATCCGTACTCCTGATGATGCATGGTTACTCACCACTGCGATCCCAGGGAAAACAGCATTCCAGGTATTAGAAGAATATCCTGATTCAGGTGAAAATATTGTTGATGCGCTGGCAGTGTTCCTGCGCCGGTTGCATTCGATTCCTGTTTGTAATTGTCCTTTTAACGGCGATCGCGTATTTCGTCTCGCTCAGGCGCAATCACGAATGAATAACGGTTTGGTTGGTGCGAGTGATTTTGATGACGAGCGTAATGGCTGGCCTGTTGAACAAGTCTGGAAAGAAATGCATAAGCTTTTGCCATTCTCACCGGATTCAGTCGTCACTCATGGTGATTTCTCACTTGATAACCTTATTTTTGACGAGGGGAAATTAATAGGTTGTATTGATGTTGGACGAGTCGGAATCGCAGACCGATACCAGGATCTTGCCATCCTATGGAACTGCCTCGGTGAGTTTTCTCCTTCATTACAGAAACGGCTTTTTCAAAAATATGGTATTGATAATCCTGATATGAATAAATTGCAGTTTCACTTGATGCTCGATGAGTTTTTCTGA",
     source: "features.json: AmpR promoter (105 bp) + KanR/APH(3')-Ia CDS (816 bp, Tn903) = 921 bp",
   },
+
+  // ── Mammalian promoters ────────────────────────────────────────────────────
+
+  {
+    id: "cmv_promoter",
+    name: "CMV promoter",
+    type: "promoter",
+    organisms: ["mammalian"],
+    description:
+      "Human cytomegalovirus (CMV) immediate early promoter. Strongest constitutive promoter for mammalian cells — works in virtually all mammalian cell lines (HEK293, CHO, HeLa, COS, NIH3T3). First choice for high-level transient or stable mammalian expression.",
+    seq: "GTGATGCGGTTTTGGCAGTACATCAATGGGCGTGGATAGCGGTTTGACTCACGGGGATTTCCAAGTCTCCACCCCATTGACGTCAATGGGAGTTTGTTTTGGCACCAAAATCAACGGGACTTTCCAAAATGTCGTAACAACTCCGCCCCATTGACGCAAATGGGCGGTAGGCGTGTACGGTGGGAGGTCTATATAAGCAGAGCT",
+    strength: "strong",
+    source: "features.json[43]: CMV promoter (204 bp)",
+  },
+  {
+    id: "sv40_promoter",
+    name: "SV40 early promoter",
+    type: "promoter",
+    organisms: ["mammalian"],
+    description:
+      "SV40 early promoter. Moderate, constitutive expression in most mammalian cell lines. Commonly used to drive selection marker genes (NeoR, PuroR) within mammalian expression vectors. Weaker than CMV but reliable.",
+    seq: "GTGTGTCAGTTAGGGTGTGGAAAGTCCCCAGGCTCCCCAGGCAGGCAGAAGTATGCAAAGCATGCATCTCAATTAGTCAGCAACCAGGTGTGGAAAGTCCCCAGGCTCCCCAGCAGGCAGAAGTATGCAAAGCATGCATCTCAATTAGTCAGCAACCATAGTCCCGCCCCTAACTCCGCCCATCCCGCCCCTAACTCCGCCCAGTTCCGCCCATTCTCCGCCCCATGGCTGACTAATTTTTTTTATTTATGCAGAGGCCGAGGCCGCCTCTGCCTCTGAGCTATTCCAGAAGTAGTGAGGAGGCTTTTTTGGAGGCCTAGGCTTTTGCAAA",
+    strength: "medium",
+    source: "features.json[7]: SV40 promoter (331 bp)",
+  },
+
+  // ── Mammalian RBS (Kozak) ─────────────────────────────────────────────────
+
+  {
+    id: "kozak",
+    name: "Kozak sequence",
+    type: "rbs",
+    organisms: ["mammalian"],
+    description:
+      "Kozak consensus sequence (GCCACC) immediately preceding the ATG start codon. Required for efficient translation initiation in mammalian cells. Always place directly before the INSERT's ATG. No prokaryotic Shine-Dalgarno RBS is needed for mammalian expression.",
+    seq: "GCCACC",
+    source: "Kozak consensus (Kozak 1987, J. Mol. Biol.)",
+  },
+
+  // ── Mammalian polyA signals (terminators) ─────────────────────────────────
+
+  {
+    id: "bgh_polya",
+    name: "bGH poly(A) signal",
+    type: "terminator",
+    organisms: ["mammalian"],
+    description:
+      "Bovine growth hormone (bGH) polyadenylation signal. Standard terminator for mammalian expression vectors — provides efficient transcriptional termination and mRNA 3' processing. Widely used in pCDNA3, pLenti, and most commercial mammalian vectors. Pair with CMV promoter.",
+    seq: "CTGTGCCTTCTAGTTGCCAGCCATCTGTTGTTTGCCCCTCCCCCGTGCCTTCCTTGACCCTGGAAGGTGCCACTCCCACTGTCCTTTCCTAATAAAATGAGGAAATTGCATC",
+    source: "features.json[520]: bGH poly(A) signal (112 bp)",
+  },
+  {
+    id: "sv40_polya",
+    name: "SV40 poly(A) signal",
+    type: "terminator",
+    organisms: ["mammalian"],
+    description:
+      "SV40 polyadenylation signal. Efficient transcriptional terminator for mammalian expression, commonly used to terminate selection marker expression cassettes within the same vector. Use bGH poly(A) for the gene of interest and SV40 poly(A) for the selection marker.",
+    seq: "AACTTGTTTATTGCAGCTTATAATGGTTACAAATAAAGCAATAGCATCACAAATTTCACAAATAAAGCATTTTTTTCACTGCATTCTAGTTGTGGTTTGTCCAAACTCATCAATGTATCTTA",
+    source: "features.json[11]: SV40 poly(A) signal (122 bp)",
+  },
+
+  // ── Mammalian origins ──────────────────────────────────────────────────────
+
+  {
+    id: "sv40_ori",
+    name: "SV40 ori",
+    type: "ori",
+    organisms: ["mammalian"],
+    description:
+      "SV40 origin of replication. Enables episomal replication in COS-1 and COS-7 cells (which express SV40 large T antigen). Not required for stable integration — use only when episomal replication in COS cells is desired for transient high-level expression. All mammalian vectors still require a ColE1 ori for bacterial propagation.",
+    seq: "GGCCTCCAAAAAAGCCTCCTCACTACTTCTGGAATAGCTCAGAGGCAGAGGCGGCCTCGGCCTCTGCATAAATAAAAAAAATTAGTCAGCCATGGGGCGGAGAATGGGCGGAACTGGGCGGAGTTAGGGGCGGGAT",
+    source: "features.json[8]: SV40 ori (136 bp)",
+  },
+
+  // ── Mammalian selection markers (complete cassettes with promoter + polyA) ─
+
+  {
+    id: "neoR_mammalian",
+    name: "NeoR/G418 resistance (mammalian)",
+    type: "marker",
+    organisms: ["mammalian"],
+    description:
+      "Complete neomycin/G418 resistance cassette for mammalian stable selection: SV40 promoter + NeoR/APH(3')-Ia CDS + SV40 poly(A). Select with 400-800 μg/mL G418 (Geneticin). Slower selection (~2-3 weeks) than puromycin but broadly used. The same NeoR gene also confers kanamycin resistance in E. coli.",
+    seq: "GTGTGTCAGTTAGGGTGTGGAAAGTCCCCAGGCTCCCCAGGCAGGCAGAAGTATGCAAAGCATGCATCTCAATTAGTCAGCAACCAGGTGTGGAAAGTCCCCAGGCTCCCCAGCAGGCAGAAGTATGCAAAGCATGCATCTCAATTAGTCAGCAACCATAGTCCCGCCCCTAACTCCGCCCATCCCGCCCCTAACTCCGCCCAGTTCCGCCCATTCTCCGCCCCATGGCTGACTAATTTTTTTTATTTATGCAGAGGCCGAGGCCGCCTCTGCCTCTGAGCTATTCCAGAAGTAGTGAGGAGGCTTTTTTGGAGGCCTAGGCTTTTGCAAAATGATTGAACAAGATGGATTGCACGCAGGTTCTCCGGCCGCTTGGGTGGAGAGGCTATTCGGCTATGACTGGGCACAACAGACAATCGGCTGCTCTGATGCCGCCGTGTTCCGGCTGTCAGCGCAGGGGCGCCCGGTTCTTTTTGTCAAGACCGACCTGTCCGGTGCCCTGAATGAACTGCAAGACGAGGCAGCGCGGCTATCGTGGCTGGCCACGACGGGCGTTCCTTGCGCAGCTGTGCTCGACGTTGTCACTGAAGCGGGAAGGGACTGGCTGCTATTGGGCGAAGTGCCGGGGCAGGATCTCCTGTCATCTCACCTTGCTCCTGCCGAGAAAGTATCCATCATGGCTGATGCAATGCGGCGGCTGCATACGCTTGATCCGGCTACCTGCCCATTCGACCACCAAGCGAAACATCGCATCGAGCGAGCACGTACTCGGATGGAAGCCGGTCTTGTCGATCAGGATGATCTGGACGAAGAACATCAGGGGCTCGCGCCAGCCGAACTGTTCGCCAGGCTCAAGGCGAGCATGCCCGACGGCGAGGATCTCGTCGTGACCCATGGCGATGCCTGCTTGCCGAATATCATGGTGGAAAATGGCCGCTTTTCTGGATTCATCGACTGTGGCCGGCTGGGTGTGGCGGACCGCTATCAGGACATAGCGTTGGCTACCCGTGATATTGCTGAAGAACTTGGCGGCGAATGGGCTGACCGCTTCCTCGTGCTTTACGGTATCGCCGCTCCCGATTCGCAGCGCATCGCCTTCTATCGCCTTCTTGACGAGTTCTTCTGAAACTTGTTTATTGCAGCTTATAATGGTTACAAATAAAGCAATAGCATCACAAATTTCACAAATAAAGCATTTTTTTCACTGCATTCTAGTTGTGGTTTGTCCAAACTCATCAATGTATCTTA",
+    source: "features.json: SV40 promoter (331 bp) + NeoR CDS (795 bp) + SV40 polyA (122 bp) = 1248 bp",
+  },
+  {
+    id: "puroR_mammalian",
+    name: "PuroR (puromycin resistance, mammalian)",
+    type: "marker",
+    organisms: ["mammalian"],
+    description:
+      "Complete puromycin resistance cassette for mammalian stable selection: SV40 promoter + PuroR CDS + SV40 poly(A). Select with 1-10 μg/mL puromycin. Fastest mammalian selection marker — resistant colonies appear in 2-5 days. Preferred for generating stable cell lines quickly. Lethal to non-resistant cells within 48h.",
+    seq: "GTGTGTCAGTTAGGGTGTGGAAAGTCCCCAGGCTCCCCAGGCAGGCAGAAGTATGCAAAGCATGCATCTCAATTAGTCAGCAACCAGGTGTGGAAAGTCCCCAGGCTCCCCAGCAGGCAGAAGTATGCAAAGCATGCATCTCAATTAGTCAGCAACCATAGTCCCGCCCCTAACTCCGCCCATCCCGCCCCTAACTCCGCCCAGTTCCGCCCATTCTCCGCCCCATGGCTGACTAATTTTTTTTATTTATGCAGAGGCCGAGGCCGCCTCTGCCTCTGAGCTATTCCAGAAGTAGTGAGGAGGCTTTTTTGGAGGCCTAGGCTTTTGCAAAATGACCGAGTACAAGCCTACCGTGCGCCTGGCCACTCGCGATGATGTGCCCCGCGCCGTCCGCACTCTGGCCGCCGCTTTCGCCGACTACCCCGCTACCCGGCACACCGTGGACCCCGACCGGCACATCGAGCGTGTGACAGAGTTGCAGGAGCTGTTCCTGACCCGCGTCGGGCTGGACATCGGCAAGGTGTGGGTAGCCGACGACGGCGCGGCCGTGGCCGTGTGGACTACCCCCGAGAGCGTTGAGGCCGGCGCCGTGTTCGCCGAGATCGGCCCCCGAATGGCCGAGCTGAGCGGCAGCCGCCTGGCCGCCCAGCAGCAAATGGAGGGCCTGCTTGCCCCCCATCGTCCCAAGGAGCCTGCCTGGTTTCTGGCCACTGTAGGAGTGAGCCCCGACCACCAGGGCAAGGGCTTGGGCAGCGCCGTCGTGTTGCCCGGCGTAGAGGCCGCCGAACGCGCCGGTGTGCCCGCCTTTCTCGAAACAAGCGCACCAAGAAACCTTCCATTCTACGAGCGCCTGGGCTTCACCGTGACCGCCGATGTCGAGGTGCCCGAGGGACCTAGGACCTGGTGTATGACACGAAAACCTGGCGCCTAAAACTTGTTTATTGCAGCTTATAATGGTTACAAATAAAGCAATAGCATCACAAATTTCACAAATAAAGCATTTTTTTCACTGCATTCTAGTTGTGGTTTGTCCAAACTCATCAATGTATCTTA",
+    source: "features.json: SV40 promoter (331 bp) + PuroR CDS (600 bp) + SV40 polyA (122 bp) = 1053 bp",
+  },
+
+  // ── Yeast promoters ───────────────────────────────────────────────────────
+
+  {
+    id: "gal1_promoter",
+    name: "GAL1 promoter",
+    type: "promoter",
+    organisms: ["yeast"],
+    description:
+      "S. cerevisiae GAL1 promoter. Strong, tightly regulated, galactose-inducible promoter. Repressed by glucose; induced by switching to galactose or raffinose + galactose media. The standard inducible promoter for yeast expression (pYES2, pGAL series vectors). ~500-fold induction. Best choice when tight off-state is needed or protein is toxic when overexpressed.",
+    seq: "CCCCATTATCTTAGCCTAAAAAAACCTTCTCTTTGGAACTTTCAGTAATACGCTTAACTGCTCATTGCTATATTGAAGTACGGATTAGAAGCCGCCGAGCGGGTGACAGCCCTCCGAAGGAAGACTCTCCTCCGTGCGTCCTCGTCTTCACCGGTCGCGTTCCTGAAACGCAGATGTGCCTCGCGCCGCACTGCTCCGAACAATAAAGATTCTACAATACTAGCTTTTATGGTTATGAAGAGGAAAAATTGGCAGTAACCTGGCCCCACAAACCTTCAAATGAACGAATCAAATTAACAACCATAGGATGATAATGCGATTAGTTTTTTAGCCTTATTTCTGGGGTAATTAATCAGCGAAGCGATGATTTTTGATCTATTAACAGATATATAAATGCAAAAACTGCATAACCACTTTAACTAATACTTTCAACATTTTCGGTTTGTATTACTTCTTATTCAAATGTAATAAAAGTATCAACAAAAAATTGTTAATATACCTCTATACTTTAACGTCAAGGAGGAAACTAGACCCGCCGCCACCATGGAG",
+    strength: "strong",
+    inducibleBy: "galactose",
+    source: "features.json[177]: GAL1 (549 bp)",
+  },
+  {
+    id: "tef1_promoter",
+    name: "TEF1 promoter",
+    type: "promoter",
+    organisms: ["yeast"],
+    description:
+      "S. cerevisiae TEF1 (translation elongation factor 1α) promoter. Strong, constitutive expression in all growth conditions. One of the strongest yeast constitutive promoters. Used in pTEF, pRS vectors. Good for selection markers and high-level constitutive protein production.",
+    seq: "CATAGCTTCAAAATGTTTCTACTCCTTTTTTACTCTTCCAGATTTTCTCGGACTCCGCGCATCGCCGTACCACTTCAAAACACCCAAGCACAGCATACTAAATTTCCCCTCTTTCTTCCTCTAGGGTGTCGTTAATTACCCGTACTAAAGGTTTGGAAAAGAAAAAAGAGACCGCCTCGTTTCTTTTTCTTCGTCGAAAAAGGCAATAAAAATTTTTATCACGTTTCTTTTTCTTGAAAATTTTTTTTTTGATTTTTTTCTCTTTCGATGACCTCCCATTGATATTTAAGTTAATAAACGGTCTTCAATTTCTCAAGTTTCAGTTTCATTTTTCTTGTTCTATTACAACTTTTTTTACTTCTTGCTCATTAGAAAGAAAGCATAGCAATCTAATCTAAG",
+    strength: "strong",
+    source: "features.json[171]: TEF1 promoter (399 bp)",
+  },
+  {
+    id: "adh1_promoter",
+    name: "ADH1 promoter",
+    type: "promoter",
+    organisms: ["yeast"],
+    description:
+      "S. cerevisiae ADH1 (alcohol dehydrogenase 1) promoter. Moderate constitutive expression. Active in all growth conditions including glucose. Commonly used for moderate-level constitutive yeast expression. Good choice when strong TEF1 overexpression causes growth problems.",
+    seq: "CAACTTCTTTTCTTTTTTTTTCTTTTCTCTCTCCCCCGTTGTTGTCTCACCATATCCGCAATGACAAAAAAATGATGGAAGACACTAAAGGAAAAAATTAACGACAAAGACAGCACCAACAGATGTCGTTGTTCCAGAGCTGATGAGGGGTATCTCGAAGCACACGAAACTTTTTCCTTCCTTCATTCACGCACACTACTCTCTAATGAGCAACGGTATACGGCCTTCCTTCCAGTTACTTGAATTTGAAATAAAAAAAAGTTTGCTGTCTTGCTATCAAGTATAAATAGACCTGCAATTATTAATCTTTTGTTTCCTCGTCATTGTTCTCGTTCCCTTTCTTCCTTGTTTCTTTTTCTGCACAATATTTCAAGCTATACCAAGCATACAATCAACT",
+    strength: "medium",
+    source: "features.json[2882]: ADH1 promoter (397 bp)",
+  },
+
+  // ── Yeast terminators ─────────────────────────────────────────────────────
+
+  {
+    id: "cyc1_terminator",
+    name: "CYC1 terminator",
+    type: "terminator",
+    organisms: ["yeast"],
+    description:
+      "S. cerevisiae CYC1 (iso-1-cytochrome c) transcriptional terminator. The standard yeast terminator — efficient mRNA 3' processing and transcriptional termination. Used in pYES, pRS, and virtually all S. cerevisiae expression vectors. Pair with GAL1, TEF1, or ADH1 promoters.",
+    seq: "TCATGTAATTAGTTATGTCACGCTTACATTCACGCCCTCCCCCCACATCCGCTCTAACCGAAAAGGAAGGAGTTAGACAACCTGAAGTCTAGGTCCCTATTTATTTTTTTATAGTTATGTTAGTATTAAGAACGTTATTTATATTTCAAATTTTTCTTTTTTTTCTGTACAGACGCGTGTACGCATGTAACATTATACTGAAAACCTTGCTTGAGAAGGTTTTGGGACGCTCGAAGGCTTTAATTTGC",
+    source: "features.json[5347]: CYC1 terminator (248 bp)",
+  },
+  {
+    id: "adh1_terminator",
+    name: "ADH1 terminator",
+    type: "terminator",
+    organisms: ["yeast"],
+    description:
+      "S. cerevisiae ADH1 transcriptional terminator. Efficient yeast terminator, alternative to CYC1. Sometimes used when CYC1 terminator causes read-through in specific construct contexts.",
+    seq: "GAGCGACCTCATGCTATACCTGAGAAAGCAACCTGACCTACAGGAAAGAGTTACTCAAGAATAAGAATTTTCGTTTTAAAACCTAAGAGTCACTTTAAAATTTGTATACACTTATTTTTTTTATAACTTATTTAATAATAAAAATCATAAATCATAAGAAATTCGC",
+    source: "features.json[250]: ADH1 terminator (166 bp)",
+  },
+
+  // ── Yeast origins ──────────────────────────────────────────────────────────
+
+  {
+    id: "2mu_ori",
+    name: "2μ origin (high-copy yeast)",
+    type: "ori",
+    organisms: ["yeast"],
+    description:
+      "S. cerevisiae 2-micron circle origin of replication. High-copy yeast origin: 10-40 copies per cell. Used in episomal yeast expression vectors (pYES2, pESC series) for high-level protein production. Relies on endogenous 2μ circle FLP/REP proteins — requires a yeast host that contains the 2μ circle (standard lab strains do, but petite mutants may not). Unstable without selection.",
+    seq: "GATCCAATATCAAAGGAAATGATAGCATTGAAGGATGAGACTAATCCAATTGAGGAGTGGCAGCATATAGAACAGCTAAAGGGTAGTGCTGAAGGAAGCATACGATACCCCGCATGGAATGGGATAATATCACAGGAGGTACTAGACTACCTTTCATCCTACATAAATAGACGCATATAAGTACGCATTTAAGCATAAACACGCACTATGCCGTTCTTCTCATGTATATATATATACAGGCAACACGCAGATATAGGTGCGACGTGAACAGTGAGCTGTATGTGCGCAGCTCGCGTTGCATTTTCGGAAGCGCTCGTTTTCGGAAACGCTTTGAAGTTCCTATTCCGAAGTTCCTATTCTCTAGAAAGTATAGGAACTTCAGAGCGCTTTTGAAAACCAAAAGCGCTCTGAAGACGCACTTTCAAAAAACCAAAAACGCACCGGACTGTAACGAGCTACTAAAATATTGCGAATACCGCTTCCACAAACATTGCTCAAAAGTATCTCTTTGCTATATATCTCTGTGCTATATCCCTATATAACCTACCCATCCACCTTTCGCTCCTTGAACTTGCATCTAAACTCGACCTCTACATTTTTTATGTTTATCTCTAGTATTACTCTTTAGACAAAAAAATTGTAGTAAGAACTATTCATAGAGTGAATCGAAAACAATACGAAAATGTAAACATTTCCTATACGTAGTATATAGAGACAAAATAGAAGAAACCGTTCATAATTTTCTGACCAATGAAGAATCATCAACGCTATCACTTTCTGTTCACAAAGTATGCGCAATCCACATCGGTATAGAATATAATCGGGGATGCCTTTATCTTGAAAAAATGCACCCGCAGCTTCGCTAGTAATCAGTAAACGCGGGAAGTGGAGTCAGGCTTTTTTTATGGAAGAGAAAATAGACACCAAAGTAGCCTTCTTCTAACCTTAACGGACCTACAGTGCAAAAAGTTATCAAGAGACTGCATTATAGAGCGCACAAAGGAGAAAAAAAGTAATCTAAGATGCTTTGTTAGAAAAATAGCGCTCTCGGGATGCATTTTTGTAGAACAAAAAAGAAGTATAGATTCTTTGTTGGTAAAATAGCGCTCTCGCGTTGCATTTCTGTTCTGTAAAAATGCAGCTCAGATTCTTTGTTTGAAAAATTAGCGCTCTCGCGTTGCATTTTTGTTTTACAAAAATGAAGCACAGATTCTTCGTTGGTAAAATAGCGCTTTCGCGTTGCATTTCTGTTCTGTAAAAATGCAGCTCAGATTCTTTGTTTGAAAAATTAGCGCTCTCGCGTTGCATTTTTGTTCTACAAAATGAAGCACAGATGCTTCGTT",
+    copyNumber: 20,
+    source: "features.json[125]: 2μ ori (1343 bp)",
+  },
+  {
+    id: "cen_ars",
+    name: "CEN/ARS (low-copy yeast)",
+    type: "ori",
+    organisms: ["yeast"],
+    description:
+      "Yeast centromere + autonomously replicating sequence (CEN/ARS). Low-copy origin: 1-2 copies per cell — behaves like a yeast chromosome. Used in pRS centromeric vectors for stable, low-level expression without selection pressure. Much more stable than 2μ vectors. Use when protein is toxic at high levels or when consistent expression is more important than yield.",
+    seq: "GATCGCTTGCCTGTAACTTACACGCGCCTCGTATCTTTTAATGATGGAATAATTTGGGAATTTACTCTGTGTTTATTTATTTTTATGTTTTGTATTTGGATTTTAGAAAGTAAATAAAGAAGGTAGAAGAGTTACGGAATGAAGAAAAAAAAATAAACAAAGGTTTAAAAAATTTCAACAAAAAGCGTACTTTACATATATATTTATTAGACAAGAAAAGCAGATTAAATAGATATACATTCGATTAACGATAAGTAAAATGTAAAATCACAGGATTTTCGTGTGTGGTCTTCTACACAGACAAGATGAAACAATTCGGCATTAATACCTGAGAGCAGGAAGAGCAAGATAAAAGGTAGTATTTGTTGGCGATCCCCCTAGAGTCTTTTACATCTTCGGAAAACAAAAACTATTTTTTCTTTAATTTCTTTTTTTACTTTCTATTTTTAATTTATATATTTATATTAAAAAATTTAAATTATAATTATTTTTATAGCACGTGAT",
+    copyNumber: 1,
+    source: "features.json[280]: CEN/ARS (504 bp)",
+  },
+
+  // ── Yeast selection markers ───────────────────────────────────────────────
+
+  {
+    id: "leu2_marker",
+    name: "LEU2 marker",
+    type: "marker",
+    organisms: ["yeast"],
+    description:
+      "S. cerevisiae LEU2 (β-isopropylmalate dehydrogenase) selectable marker: LEU2 promoter + LEU2 CDS. Complements leu2 auxotrophy — use in leu2Δ strains (BY4741, W303-1A, most lab strains). Select on synthetic complete media lacking leucine (SC-Leu). No antibiotic required. Most common yeast selection marker in pRS415, pYES series vectors.",
+    seq: "AACTGTGGGAATACTCAGGTATCGTAAGATGCAAGAGTTCGAATCTCTTAGCAACCATTATTTTTTTCCTCAACATAACGAGAACACACAGGGGCGCTATCGCACAGAATCAAATTCGATGACTGGAAATTTTTTGTTAATTTCAGAGGTCGCCTGACGCATATACCTTTTTCAACTGAAAAATTGGGAGAAAAAGGAAAGGTGAGAGGCCGGAACCGGCTTTTCATATAGAATAGAGAAGCGTTCATGACTAAATGCTTGCATCACAATACTTGAAGTTGACAATATTATTTAAGGACCTATTGTTTTTTCCAATAGGTGGTTAGCAATCGTCTTACTTTCTAACTTTTCTTACCTTTTACATTTCAGCAATATATATATATATTTCAAGGATATACCATTCTAATGTTTGTTCCTAAGAAGATCGTCGTTTTGCCAGGTGACCACGTTGGTCAAGAAATCACAGCCGAAGCCATTAAGGTTCTTAAAGCTATTTCTGATGTTCGTTCCAATGTCAAGTTCGATTTCGAAAATCATTTAATTGGTGGTGCTGCTATCGATGCTACAGGTGTCCCACTTCCAGATGAGGCACTGGAAGCCTCCAAGAAGGTTGATGCCGTTTTGTTAGGTGCTGTGGGTGGTCCAAAATGGGGTACCGGTAGTGTTAGACCTGAACAAGGTTTACTAAAAATCCGTAAAGAACTTCAATTGTACGCCAACTTAAGACCATGTAACTTTGCATCCGACTCTCTTTTAGACTTATCTCCAATCAAGCCACAATTTGCTAAAGGTACTGACTTCGTTGTTGTCAGAGAATTAGTGGGAGGTATTTACTTTGGTAAGAGAAAGGAAGACGATGGTGATGGTGTCGCTTGGGATAGTGAACAATACACCGTTCCAGAAGTGCAAAGAATCACAAGAATGGCCGCTTTCATGGCCCTACAACATGAGCCACCATTGCCTATTTGGACCTTGGATAAAGCTAATGTTTTGGCCTCTTCAAGATTATGGAGAAAAACTGTGGAGGAAACCATCAAGAACGAATTCCCTACATTGAAGGTTCAACATCAATTGATTGATTCTGCCGCCATGATCCTAGTTAAGAACCCAACCCACCTAAATGGTATTATAATCACCAGCAACATGTTTGGTGATATCATCTCCGATGAAGCCTTACGTTATCCAGGTTCCTTGGGTTTGTTGCCATCTGCGTCCTTGGCCTCTTTGCCAGACAAGAACACCGCATTTGGTTTGTACGAACCATGCCACGGTTCTGCTCCCGGATTTGCCAAGAATAAGGTTGACCCTATCGCCACTATCTTGTCTGCTGCAATGATGTTGAAATTGTCATTGAACTTGCCTGAAGAAGGTAAGGCCATTGAAGATGCAGTTAAAAAGGTTTTGGATGCAGGTATCAGAACTGGTGATTTAGGTGGTTCCAACAGTACCACCGAAGTCGGTGATGCTGTCGCCGAAGAAGTTAAGAAAATCCTTGCTTAA",
+    source: "features.json: LEU2 promoter (405 bp) + LEU2 CDS (1095 bp) = 1500 bp",
+  },
+  {
+    id: "trp1_marker",
+    name: "TRP1 marker",
+    type: "marker",
+    organisms: ["yeast"],
+    description:
+      "S. cerevisiae TRP1 (anthranilate synthase) selectable marker: TRP1 promoter + TRP1 CDS. Complements trp1 auxotrophy — use in trp1Δ strains (BY4742, W303-1B). Select on synthetic complete media lacking tryptophan (SC-Trp). Used in pRS424, pGAL4 series vectors. Alternative to LEU2 for dual-marker two-plasmid experiments.",
+    seq: "AATTCGGTCGAAAAAAGAAAAGGAGAGGGCCAAGAGGGAGGGCATTGGTGACTATTGAGCACGTGAGTATACGTGATTAAGCACACAAAGGCAGCTTGGAGTATGTCTGTTATTAATTTCACAGGTAGTTCTGGTCCATTGGTGAAAGTTTGCGGCTTGCAGAGCACAGAGGCCGCAGAATGTGCACTAGATTCCGATGCTGACTTGCTGGGTATTATATGTGTGCCCAATAGAAAGAGAACAATTGACCCGGTTATTGCAAGGAAAATTTCAAGTCTTGTAAAAGCATATAAAAATAGTTCAGGCACTCCGAAATACTTGGTTGGCGTGTTTCGTAATCAACCTAAGGAGGATGTTTTGGCTCTGGTCAATGATTACGGCATTGATATCGTCCAACTGCATGGAGATGAGTCGTGGCAAGAATACCAAGAGTTCCTCGGTTTGCCAGTTATTAAAAGACTCGTATTTCCAAAAGACTGCAACATACTACTCAGTGCAGCTTCACAGAAACCTCATTCGTTTATTCCCTTGTTTGATTCAGAAGCAGGTGGGACAGGTGAACTTTTGGATTGGAACTCGATTTCTGACTGGGTTGGAAGGCAAGAGAGCCCCGAGAGCTTACATTTTATGTTAGCTGGTGGACTGACGCCAGAAAATGTTGGTGATGCGCTTAGATTAAATGGCGTTATTGGTGTTGATGTAAGCGGAGGTGTGGAGACAAATGGTGTAAAAGACTCTAACAAAATAGCAAATTTCGTCAAAAATGCTAAGAAATAG",
+    source: "features.json: TRP1 promoter (102 bp) + TRP1 CDS (675 bp) = 777 bp",
+  },
 ];
 
 // ── Lookup by ID ──────────────────────────────────────────────────────────────
@@ -288,34 +493,57 @@ export const PARTS_BY_ID: Record<string, Part> = Object.fromEntries(
   PARTS_CATALOG.map((p) => [p.id, p]),
 );
 
-/** Format the catalog as a readable prompt context for Claude. */
+/** Format the catalog as a readable prompt context for Claude, grouped by organism. */
 export function formatCatalogForPrompt(): string {
-  const sections: Record<PartType, Part[]> = {
-    promoter: [],
-    rbs: [],
-    terminator: [],
-    ori: [],
-    marker: [],
-    cds: [],
+  const lines: string[] = ["== AVAILABLE PARTS =="];
+
+  const orgGroups: { label: string; org: Organism; types: PartType[] }[] = [
+    {
+      label: "E. COLI PARTS",
+      org: "ecoli",
+      types: ["promoter", "rbs", "terminator", "ori", "marker"],
+    },
+    {
+      label: "MAMMALIAN CELL PARTS",
+      org: "mammalian",
+      types: ["promoter", "rbs", "terminator", "ori", "marker"],
+    },
+    {
+      label: "YEAST (S. cerevisiae) PARTS",
+      org: "yeast",
+      types: ["promoter", "terminator", "ori", "marker"],
+    },
+    {
+      label: "CDS LIBRARY (all organisms — reporters, purification tags, genome editors)",
+      org: "universal",
+      types: ["cds"],
+    },
+  ];
+
+  const typeHeaders: Partial<Record<PartType, string>> = {
+    promoter: "Promoters",
+    rbs: "RBS / Translation initiation",
+    terminator: "Terminators / PolyA signals",
+    ori: "Origins of replication",
+    marker: "Selection markers",
+    cds: "CDS",
   };
-  for (const p of PARTS_CATALOG) sections[p.type].push(p);
 
-  const lines: string[] = ["== AVAILABLE PARTS (E. coli) =="];
+  for (const { label, org, types } of orgGroups) {
+    const partsInGroup = PARTS_CATALOG.filter(
+      (p) => p.organisms.includes(org) && types.includes(p.type),
+    );
+    if (partsInGroup.length === 0) continue;
 
-  const headers: Record<PartType, string> = {
-    promoter: "PROMOTERS",
-    rbs: "RIBOSOME BINDING SITES (RBS)",
-    terminator: "TERMINATORS",
-    ori: "ORIGINS OF REPLICATION",
-    marker: "RESISTANCE MARKERS",
-    cds: "CDS LIBRARY (reporters, tags, genome editors)",
-  };
-
-  for (const type of ["promoter", "rbs", "terminator", "ori", "marker", "cds"] as PartType[]) {
-    lines.push(`\n${headers[type]}:`);
-    for (const p of sections[type]) {
-      lines.push(`  • ${p.name} (id: "${p.id}", ${p.seq.length} bp)`);
-      lines.push(`    ${p.description}`);
+    lines.push(`\n=== ${label} ===`);
+    for (const type of types) {
+      const partsOfType = partsInGroup.filter((p) => p.type === type);
+      if (partsOfType.length === 0) continue;
+      lines.push(`\n${typeHeaders[type] ?? type.toUpperCase()}:`);
+      for (const p of partsOfType) {
+        lines.push(`  • ${p.name} (id: "${p.id}", ${p.seq.length} bp)`);
+        lines.push(`    ${p.description}`);
+      }
     }
   }
 

@@ -182,7 +182,7 @@ function SeqLine({
 }
 
 // Ranked pair card — primary result view
-function PairCard({ pair, rank, tmTarget }: { pair: DesignPair; rank: number; tmTarget: number }) {
+function PairCard({ pair, rank, tmTarget, mode }: { pair: DesignPair; rank: number; tmTarget: number; mode?: string }) {
 	const [copied, setCopied] = useState(false);
 	function copyPair() {
 		const text = `Fwd (${pair.fwd.len}bp, Tm ${pair.fwd.tm.toFixed(1)}°C): ${pair.fwd.seq}\nRev (${pair.rev.len}bp, Tm ${pair.rev.tm.toFixed(1)}°C): ${pair.rev.seq}`;
@@ -280,9 +280,13 @@ function PairCard({ pair, rank, tmTarget }: { pair: DesignPair; rank: number; tm
 						ΔTm {pair.tmDiff.toFixed(1)}°
 					</span>
 					{dimerWarn && <Badge label="dimer" value={`${pair.heteroDimerDG.toFixed(1)}`} warn />}
-					{effBadge}
+					{/* Show eff badge only in PCR/non-qPCR mode; qPCR gets a full bar below */}
+					{mode !== "qpcr" && effBadge}
 					{pair.ampliconTm !== undefined && (
-						<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}>
+						<span
+							style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}
+							title="Predicted melting temperature of the amplicon product"
+						>
 							amp {pair.ampliconTm.toFixed(0)}°
 						</span>
 					)}
@@ -308,6 +312,87 @@ function PairCard({ pair, rank, tmTarget }: { pair: DesignPair; rank: number; tm
 			{/* Sequences */}
 			<SeqLine dir="→" primer={pair.fwd} tmTarget={tmTarget} />
 			<SeqLine dir="←" primer={pair.rev} tmTarget={tmTarget} />
+
+			{/* qPCR efficiency bar — replaces the small badge with a visual row */}
+			{mode === "qpcr" && pair.efficiencyScore !== undefined && (
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "8px",
+						marginTop: "7px",
+						paddingTop: "6px",
+						borderTop: "1px solid rgba(221,216,206,0.5)",
+					}}
+				>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "8px",
+							letterSpacing: "0.06em",
+							color: "#9a9284",
+							flexShrink: 0,
+						}}
+					>
+						Efficiency
+					</span>
+					<div
+						style={{
+							flex: 1,
+							height: "5px",
+							background: "#ede9e0",
+							borderRadius: "3px",
+							overflow: "hidden",
+						}}
+					>
+						<div
+							style={{
+								width: `${pair.efficiencyScore * 100}%`,
+								height: "100%",
+								borderRadius: "3px",
+								background:
+									pair.efficiencyScore >= 0.8
+										? "#1a4731"
+										: pair.efficiencyScore >= 0.6
+											? "#b8933a"
+											: "#a02828",
+								transition: "width 0.3s ease",
+							}}
+						/>
+					</div>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							fontWeight: 700,
+							flexShrink: 0,
+							color:
+								pair.efficiencyScore >= 0.8
+									? "#1a4731"
+									: pair.efficiencyScore >= 0.6
+										? "#b8933a"
+										: "#a02828",
+						}}
+						title={
+							pair.efficiencyScore >= 0.8
+								? "Excellent — standard PCR efficiency, reliable quantification"
+								: pair.efficiencyScore >= 0.6
+									? "Acceptable — monitor for accuracy; validate with standard curve"
+									: "Poor — consider redesigning primers or adjusting amplicon region"
+						}
+					>
+						{(pair.efficiencyScore * 100).toFixed(0)}%
+					</span>
+					{pair.ampliconDG !== undefined && pair.ampliconDG < -3.0 && (
+						<span
+							title={`Amplicon ΔG: ${pair.ampliconDG.toFixed(1)} kcal/mol — secondary structure may reduce qPCR efficiency`}
+							style={{ fontSize: "10px", color: "#b8933a", cursor: "help", flexShrink: 0 }}
+						>
+							⚠
+						</span>
+					)}
+				</div>
+			)}
 		</div>
 	);
 }
@@ -777,6 +862,11 @@ export function PrimerPanel({
 	const [maxLen, setMaxLen] = useState(27);
 	const [gcMin, setGcMin] = useState(40);
 	const [gcMax, setGcMax] = useState(65);
+	// qPCR-specific parameters
+	const [qpcrAmpliconMin, setQpcrAmpliconMin] = useState(70);
+	const [qpcrAmpliconMax, setQpcrAmpliconMax] = useState(200);
+	// Shared: max Tm difference between fwd and rev primers (stricter for qPCR)
+	const [maxTmDiff, setMaxTmDiff] = useState(3);
 	const [diagnoseState, setDiagnoseState] = useState<DiagnoseState>({ status: "idle" });
 	const abortDiagnoseRef = useRef<AbortController | null>(null);
 	const mountedRef = useRef(true);
@@ -809,6 +899,10 @@ export function PrimerPanel({
 	// Handles circular origin-spanning selections by rotating the sequence.
 	const runDesign = useCallback(
 		(s: number, e: number) => {
+			// Always clear any previous diagnosis when a new design is attempted
+			setDiagnoseState({ status: "idle" });
+			abortDiagnoseRef.current?.abort();
+
 			// Allow s > e on circular plasmids (selection wraps the origin)
 			const isWrapping = topology === "circular" && s > e && s >= 1 && e >= 1;
 			if (Number.isNaN(s) || Number.isNaN(e) || s < 1) {
@@ -873,6 +967,12 @@ export function PrimerPanel({
 				opts: {
 					...(mode === "pcr"
 						? { productSizeRange: [regionLen + 36, regionLen + 500] as [number, number] }
+						: {}),
+					...(mode === "qpcr"
+						? {
+								productSizeRange: [qpcrAmpliconMin, qpcrAmpliconMax] as [number, number],
+								maxTmDiff,
+							}
 						: {}),
 					tmTarget,
 					primerLenRange: [minLen, maxLen] as [number, number],
@@ -1167,6 +1267,8 @@ export function PrimerPanel({
 								setPairs(null);
 								setAssemblyPairs(null);
 								setWarning(null);
+								setDiagnoseState({ status: "idle" });
+								abortDiagnoseRef.current?.abort();
 							}}
 							style={{
 								padding: "3px 10px",
@@ -1195,7 +1297,7 @@ export function PrimerPanel({
 								marginLeft: "4px",
 							}}
 						>
-							70–200 bp
+							{qpcrAmpliconMin}–{qpcrAmpliconMax} bp
 						</span>
 					)}
 				</div>
@@ -1428,7 +1530,9 @@ export function PrimerPanel({
 									· wraps origin ↻
 								</span>
 							)}
-							{!isWrapping && " · primers flank selection"}
+							{!isWrapping && (mode === "qpcr"
+							? ` · amplicon ${qpcrAmpliconMin}–${qpcrAmpliconMax} bp within region`
+							: " · primers flank selection")}
 						</>
 					) : (
 						<span style={{ color: "#b8b0a4" }}>
@@ -1479,6 +1583,9 @@ export function PrimerPanel({
 									setMaxLen(27);
 									setGcMin(40);
 									setGcMax(65);
+									setMaxTmDiff(3);
+									setQpcrAmpliconMin(70);
+									setQpcrAmpliconMax(200);
 								}}
 								style={{
 									background: "none",
@@ -1610,6 +1717,58 @@ export function PrimerPanel({
 										/>
 										<span style={unitStyle}>%</span>
 									</div>
+									{/* Max ΔTm — shown for all modes (stricter for qPCR) */}
+									<div style={rowStyle}>
+										<span style={labelStyle}>Max ΔTm</span>
+										<input
+											type="number"
+											value={maxTmDiff}
+											min={0.5}
+											max={10}
+											step={0.5}
+											onChange={(e) =>
+												setMaxTmDiff(
+													Math.max(0.5, Math.min(10, parseFloat(e.target.value) || 3)),
+												)
+											}
+											style={numStyle}
+										/>
+										<span style={unitStyle}>°C</span>
+									</div>
+									{/* qPCR-specific: amplicon size range */}
+									{mode === "qpcr" && (
+										<div style={rowStyle}>
+											<span style={labelStyle}>Amplicon</span>
+											<input
+												type="number"
+												value={qpcrAmpliconMin}
+												min={50}
+												max={300}
+												step={10}
+												onChange={(e) =>
+													setQpcrAmpliconMin(
+														Math.max(50, Math.min(parseInt(e.target.value, 10) || 70, qpcrAmpliconMax - 20)),
+													)
+												}
+												style={numStyle}
+											/>
+											<span style={unitStyle}>–</span>
+											<input
+												type="number"
+												value={qpcrAmpliconMax}
+												min={50}
+												max={300}
+												step={10}
+												onChange={(e) =>
+													setQpcrAmpliconMax(
+														Math.min(300, Math.max(parseInt(e.target.value, 10) || 200, qpcrAmpliconMin + 20)),
+													)
+												}
+												style={numStyle}
+											/>
+											<span style={unitStyle}>bp</span>
+										</div>
+									)}
 								</div>
 							);
 						})()}
@@ -1809,7 +1968,7 @@ export function PrimerPanel({
 									</span>
 								</div>
 								{pairs.map((pair, i) => (
-									<PairCard key={i} pair={pair} rank={i + 1} tmTarget={tmTarget} />
+									<PairCard key={i} pair={pair} rank={i + 1} tmTarget={tmTarget} mode={mode} />
 								))}
 
 								{/* ── Individual primers (collapsible) ── */}

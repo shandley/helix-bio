@@ -112,6 +112,34 @@ source /ref/sahlab/software/scott_conda/miniconda/etc/profile.d/conda.sh
 conda activate confphylo
 ```
 
+## Testing
+
+```bash
+pnpm test          # vitest — runs lib/bio/verify-clone.test.ts (31 tests)
+pnpm exec tsc --noEmit   # type check
+pnpm exec biome check .  # lint
+```
+
+## AI features — architecture pattern
+
+Two-layer pattern used for all AI analysis features:
+1. **Deterministic layer** (lib/bio/): classifies/scores data with pure functions, emits structured output. Unit-testable. Never calls Claude.
+2. **Claude explanation layer** (app/api/): receives deterministic output as structured text context, streams plain-English explanation. Uses `claude-haiku-4-5` for speed/cost. Same auth guard as all routes.
+
+### Clone verification (`lib/bio/verify-clone.ts` + `/api/verify-clone`)
+Triggered from the ALIGN tab after Sanger reads are aligned. Two layers:
+- Deterministic: walks SW-aligned strings for variants (substitutions, indels), classifies CDS codon changes (silent/missense/nonsense/frameshift, both strands, origin-spanning), computes per-feature coverage via interval union, emits `Verdict`: `CONFIRMED | MUTATION_DETECTED | INCOMPLETE | FAILED`
+- Thresholds: `CONFIRMED_MIN_IDENTITY = 0.98`, `CONFIRMED_NO_CDS_IDENTITY = 0.95`, `LOW_QUALITY_THRESHOLD = 20` (Phred), `FULL_COVERAGE_THRESHOLD = 0.98`
+- Claude explains the verdict (120-200 words), never decides it
+- UI: Verify button appears after alignment; verdict badge appears instantly from deterministic layer; explanation streams in; Coverage table shows per-feature %
+
+### PCR failure diagnosis (`/api/diagnose-pcr`)
+Triggered from the PRIMERS tab after primer design runs. Single Claude layer (no separate deterministic verdict — thermodynamic values already computed by primd):
+- Sends: primer sequences, Tm, GC%, hairpin ΔG, self-dimer ΔG, hetero-dimer ΔG, template accessibility, product size, ΔTm between primers
+- Severity ranking used in prompt: template structure > hetero-dimer > hairpin > ΔTm > GC
+- Model: `claude-haiku-4-5`, 512 tokens
+- UI: Diagnose button appears after design; explanation streams in; Back to primers returns to normal view
+
 ## Feature annotation database
 
 **Architecture**: The HTCF pipeline is an OFFLINE CURATION TOOL, not a runtime service.

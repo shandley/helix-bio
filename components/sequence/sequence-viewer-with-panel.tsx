@@ -541,6 +541,7 @@ export function SequenceViewerWithPanel({
 								seq={parsed.seq}
 								seqLen={parsed.seq.length}
 								topology={topology}
+								sequenceName={name}
 								selectionStart={selection?.start}
 								selectionEnd={selection?.end}
 								onPrimersDesigned={setBestPair}

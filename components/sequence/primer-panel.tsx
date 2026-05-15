@@ -27,6 +27,8 @@ interface PrimerPanelProps {
 	onPrimersDesigned?: (pair: PrimerPair | null) => void;
 	/** Set when an annotation was clicked — triggers auto-design and shows the name */
 	annotationName?: string | null;
+	/** Plasmid name sent as context to the PCR diagnosis endpoint. */
+	sequenceName?: string;
 }
 
 function Badge({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
@@ -589,6 +591,100 @@ function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: numb
 	);
 }
 
+// ── PCR diagnosis helpers ─────────────────────────────────────────────────────
+
+type DiagnoseState =
+	| { status: "idle" }
+	| { status: "running"; explanation: string }
+	| { status: "done"; explanation: string }
+	| { status: "error"; message: string };
+
+function renderInlineDiagnose(text: string): React.ReactNode[] {
+	return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, j) => {
+		if (part.startsWith("**") && part.endsWith("**"))
+			return <strong key={j}>{part.slice(2, -2)}</strong>;
+		if (part.startsWith("`") && part.endsWith("`"))
+			return (
+				<code
+					key={j}
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "10px",
+						background: "rgba(26,71,49,0.08)",
+						padding: "1px 3px",
+						borderRadius: "2px",
+					}}
+				>
+					{part.slice(1, -1)}
+				</code>
+			);
+		return part;
+	});
+}
+
+function DiagnoseTypingDots() {
+	return (
+		<span style={{ display: "inline-flex", gap: "3px", alignItems: "center", padding: "4px 0" }}>
+			{[0, 1, 2].map((i) => (
+				<span
+					key={i}
+					style={{
+						width: "4px",
+						height: "4px",
+						borderRadius: "50%",
+						background: "#9a9284",
+						display: "inline-block",
+						animation: `diagnosePulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+					}}
+				/>
+			))}
+		</span>
+	);
+}
+
+function DiagnoseResultCard({
+	state,
+}: {
+	state: Extract<DiagnoseState, { status: "running" | "done" }>;
+}) {
+	return (
+		<div style={{ padding: "12px 14px" }}>
+			<div
+				style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "8px",
+					letterSpacing: "0.1em",
+					textTransform: "uppercase",
+					color: "#2d4a7a",
+					marginBottom: "10px",
+				}}
+			>
+				PCR Diagnosis
+			</div>
+			<div>
+				{state.explanation ? (
+					state.explanation.split(/\n\n+/).map((para, i) => (
+						<p
+							key={i}
+							style={{
+								margin: "0 0 8px",
+								fontFamily: "var(--font-karla)",
+								fontSize: "12px",
+								color: "#1c1a16",
+								lineHeight: 1.65,
+							}}
+						>
+							{renderInlineDiagnose(para.replace(/\n/g, " "))}
+						</p>
+					))
+				) : (
+					<DiagnoseTypingDots />
+				)}
+			</div>
+		</div>
+	);
+}
+
 export function PrimerPanel({
 	seq,
 	seqLen,
@@ -597,6 +693,7 @@ export function PrimerPanel({
 	selectionEnd,
 	onPrimersDesigned,
 	annotationName,
+	sequenceName,
 }: PrimerPanelProps) {
 	const [start, setStart] = useState<string>(
 		selectionStart !== undefined ? String(selectionStart + 1) : String(Math.floor(seqLen / 3) + 1),
@@ -626,6 +723,17 @@ export function PrimerPanel({
 	const [maxLen, setMaxLen] = useState(27);
 	const [gcMin, setGcMin] = useState(40);
 	const [gcMax, setGcMax] = useState(65);
+	const [diagnoseState, setDiagnoseState] = useState<DiagnoseState>({ status: "idle" });
+	const abortDiagnoseRef = useRef<AbortController | null>(null);
+	const mountedRef = useRef(true);
+
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+			abortDiagnoseRef.current?.abort();
+		};
+	}, []);
 
 	useEffect(() => {
 		if (selectionStart !== undefined) setStart(String(selectionStart + 1));
@@ -815,6 +923,127 @@ export function PrimerPanel({
 		runDesignRef.current(selectionStart + 1, selectionEnd + 1);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [annotationName, selectionStart, selectionEnd]);
+
+	const runDiagnosis = useCallback(async () => {
+		const best = pairs?.[0];
+		const bestAsm = assemblyPairs?.[0];
+		if (!best && !bestAsm) return;
+
+		abortDiagnoseRef.current?.abort();
+		setDiagnoseState({ status: "running", explanation: "" });
+
+		const ac = new AbortController();
+		abortDiagnoseRef.current = ac;
+
+		try {
+			const res = await fetch("/api/diagnose-pcr", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(
+					best
+						? {
+								mode,
+								tmTarget,
+								fwd: {
+									seq: best.fwd.seq,
+									tm: best.fwd.tm,
+									gc: best.fwd.gc,
+									len: best.fwd.len,
+									hairpinDG: best.fwd.hairpinDG,
+									selfDimerDG: best.fwd.selfDimerDG,
+									accessibility: best.fwd.templateAccessibility,
+									start: best.fwd.start,
+								},
+								rev: {
+									seq: best.rev.seq,
+									tm: best.rev.tm,
+									gc: best.rev.gc,
+									len: best.rev.len,
+									hairpinDG: best.rev.hairpinDG,
+									selfDimerDG: best.rev.selfDimerDG,
+									accessibility: best.rev.templateAccessibility,
+									start: best.rev.start,
+								},
+								productSize: best.productSize,
+								tmDiff: best.tmDiff,
+								heteroDimerDG: best.heteroDimerDG,
+								context: {
+									sequenceName: sequenceName ?? "Sequence",
+									seqLen,
+									topology,
+									regionLen: (() => {
+										const s = parseInt(start, 10);
+										const e = parseInt(end, 10);
+										if (Number.isNaN(s) || Number.isNaN(e)) return 0;
+										if (topology === "circular" && s > e && s >= 1 && e >= 1)
+											return seqLen - (s - 1) + e;
+										return e > s ? e - s : 0;
+									})(),
+								},
+							}
+						: {
+								mode: "assembly",
+								tmTarget,
+								fwd: {
+									seq: bestAsm!.fwd.tail + bestAsm!.fwd.seq,
+									tm: bestAsm!.fwd.tm,
+									gc: 0.5,
+									len: (bestAsm!.fwd.tail + bestAsm!.fwd.seq).length,
+									hairpinDG: 0,
+									selfDimerDG: 0,
+									accessibility: 1,
+									start: 0,
+								},
+								rev: {
+									seq: bestAsm!.rev.tail + bestAsm!.rev.seq,
+									tm: bestAsm!.rev.tm,
+									gc: 0.5,
+									len: (bestAsm!.rev.tail + bestAsm!.rev.seq).length,
+									hairpinDG: 0,
+									selfDimerDG: 0,
+									accessibility: 1,
+									start: 0,
+								},
+								productSize: bestAsm!.productSize,
+								tmDiff: 0,
+								heteroDimerDG: 0,
+								context: {
+									sequenceName: sequenceName ?? "Sequence",
+									seqLen,
+									topology,
+									regionLen: (() => {
+										const s = parseInt(start, 10);
+										const e = parseInt(end, 10);
+										if (Number.isNaN(s) || Number.isNaN(e)) return 0;
+										if (topology === "circular" && s > e && s >= 1 && e >= 1)
+											return seqLen - (s - 1) + e;
+										return e > s ? e - s : 0;
+									})(),
+								},
+							},
+				),
+				signal: ac.signal,
+			});
+
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			if (!res.body) throw new Error("No response body");
+
+			const reader = res.body.getReader();
+			const decoder = new TextDecoder();
+			let text = "";
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				text += decoder.decode(value, { stream: true });
+				if (mountedRef.current) setDiagnoseState({ status: "running", explanation: text });
+			}
+			if (mountedRef.current) setDiagnoseState({ status: "done", explanation: text });
+		} catch (e) {
+			if ((e as Error).name === "AbortError") return;
+			if (mountedRef.current)
+				setDiagnoseState({ status: "error", message: (e as Error).message });
+		}
+	}, [pairs, assemblyPairs, mode, tmTarget, sequenceName, seqLen, topology, start, end]);
 
 	const s = parseInt(start, 10);
 	const e = parseInt(end, 10);
@@ -1379,8 +1608,26 @@ export function PrimerPanel({
 				</button>
 			</div>
 
-			{/* Results */}
+			{/* Results — or diagnosis card when active */}
 			<div style={{ flex: 1, overflowY: "auto" }}>
+				{diagnoseState.status !== "idle" ? (
+					diagnoseState.status === "error" ? (
+						<div
+							style={{
+								padding: "16px 12px",
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								color: "#a02828",
+								lineHeight: 1.6,
+							}}
+						>
+							{diagnoseState.message}
+						</div>
+					) : (
+						<DiagnoseResultCard state={diagnoseState} />
+					)
+				) : (
+				<>
 				{assemblyPairs !== null && assemblyPairs.length > 0 && (
 					<>
 						<div
@@ -1620,7 +1867,70 @@ export function PrimerPanel({
 							</>
 						);
 					})()}
+				</>
+				)}
 			</div>
+
+			{/* Bottom action bar — appears when primers are ready */}
+			{(pairs?.length || assemblyPairs?.length) && (
+				<div
+					style={{
+						flexShrink: 0,
+						padding: "8px 12px",
+						borderTop: "1px solid #ddd8ce",
+						display: "flex",
+						gap: "8px",
+					}}
+				>
+					{diagnoseState.status !== "idle" ? (
+						<button
+							type="button"
+							onClick={() => setDiagnoseState({ status: "idle" })}
+							style={{
+								flex: 1,
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.08em",
+								textTransform: "uppercase",
+								background: "none",
+								border: "1px solid #ddd8ce",
+								borderRadius: "2px",
+								color: "#5a5648",
+								cursor: "pointer",
+								padding: "5px 10px",
+							}}
+						>
+							← Back to primers
+						</button>
+					) : (
+						<button
+							type="button"
+							onClick={() => void runDiagnosis()}
+							title="AI-powered PCR failure analysis"
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.08em",
+								textTransform: "uppercase",
+								background: "#2d4a7a",
+								color: "white",
+								border: "none",
+								borderRadius: "2px",
+								cursor: "pointer",
+								padding: "5px 12px",
+							}}
+						>
+							Diagnose
+						</button>
+					)}
+				</div>
+			)}
+			<style>{`
+				@keyframes diagnosePulse {
+					0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+					40% { opacity: 1; transform: scale(1); }
+				}
+			`}</style>
 		</div>
 	);
 }

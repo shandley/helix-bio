@@ -11,6 +11,16 @@ import type { SearchMatch } from "@/lib/bio/search";
 import { AIPanel } from "./ai-panel";
 import type { AlignRead } from "./align-panel";
 import { AlignPanel } from "./align-panel";
+import {
+	AnnotationEditor,
+	type AnnotationLike,
+	type AnnotationOverride,
+	annKey,
+	applyOverrides,
+	loadOverrides,
+	type OverrideMap,
+	saveOverrides,
+} from "./annotation-editor";
 import { Chromatogram } from "./chromatogram";
 import { DigestPanel } from "./digest-panel";
 import { EnzymePanel } from "./enzyme-panel";
@@ -58,9 +68,16 @@ export function SequenceViewerWithPanel({
 	const [alignedReads, setAlignedReads] = useState<AlignRead[]>([]);
 	const [selectedAlignRead, setSelectedAlignRead] = useState<AlignRead | null>(null);
 	const [translationTarget, setTranslationTarget] = useState<TranslationTarget | null>(null);
+	const [selectedAnnotation, setSelectedAnnotation] = useState<AnnotationLike | null>(null);
+	const [overrides, setOverrides] = useState<OverrideMap>({});
 	const [autoAnnotations, setAutoAnnotations] = useState<Annotation[]>([]);
 	const [annotating, setAnnotating] = useState(false);
 	const annotationWorkerRef = useRef<Worker | null>(null);
+
+	// Load persisted overrides on mount
+	useEffect(() => {
+		setOverrides(loadOverrides(fileUrl));
+	}, [fileUrl]);
 
 	const handleSearchMatches = useCallback((matches: SearchMatch[]) => {
 		setSearchMatches(matches);
@@ -69,18 +86,22 @@ export function SequenceViewerWithPanel({
 	// Feature types that should show translation instead of primer design
 	const CDS_TYPES = new Set(["CDS", "mat_peptide", "sig_peptide", "transit_peptide"]);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: CDS_TYPES is stable; eslint comment preserved from prior session
+	// biome-ignore lint/correctness/useExhaustiveDependencies: CDS_TYPES is stable
 	const handleSelection = useCallback(
 		(sel: SeqVizSelection | null) => {
 			setSelection(sel);
 			if (sel?.type === "ANNOTATION" && sel.name) {
-				// Look up the annotation — prefer CDS-typed match when multiple share a name
-				const allAnns = [...(parsed?.annotations ?? []), ...autoAnnotations];
-				const matches = allAnns.filter((a) => a.name === sel.name);
+				// Search post-override annotations so renamed annotations are found correctly
+				const displayed = applyOverrides(
+					[...(parsed?.annotations ?? []), ...autoAnnotations],
+					overrides,
+				);
+				const matches = displayed.filter((a) => a.name === sel.name);
 				const ann = matches.find((a) => CDS_TYPES.has(a.type)) ?? matches[0];
 
+				setSelectedAnnotation(ann ?? null);
+
 				if (ann && CDS_TYPES.has(ann.type)) {
-					// CDS: show translation drawer, don't switch tabs
 					setTranslationTarget({
 						name: ann.name,
 						start: ann.start,
@@ -90,17 +111,16 @@ export function SequenceViewerWithPanel({
 					});
 					setSelectedAlignRead(null);
 				} else {
-					// Non-CDS: jump to Primers tab
 					setTranslationTarget(null);
 					setActiveTab("primers");
 					setAnnotationName(sel.name);
 				}
 			} else {
 				setAnnotationName(null);
+				setSelectedAnnotation(null);
 			}
-			// eslint-disable-next-line react-hooks/exhaustive-deps
 		},
-		[parsed, autoAnnotations],
+		[parsed, autoAnnotations, overrides],
 	);
 
 	useEffect(() => {
@@ -197,7 +217,28 @@ export function SequenceViewerWithPanel({
 	//   3. RC false positive: reverse-complement hit lands at a different position
 	//      with no overlap → NOT suppressed (correctly shown as a new find)
 	// Threshold 0.5: at least half of the shorter annotation must overlap.
-	const dedupedAuto = autoAnnotations.filter((auto) => {
+	// Override save/delete handlers
+	const handleOverrideSave = (key: string, override: AnnotationOverride) => {
+		const next = { ...overrides, [key]: { ...overrides[key], ...override } };
+		setOverrides(next);
+		saveOverrides(fileUrl, next);
+		// Refresh selectedAnnotation with new name/color
+		if (selectedAnnotation && annKey(selectedAnnotation) === key) {
+			setSelectedAnnotation({ ...selectedAnnotation, ...override });
+		}
+	};
+
+	const handleOverrideDelete = (key: string) => {
+		const next = { ...overrides, [key]: { ...overrides[key], deleted: true } };
+		setOverrides(next);
+		saveOverrides(fileUrl, next);
+		setSelectedAnnotation(null);
+	};
+
+	// Apply user overrides to GenBank and auto-annotations
+	const baseAnnotations = applyOverrides(parsed.annotations, overrides);
+
+	const dedupedAuto = applyOverrides(autoAnnotations, overrides).filter((auto) => {
 		return !parsed.annotations.some((existing) => {
 			const overlapStart = Math.max(existing.start, auto.start);
 			const overlapEnd = Math.min(existing.end, auto.end);
@@ -237,11 +278,11 @@ export function SequenceViewerWithPanel({
 		return anns;
 	});
 
-	// Build the annotation-merged parsed object (GenBank + auto + search hits)
+	// Build the annotation-merged parsed object (GenBank overridden + auto + search hits)
 	const parsedWithAll = {
 		...parsed,
 		annotations: [
-			...parsed.annotations,
+			...baseAnnotations,
 			...alignAnnotations,
 			...dedupedAuto.map((a) => ({
 				start: a.start,
@@ -349,6 +390,16 @@ export function SequenceViewerWithPanel({
 					>
 						<CloningModal seq={parsed.seq} seqName={name} topology={topology} />
 					</div>
+
+					{/* Annotation editor — shown when an annotation is selected */}
+					{selectedAnnotation && (
+						<AnnotationEditor
+							annotation={selectedAnnotation}
+							onSave={handleOverrideSave}
+							onDelete={handleOverrideDelete}
+							onClose={() => setSelectedAnnotation(null)}
+						/>
+					)}
 
 					{/* Tab bar — two rows of 3 tabs each */}
 					<div style={{ flexShrink: 0, background: "#f5f0e8", borderBottom: "1px solid #ddd8ce" }}>

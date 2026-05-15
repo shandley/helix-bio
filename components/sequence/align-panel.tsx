@@ -1,8 +1,10 @@
 "use client";
 
 import { parseAbif } from "@shandley/abif-ts";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AlignmentResult } from "@/lib/bio/align";
+import { verifyClone } from "@/lib/bio/verify-clone";
+import type { AnnotationSummary, VerificationResult, Verdict } from "@/lib/bio/verify-clone";
 import type { AlignWorkerRequest, AlignWorkerResponse } from "./align.worker";
 import type { TraceData } from "./chromatogram";
 
@@ -25,6 +27,10 @@ export interface AlignRead {
 interface AlignPanelProps {
 	seq: string;
 	topology: "circular" | "linear";
+	/** Plasmid name shown in the verification report. */
+	sequenceName?: string;
+	/** Biological annotations used for codon classification and coverage analysis. */
+	annotations?: AnnotationSummary[];
 	onAlignmentResults?: (reads: AlignRead[]) => void;
 	onReadSelect?: (read: AlignRead | null) => void;
 }
@@ -267,17 +273,268 @@ function ReadRow({
 	);
 }
 
+// ── Verification types and helpers ───────────────────────────────────────────
+
+type VerifyState =
+	| { status: "idle" }
+	| { status: "running"; result?: VerificationResult; explanation: string }
+	| { status: "done"; result: VerificationResult; explanation: string }
+	| { status: "error"; message: string };
+
+const VERDICT_CONFIG: Record<
+	Verdict,
+	{ label: string; color: string; bg: string; border: string; icon: string }
+> = {
+	CONFIRMED: {
+		label: "Confirmed",
+		color: "#1a4731",
+		bg: "rgba(26,71,49,0.08)",
+		border: "rgba(26,71,49,0.25)",
+		icon: "✓",
+	},
+	MUTATION_DETECTED: {
+		label: "Mutation Detected",
+		color: "#b8933a",
+		bg: "rgba(184,147,58,0.08)",
+		border: "rgba(184,147,58,0.3)",
+		icon: "⚠",
+	},
+	FAILED: {
+		label: "Failed",
+		color: "#a02828",
+		bg: "rgba(160,40,40,0.08)",
+		border: "rgba(160,40,40,0.25)",
+		icon: "✗",
+	},
+	INCOMPLETE: {
+		label: "Incomplete",
+		color: "#7a7060",
+		bg: "rgba(90,86,72,0.06)",
+		border: "rgba(90,86,72,0.2)",
+		icon: "◑",
+	},
+};
+
+function renderInlineVerify(text: string): React.ReactNode[] {
+	return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, j) => {
+		if (part.startsWith("**") && part.endsWith("**"))
+			return <strong key={j}>{part.slice(2, -2)}</strong>;
+		if (part.startsWith("`") && part.endsWith("`"))
+			return (
+				<code
+					key={j}
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "10px",
+						background: "rgba(26,71,49,0.08)",
+						padding: "1px 3px",
+						borderRadius: "2px",
+					}}
+				>
+					{part.slice(1, -1)}
+				</code>
+			);
+		return part;
+	});
+}
+
+function VerifyTypingDots() {
+	return (
+		<span style={{ display: "inline-flex", gap: "3px", alignItems: "center", padding: "4px 0" }}>
+			{[0, 1, 2].map((i) => (
+				<span
+					key={i}
+					style={{
+						width: "4px",
+						height: "4px",
+						borderRadius: "50%",
+						background: "#9a9284",
+						display: "inline-block",
+						animation: `verifyPulse 1.2s ease-in-out ${i * 0.2}s infinite`,
+					}}
+				/>
+			))}
+		</span>
+	);
+}
+
+function VerifyResultCard({
+	state,
+}: {
+	state: Extract<VerifyState, { status: "running" | "done" }>;
+}) {
+	const cfg = state.result ? VERDICT_CONFIG[state.result.verdict] : null;
+	const isStreaming = state.status === "running";
+
+	return (
+		<div style={{ padding: "12px 14px" }}>
+			{/* Verdict badge — appears as soon as deterministic result is ready */}
+			{cfg && state.result && (
+				<div
+					style={{
+						display: "flex",
+						alignItems: "flex-start",
+						gap: "9px",
+						padding: "8px 10px",
+						borderRadius: "3px",
+						background: cfg.bg,
+						border: `1px solid ${cfg.border}`,
+						marginBottom: "12px",
+					}}
+				>
+					<span style={{ fontSize: "14px", color: cfg.color, lineHeight: 1.2, flexShrink: 0 }}>
+						{cfg.icon}
+					</span>
+					<div>
+						<div
+							style={{
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								letterSpacing: "0.1em",
+								textTransform: "uppercase",
+								color: cfg.color,
+								fontWeight: "bold",
+								marginBottom: "3px",
+							}}
+						>
+							{cfg.label}
+						</div>
+						<div
+							style={{
+								fontFamily: "var(--font-karla)",
+								fontSize: "11px",
+								color: "#5a5648",
+								lineHeight: 1.45,
+							}}
+						>
+							{state.result.verdictReason}
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Claude explanation — streams in progressively */}
+			<div style={{ marginBottom: "10px" }}>
+				{state.explanation ? (
+					state.explanation.split(/\n\n+/).map((para, i) => (
+						<p
+							key={i}
+							style={{
+								margin: "0 0 8px",
+								fontFamily: "var(--font-karla)",
+								fontSize: "12px",
+								color: "#1c1a16",
+								lineHeight: 1.65,
+							}}
+						>
+							{renderInlineVerify(para.replace(/\n/g, " "))}
+						</p>
+					))
+				) : isStreaming ? (
+					<VerifyTypingDots />
+				) : null}
+			</div>
+
+			{/* Feature coverage table */}
+			{state.result && state.result.featureCoverage.length > 0 && (
+				<div
+					style={{
+						borderTop: "1px solid #ddd8ce",
+						paddingTop: "10px",
+						marginTop: "4px",
+					}}
+				>
+					<div
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "8px",
+							letterSpacing: "0.08em",
+							textTransform: "uppercase",
+							color: "#9a9284",
+							marginBottom: "6px",
+						}}
+					>
+						Coverage
+					</div>
+					{state.result.featureCoverage.map((fc) => (
+						<div
+							key={`${fc.name}-${fc.start}`}
+							style={{
+								display: "flex",
+								justifyContent: "space-between",
+								alignItems: "baseline",
+								marginBottom: "3px",
+							}}
+						>
+							<span
+								style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "8px",
+									color: "#5a5648",
+									overflow: "hidden",
+									textOverflow: "ellipsis",
+									whiteSpace: "nowrap",
+									maxWidth: "150px",
+								}}
+							>
+								{fc.name}
+							</span>
+							<span
+								style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "8px",
+									flexShrink: 0,
+									marginLeft: "6px",
+									color: fc.fullySequenced
+										? "#1a4731"
+										: fc.coveredFraction > 0
+											? "#b8933a"
+											: "#a02828",
+								}}
+							>
+								{fc.fullySequenced
+									? "✓ full"
+									: fc.coveredFraction > 0
+										? `${(fc.coveredFraction * 100).toFixed(0)}%`
+										: "✗ none"}
+							</span>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	);
+}
+
 // ── Main panel ────────────────────────────────────────────────────────────────
 
-export function AlignPanel({ seq, topology, onAlignmentResults, onReadSelect }: AlignPanelProps) {
+export function AlignPanel({
+	seq,
+	topology,
+	sequenceName,
+	annotations,
+	onAlignmentResults,
+	onReadSelect,
+}: AlignPanelProps) {
 	const [reads, setReads] = useState<AlignRead[]>([]);
 	const [pasteText, setPasteText] = useState("");
 	const [running, setRunning] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [isDragging, setIsDragging] = useState(false);
 	const [activeTraceId, setActiveTraceId] = useState<string | null>(null);
+	const [verifyState, setVerifyState] = useState<VerifyState>({ status: "idle" });
 	const workerRef = useRef<Worker | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const abortVerifyRef = useRef<AbortController | null>(null);
+	const mountedRef = useRef(true);
+
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+			abortVerifyRef.current?.abort();
+		};
+	}, []);
 
 	// ── File ingestion ────────────────────────────────────────────────────────
 
@@ -403,6 +660,72 @@ export function AlignPanel({ seq, topology, onAlignmentResults, onReadSelect }: 
 		[addFiles],
 	);
 
+	// ── Clone verification ────────────────────────────────────────────────────
+
+	const runVerification = useCallback(async () => {
+		if (!reads.some((r) => r.result) || !seq) return;
+
+		abortVerifyRef.current?.abort();
+		setVerifyState({ status: "running", result: undefined, explanation: "" });
+
+		// Deterministic classification is synchronous and fast (< 5 ms for typical reads)
+		const verResult = verifyClone(
+			seq,
+			topology,
+			sequenceName ?? "Sequence",
+			annotations ?? [],
+			reads,
+		);
+
+		// Show the verdict badge immediately; stream Claude's explanation in behind it
+		setVerifyState({ status: "running", result: verResult, explanation: "" });
+
+		const ac = new AbortController();
+		abortVerifyRef.current = ac;
+
+		try {
+			const res = await fetch("/api/verify-clone", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					result: verResult,
+					context: {
+						name: sequenceName ?? "Sequence",
+						seqLen: seq.length,
+						topology,
+						annotations: annotations ?? [],
+					},
+				}),
+				signal: ac.signal,
+			});
+
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			if (!res.body) throw new Error("No response body");
+
+			const reader = res.body.getReader();
+			const decoder = new TextDecoder();
+			let text = "";
+
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				text += decoder.decode(value, { stream: true });
+				if (mountedRef.current) {
+					setVerifyState({ status: "running", result: verResult, explanation: text });
+				}
+			}
+
+			if (mountedRef.current) {
+				setVerifyState({ status: "done", result: verResult, explanation: text });
+			}
+		} catch (e) {
+			if ((e as Error).name === "AbortError") return;
+			if (mountedRef.current) {
+				setVerifyState({ status: "error", message: (e as Error).message });
+			}
+		}
+	}, [reads, seq, topology, sequenceName, annotations]);
+
 	// ── Render ────────────────────────────────────────────────────────────────
 
 	const btnStyle: React.CSSProperties = {
@@ -511,9 +834,25 @@ export function AlignPanel({ seq, topology, onAlignmentResults, onReadSelect }: 
 				)}
 			</div>
 
-			{/* Reads list */}
+			{/* Reads list OR verify result */}
 			<div style={{ flex: 1, overflowY: "auto" }}>
-				{reads.length === 0 ? (
+				{verifyState.status !== "idle" ? (
+					verifyState.status === "error" ? (
+						<div
+							style={{
+								padding: "16px 12px",
+								fontFamily: "var(--font-courier)",
+								fontSize: "9px",
+								color: "#a02828",
+								lineHeight: 1.6,
+							}}
+						>
+							{verifyState.message}
+						</div>
+					) : (
+						<VerifyResultCard state={verifyState} />
+					)
+				) : reads.length === 0 ? (
 					<div
 						style={{
 							padding: "24px 12px",
@@ -553,37 +892,78 @@ export function AlignPanel({ seq, topology, onAlignmentResults, onReadSelect }: 
 						gap: "8px",
 					}}
 				>
-					<button
-						type="button"
-						disabled={running}
-						onClick={runAlignment}
-						style={{
-							...btnStyle,
-							flex: 1,
-							background: running ? "#2d7a54" : "#1a4731",
-							color: "white",
-							opacity: running ? 0.7 : 1,
-						}}
-					>
-						{running ? "Aligning…" : `Align ${reads.length} read${reads.length !== 1 ? "s" : ""}`}
-					</button>
-					<button
-						type="button"
-						onClick={() => {
-							setReads([]);
-							onAlignmentResults?.([]);
-						}}
-						style={{
-							...btnStyle,
-							background: "none",
-							border: "1px solid #ddd8ce",
-							color: "#9a9284",
-						}}
-					>
-						Clear
-					</button>
+					{verifyState.status !== "idle" ? (
+						/* Result view: just a Back button */
+						<button
+							type="button"
+							onClick={() => setVerifyState({ status: "idle" })}
+							style={{
+								...btnStyle,
+								flex: 1,
+								background: "none",
+								border: "1px solid #ddd8ce",
+								color: "#5a5648",
+							}}
+						>
+							← Back to reads
+						</button>
+					) : (
+						<>
+							<button
+								type="button"
+								disabled={running}
+								onClick={runAlignment}
+								style={{
+									...btnStyle,
+									flex: 1,
+									background: running ? "#2d7a54" : "#1a4731",
+									color: "white",
+									opacity: running ? 0.7 : 1,
+								}}
+							>
+								{running ? "Aligning…" : `Align ${reads.length} read${reads.length !== 1 ? "s" : ""}`}
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									setReads([]);
+									onAlignmentResults?.([]);
+								}}
+								style={{
+									...btnStyle,
+									background: "none",
+									border: "1px solid #ddd8ce",
+									color: "#9a9284",
+								}}
+							>
+								Clear
+							</button>
+							{reads.some((r) => r.result) && (
+								<button
+									type="button"
+									onClick={() => void runVerification()}
+									title="AI-powered clone verification"
+									style={{
+										...btnStyle,
+										background: "#2d4a7a",
+										color: "white",
+										flexShrink: 0,
+										letterSpacing: "0.06em",
+									}}
+								>
+									Verify
+								</button>
+							)}
+						</>
+					)}
 				</div>
 			)}
+			<style>{`
+				@keyframes verifyPulse {
+					0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+					40% { opacity: 1; transform: scale(1); }
+				}
+			`}</style>
 		</div>
 	);
 }

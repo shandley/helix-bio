@@ -554,6 +554,8 @@ export function SequenceViewerWithPanel({
 							<AlignPanel
 								seq={parsed.seq}
 								topology={topology}
+								sequenceName={name}
+								annotations={[...baseAnnotations, ...dedupedAuto]}
 								onAlignmentResults={setAlignedReads}
 								onReadSelect={setSelectedAlignRead}
 							/>

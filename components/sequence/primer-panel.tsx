@@ -4,6 +4,13 @@ import type { AssemblyPrimerPair, PrimerCandidate, PrimerPair } from "@shandley/
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PrimerWorkerRequest, PrimerWorkerResponse } from "./primer-design.worker";
 
+// Golden Gate enzyme recognition sites (Type IIS)
+const GG_ENZYME_SITES: Record<string, string> = {
+	BsaI: "GGTCTC",
+	BbsI: "GAAGAC",
+	BsmBI: "CGTCTC",
+};
+
 // PCR pair augmented with optional qPCR-specific fields
 type DesignPair = PrimerPair & {
 	ampliconTm?: number;
@@ -600,6 +607,9 @@ export function PrimerPanel({
 			: String(Math.floor((seqLen * 2) / 3) + 1),
 	);
 	const [mode, setMode] = useState<"pcr" | "qpcr" | "assembly">("pcr");
+	const [assemblyMethod, setAssemblyMethod] = useState<"gibson" | "golden_gate">("gibson");
+	const [gibsonOverlap, setGibsonOverlap] = useState(20);
+	const [ggEnzyme, setGgEnzyme] = useState<"BsaI" | "BbsI" | "BsmBI">("BsaI");
 	const [pairs, setPairs] = useState<DesignPair[] | null>(null);
 	const [assemblyPairs, setAssemblyPairs] = useState<AssemblyPrimerPair[] | null>(null);
 	const [warning, setWarning] = useState<string | null>(null);
@@ -692,8 +702,11 @@ export function PrimerPanel({
 				...(mode === "assembly"
 					? {
 							assemblyOpts: {
-								method: "gibson" as const,
+								method: assemblyMethod,
 								annealingLenRange: [minLen, maxLen] as [number, number],
+								...(assemblyMethod === "gibson"
+									? { gibsonOverlap }
+									: { ggEnzymeSite: GG_ENZYME_SITES[ggEnzyme] }),
 							},
 						}
 					: {}),
@@ -744,7 +757,21 @@ export function PrimerPanel({
 				setRunning(false);
 			};
 		},
-		[seq, seqLen, topology, mode, onPrimersDesigned, tmTarget, minLen, maxLen, gcMin, gcMax],
+		[
+			seq,
+			seqLen,
+			topology,
+			mode,
+			onPrimersDesigned,
+			tmTarget,
+			minLen,
+			maxLen,
+			gcMin,
+			gcMax,
+			assemblyMethod,
+			gibsonOverlap,
+			ggEnzyme,
+		],
 	);
 
 	// Stable ref so the annotation effect always calls the latest runDesign
@@ -866,19 +893,109 @@ export function PrimerPanel({
 						</span>
 					)}
 					{mode === "assembly" && (
-						<span
-							style={{
-								fontFamily: "var(--font-courier)",
-								fontSize: "8px",
-								color: "#9a9284",
-								alignSelf: "center",
-								marginLeft: "4px",
-							}}
-						>
-							Gibson · 20 bp overlap
-						</span>
+						<div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "4px" }}>
+							{/* Gibson / Golden Gate toggle */}
+							{(["gibson", "golden_gate"] as const).map((m) => (
+								<button
+									key={m}
+									type="button"
+									onClick={() => setAssemblyMethod(m)}
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "8px",
+										letterSpacing: "0.06em",
+										textTransform: "uppercase",
+										color: assemblyMethod === m ? "#1a4731" : "#9a9284",
+										background: assemblyMethod === m ? "rgba(26,71,49,0.08)" : "none",
+										border: `1px solid ${assemblyMethod === m ? "#1a4731" : "#ddd8ce"}`,
+										borderRadius: "2px",
+										padding: "2px 6px",
+										cursor: "pointer",
+									}}
+								>
+									{m === "gibson" ? "Gibson" : "Golden Gate"}
+								</button>
+							))}
+						</div>
 					)}
 				</div>
+
+				{/* Assembly-specific controls */}
+				{mode === "assembly" && (
+					<div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+						{assemblyMethod === "gibson" ? (
+							<div style={{ flex: 1 }}>
+								<div
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "8px",
+										letterSpacing: "0.1em",
+										textTransform: "uppercase",
+										color: "#9a9284",
+										marginBottom: "4px",
+									}}
+								>
+									Overlap (bp)
+								</div>
+								<input
+									type="number"
+									value={gibsonOverlap}
+									min={10}
+									max={40}
+									step={1}
+									onChange={(e) =>
+										setGibsonOverlap(Math.max(10, Math.min(40, Number(e.target.value))))
+									}
+									style={{
+										width: "100%",
+										padding: "5px 8px",
+										fontFamily: "var(--font-courier)",
+										fontSize: "11px",
+										color: "#1c1a16",
+										background: "#f5f0e8",
+										border: "1px solid #ddd8ce",
+										borderRadius: "3px",
+										outline: "none",
+									}}
+								/>
+							</div>
+						) : (
+							<div style={{ flex: 1 }}>
+								<div
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "8px",
+										letterSpacing: "0.1em",
+										textTransform: "uppercase",
+										color: "#9a9284",
+										marginBottom: "4px",
+									}}
+								>
+									Enzyme
+								</div>
+								<select
+									value={ggEnzyme}
+									onChange={(e) => setGgEnzyme(e.target.value as "BsaI" | "BbsI" | "BsmBI")}
+									style={{
+										width: "100%",
+										padding: "5px 8px",
+										fontFamily: "var(--font-courier)",
+										fontSize: "11px",
+										color: "#1c1a16",
+										background: "#f5f0e8",
+										border: "1px solid #ddd8ce",
+										borderRadius: "3px",
+										outline: "none",
+									}}
+								>
+									<option value="BsaI">BsaI (GGTCTC)</option>
+									<option value="BbsI">BbsI (GAAGAC)</option>
+									<option value="BsmBI">BsmBI (CGTCTC)</option>
+								</select>
+							</div>
+						)}
+					</div>
+				)}
 
 				<div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
 					{[
@@ -1202,7 +1319,8 @@ export function PrimerPanel({
 							<span
 								style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284" }}
 							>
-								{assemblyPairs.length} · muted = overlap tail
+								{assemblyPairs.length} · muted ={" "}
+								{assemblyMethod === "gibson" ? `${gibsonOverlap}bp overlap` : `${ggEnzyme} site`}
 							</span>
 						</div>
 						{assemblyPairs.map((pair, i) => (

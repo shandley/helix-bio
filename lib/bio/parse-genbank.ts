@@ -37,6 +37,7 @@ const FEATURE_COLORS: Record<string, string> = {
 
 function parseLocation(raw: string): { start: number; end: number; direction: 1 | -1 } | null {
 	const isComplement = raw.includes("complement");
+	const isJoin = raw.includes("join") || raw.includes("order");
 	// Strip all operators — we just want the numeric positions
 	const stripped = raw.replace(/complement\(|\)|join\(|order\(|<|>/g, "");
 	const nums: number[] = [];
@@ -45,6 +46,25 @@ function parseLocation(raw: string): { start: number; end: number; direction: 1 
 		if (!Number.isNaN(n)) nums.push(n);
 	}
 	if (nums.length === 0) return null;
+
+	// Detect origin-spanning joins: e.g. join(2480..2686, 1..150)
+	// Nums arrive as [segStart1, segEnd1, segStart2, segEnd2, ...]
+	// When the first segment end is greater than the second segment start the
+	// feature crosses the origin — take the first segment start and last segment
+	// end as the wrapping coordinates instead of min/max (which would span the
+	// entire plasmid).
+	if (isJoin && nums.length >= 4) {
+		const seg1End = nums[1]!;
+		const seg2Start = nums[2]!;
+		if (seg1End > seg2Start) {
+			return {
+				start: nums[0]! - 1, // 0-indexed
+				end: nums[nums.length - 1]!, // 0-indexed exclusive (last segment end)
+				direction: isComplement ? -1 : 1,
+			};
+		}
+	}
+
 	return {
 		start: Math.min(...nums) - 1, // SeqViz is 0-based
 		end: Math.max(...nums),

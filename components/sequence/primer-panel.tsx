@@ -649,8 +649,24 @@ export function PrimerPanel({
 		(s: number, e: number) => {
 			// Allow s > e on circular plasmids (selection wraps the origin)
 			const isWrapping = topology === "circular" && s > e && s >= 1 && e >= 1;
-			if (Number.isNaN(s) || Number.isNaN(e) || s < 1 || e > seqLen || (s >= e && !isWrapping)) {
-				setError("Enter a valid start/end range (1-indexed).");
+			if (Number.isNaN(s) || Number.isNaN(e) || s < 1) {
+				setError("Enter a valid start/end (1-indexed).");
+				return;
+			}
+			if (e > seqLen) {
+				setError(
+					topology === "circular"
+						? "End exceeds sequence length. For origin-spanning regions, set Start > End (e.g. Start 2500, End 100)."
+						: "End exceeds sequence length.",
+				);
+				return;
+			}
+			if (s >= e && !isWrapping) {
+				setError(
+					topology === "circular"
+						? "Start must be less than End, or use Start > End for origin-spanning regions."
+						: "Start must be less than End.",
+				);
 				return;
 			}
 			setError(null);

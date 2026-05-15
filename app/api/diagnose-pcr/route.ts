@@ -52,6 +52,7 @@ Instructions:
 - For each issue, give a concrete fix: temperature (give °C values), additives (5% DMSO, 1M betaine), touchdown PCR protocol details, or redesign advice pointing to the specific property to change.
 - Target 120–180 words total.
 - End with exactly one specific next step.
+- Write in plain prose. No markdown headers (##), no bullet lists, no code blocks. Bold key terms with **text** only.
 - No filler sentences. No restatement of the verdict.`;
 
 function buildContext(body: DiagnosePCRRequest): string {

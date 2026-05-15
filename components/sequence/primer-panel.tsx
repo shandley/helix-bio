@@ -599,7 +599,7 @@ type DiagnoseState =
 	| { status: "done"; explanation: string }
 	| { status: "error"; message: string };
 
-function renderInlineDiagnose(text: string): React.ReactNode[] {
+function renderInline(text: string): React.ReactNode[] {
 	return text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g).map((part, j) => {
 		if (part.startsWith("**") && part.endsWith("**"))
 			return <strong key={j}>{part.slice(2, -2)}</strong>;
@@ -620,6 +620,77 @@ function renderInlineDiagnose(text: string): React.ReactNode[] {
 			);
 		return part;
 	});
+}
+
+function renderDiagnoseMarkdown(text: string): React.ReactNode[] {
+	const nodes: React.ReactNode[] = [];
+	const lines = text.split("\n");
+	let i = 0;
+	while (i < lines.length) {
+		const line = lines[i]!;
+		// Strip markdown headings — render as a small label instead
+		if (line.startsWith("## ") || line.startsWith("### ")) {
+			const content = line.replace(/^#{2,3}\s+/, "");
+			nodes.push(
+				<p
+					key={i}
+					style={{
+						margin: "10px 0 4px",
+						fontFamily: "var(--font-courier)",
+						fontSize: "8px",
+						letterSpacing: "0.1em",
+						textTransform: "uppercase",
+						color: "#5a5648",
+					}}
+				>
+					{content}
+				</p>,
+			);
+			i++;
+			continue;
+		}
+		// Bullet list lines
+		if (line.startsWith("- ") || line.startsWith("* ")) {
+			const items: React.ReactNode[] = [];
+			while (i < lines.length && (lines[i]!.startsWith("- ") || lines[i]!.startsWith("* "))) {
+				items.push(
+					<li key={i} style={{ marginBottom: "2px" }}>
+						{renderInline(lines[i]!.slice(2))}
+					</li>,
+				);
+				i++;
+			}
+			nodes.push(
+				<ul key={`ul-${i}`} style={{ paddingLeft: "16px", margin: "4px 0" }}>
+					{items}
+				</ul>,
+			);
+			continue;
+		}
+		// Empty line
+		if (line.trim() === "") {
+			nodes.push(<span key={i} style={{ display: "block", height: "6px" }} />);
+			i++;
+			continue;
+		}
+		// Regular paragraph line
+		nodes.push(
+			<p
+				key={i}
+				style={{
+					margin: "0 0 8px",
+					fontFamily: "var(--font-karla)",
+					fontSize: "12px",
+					color: "#1c1a16",
+					lineHeight: 1.65,
+				}}
+			>
+				{renderInline(line)}
+			</p>,
+		);
+		i++;
+	}
+	return nodes;
 }
 
 function DiagnoseTypingDots() {
@@ -662,24 +733,7 @@ function DiagnoseResultCard({
 				PCR Diagnosis
 			</div>
 			<div>
-				{state.explanation ? (
-					state.explanation.split(/\n\n+/).map((para, i) => (
-						<p
-							key={i}
-							style={{
-								margin: "0 0 8px",
-								fontFamily: "var(--font-karla)",
-								fontSize: "12px",
-								color: "#1c1a16",
-								lineHeight: 1.65,
-							}}
-						>
-							{renderInlineDiagnose(para.replace(/\n/g, " "))}
-						</p>
-					))
-				) : (
-					<DiagnoseTypingDots />
-				)}
+				{state.explanation ? renderDiagnoseMarkdown(state.explanation) : <DiagnoseTypingDots />}
 			</div>
 		</div>
 	);

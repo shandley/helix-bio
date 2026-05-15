@@ -338,6 +338,72 @@ function renderInlineVerify(text: string): React.ReactNode[] {
 	});
 }
 
+function renderVerifyMarkdown(text: string): React.ReactNode[] {
+	const nodes: React.ReactNode[] = [];
+	const lines = text.split("\n");
+	let i = 0;
+	while (i < lines.length) {
+		const line = lines[i]!;
+		if (line.startsWith("## ") || line.startsWith("### ")) {
+			nodes.push(
+				<p
+					key={i}
+					style={{
+						margin: "10px 0 4px",
+						fontFamily: "var(--font-courier)",
+						fontSize: "8px",
+						letterSpacing: "0.1em",
+						textTransform: "uppercase",
+						color: "#5a5648",
+					}}
+				>
+					{line.replace(/^#{2,3}\s+/, "")}
+				</p>,
+			);
+			i++;
+			continue;
+		}
+		if (line.startsWith("- ") || line.startsWith("* ")) {
+			const items: React.ReactNode[] = [];
+			while (i < lines.length && (lines[i]!.startsWith("- ") || lines[i]!.startsWith("* "))) {
+				items.push(
+					<li key={i} style={{ marginBottom: "2px" }}>
+						{renderInlineVerify(lines[i]!.slice(2))}
+					</li>,
+				);
+				i++;
+			}
+			nodes.push(
+				<ul key={`ul-${i}`} style={{ paddingLeft: "16px", margin: "4px 0" }}>
+					{items}
+				</ul>,
+			);
+			continue;
+		}
+		if (line.trim() === "") {
+			nodes.push(<span key={i} style={{ display: "block", height: "6px" }} />);
+			i++;
+			continue;
+		}
+		nodes.push(
+			<p
+				key={i}
+				style={{
+					margin: "0 0 8px",
+					fontFamily: "var(--font-karla)",
+					fontSize: "12px",
+					color: "#1c1a16",
+					lineHeight: 1.65,
+				}}
+			>
+				{renderInlineVerify(line)}
+			</p>,
+		);
+		i++;
+	}
+	return nodes;
+}
+
 function VerifyTypingDots() {
 	return (
 		<span style={{ display: "inline-flex", gap: "3px", alignItems: "center", padding: "4px 0" }}>
@@ -416,20 +482,7 @@ function VerifyResultCard({
 			{/* Claude explanation — streams in progressively */}
 			<div style={{ marginBottom: "10px" }}>
 				{state.explanation ? (
-					state.explanation.split(/\n\n+/).map((para, i) => (
-						<p
-							key={i}
-							style={{
-								margin: "0 0 8px",
-								fontFamily: "var(--font-karla)",
-								fontSize: "12px",
-								color: "#1c1a16",
-								lineHeight: 1.65,
-							}}
-						>
-							{renderInlineVerify(para.replace(/\n/g, " "))}
-						</p>
-					))
+					renderVerifyMarkdown(state.explanation)
 				) : isStreaming ? (
 					<VerifyTypingDots />
 				) : null}

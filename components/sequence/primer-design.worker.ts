@@ -30,7 +30,14 @@ self.addEventListener("message", (e: MessageEvent<PrimerWorkerRequest>) => {
 	try {
 		let result: PCRResult | QPCRResult | AssemblyResult;
 		if (mode === "assembly") {
-			result = designAssembly(seq, regionStart, regionEnd, assemblyOpts);
+			// Merge user Tm/GC opts into assemblyOpts so the annealing region
+			// uses the same targets as PCR mode
+			const mergedAssembly: Partial<AssemblyPrimerOptions> = {
+				tmTarget: opts.tmTarget,
+				gcRange: opts.gcRange,
+				...assemblyOpts,
+			};
+			result = designAssembly(seq, regionStart, regionEnd, mergedAssembly);
 		} else if (mode === "qpcr") {
 			result = designQPCR(seq, regionStart, regionEnd, opts as QPCROptions);
 		} else {

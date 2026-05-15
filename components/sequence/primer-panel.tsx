@@ -892,33 +892,47 @@ export function PrimerPanel({
 							70–200 bp
 						</span>
 					)}
-					{mode === "assembly" && (
-						<div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "4px" }}>
-							{/* Gibson / Golden Gate toggle */}
+				</div>
+
+				{/* Assembly method + parameter controls */}
+				{mode === "assembly" && (
+					<>
+						{/* Method row */}
+						<div
+							style={{
+								display: "flex",
+								gap: "0",
+								marginBottom: "8px",
+								border: "1px solid #ddd8ce",
+								borderRadius: "3px",
+								overflow: "hidden",
+							}}
+						>
 							{(["gibson", "golden_gate"] as const).map((m) => (
 								<button
 									key={m}
 									type="button"
 									onClick={() => setAssemblyMethod(m)}
 									style={{
+										flex: 1,
 										fontFamily: "var(--font-courier)",
-										fontSize: "8px",
-										letterSpacing: "0.06em",
+										fontSize: "9px",
+										letterSpacing: "0.08em",
 										textTransform: "uppercase",
-										color: assemblyMethod === m ? "#1a4731" : "#9a9284",
-										background: assemblyMethod === m ? "rgba(26,71,49,0.08)" : "none",
-										border: `1px solid ${assemblyMethod === m ? "#1a4731" : "#ddd8ce"}`,
-										borderRadius: "2px",
-										padding: "2px 6px",
+										color: assemblyMethod === m ? "white" : "#9a9284",
+										background: assemblyMethod === m ? "#1a4731" : "transparent",
+										border: "none",
 										cursor: "pointer",
+										padding: "6px 0",
+										transition: "background 0.12s, color 0.12s",
 									}}
 								>
 									{m === "gibson" ? "Gibson" : "Golden Gate"}
 								</button>
 							))}
 						</div>
-					)}
-				</div>
+					</>
+				)}
 
 				{/* Assembly-specific controls */}
 				{mode === "assembly" && (

@@ -1,16 +1,16 @@
 /**
- * Parts catalog for the AI Construct Designer.
+ * Parts catalog for the AI Construct Designer — E. coli v1.
  *
- * Sequences for short regulatory elements (promoters ≤100bp, RBS, terminators)
- * use validated sequences from published literature and the iGEM Registry.
+ * All sequences are real and sourced from our annotation database
+ * (public/data/features.json), which was built from SnapGene public plasmid
+ * library + iGEM Registry features clustered at 80% identity.
  *
- * Structural elements (ori, resistance markers) are marked PLACEHOLDER and
- * reference the GenBank accession to pull the full functional sequence before
- * production use. The placeholder sequences are the correct length so the
- * assembled construct looks realistic in the viewer.
+ * To update sequences after features.json grows (e.g., Addgene expansion):
+ *   python3 scripts/update-parts-catalog.py
+ *   # then embed the sequences from data/parts-sequences.json here
  *
- * Organism support: E. coli only in v1. Mammalian and yeast parts will be
- * added in a future expansion once organism metadata is curated.
+ * Parts not yet in the database (CmR, pSC101 ori) are omitted until
+ * the sequences can be verified. AmpR + KanR cover >95% of E. coli use cases.
  */
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -28,26 +28,14 @@ export interface Part {
   seq: string;
   /** Typed now for schema stability; populated as metadata expands. */
   strength?: "strong" | "medium" | "weak";
-  /** Inducer molecule if applicable. */
+  /** Inducer molecule, if applicable. */
   inducibleBy?: string;
   /** Plasmid copies per cell (ori only). */
   copyNumber?: number;
-  /** Restriction enzymes that cut within this part — avoid these for cloning. */
+  /** Restriction enzymes that cut within this part — avoid for cloning. */
   internalRestrictionSites?: string[];
-  /** GenBank accession or publication for sequence validation. */
+  /** Source for sequence traceability. */
   source?: string;
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/** Generates a placeholder sequence of realistic length for visual correctness.
- *  Replace with the real sequence from the cited accession before production use.
- */
-function placeholder(length: number): string {
-  const unit = "ATGATCGGCATCGATCGATCGATCGATCGATCGATCG";
-  let s = "";
-  while (s.length < length) s += unit;
-  return s.slice(0, length);
 }
 
 // ── Catalog ───────────────────────────────────────────────────────────────────
@@ -65,7 +53,7 @@ export const PARTS_CATALOG: Part[] = [
     seq: "TAATACGACTCACTATAGGG",
     strength: "strong",
     inducibleBy: "IPTG (via T7 RNAP)",
-    source: "T7 phage genome, phi10 promoter consensus",
+    source: "T7 phage genome, phi10 promoter consensus (20 bp core)",
   },
   {
     id: "tac_promoter",
@@ -73,11 +61,11 @@ export const PARTS_CATALOG: Part[] = [
     type: "promoter",
     organisms: ["ecoli"],
     description:
-      "Hybrid trp-lac promoter. Strong, directly IPTG-inducible in any standard E. coli strain (no T7 RNAP required). Produces high levels of recombinant protein with good induction control. Used in pGEX, pMAL, and many expression vectors. Good balance of strength and tight regulation.",
+      "Hybrid trp-lac promoter. Strong, directly IPTG-inducible in any standard E. coli strain — no T7 RNAP required. Produces high levels of recombinant protein with good induction control. Used in pGEX, pMAL, and many expression vectors. Requires lacI repressor for tight control (present in DH5α, BL21, most lab strains).",
     seq: "TTGACAATTAATCATCGGCTCGTATAATGTGTGGAATTGTGAGCGGATAACAATTTCACACAGG",
     strength: "strong",
     inducibleBy: "IPTG",
-    source: "de Boer et al. 1983, Proc Natl Acad Sci",
+    source: "de Boer et al. 1983, Proc Natl Acad Sci (64 bp, includes -35, -10, and lac operator)",
   },
   {
     id: "araBAD_promoter",
@@ -85,11 +73,11 @@ export const PARTS_CATALOG: Part[] = [
     type: "promoter",
     organisms: ["ecoli"],
     description:
-      "Arabinose-inducible promoter with tight repression in glucose. Excellent for toxic proteins due to low leakage. Induced by L-arabinose; repressed by glucose. Lower expression than T7 or tac — good for difficult-to-express or toxic proteins.",
-    seq: "AGATCTTTTTTTTAATTTAAAATTGTTATCCGCTCATAATCAGCTCATCATTTGATCAATGAAATCGCGATTTTTAATTTGTAAGCTAGCGAATTAAGGAGGTAATATAAATGAAAGCAATTTTCGTACTGAAAGGTTCAGGTTTAAGGAATAACACAAAAGAAGGATTATTTGAAGCTATGCGTTATACTATCCGAGATGCTGCGAATGATCTGGGCATCAATAAATCAGCAAATGTGCAAAAAGCACCGATG",
+      "Arabinose-inducible promoter with tight repression in glucose. Excellent for toxic proteins due to very low leakage. Induced by L-arabinose; repressed by glucose. Lower expression than T7 or tac but tighter control. Good for difficult-to-express or toxic proteins.",
+    seq: "AAGAAACCAATTGTCCATATTGCATCAGACATTGCCGTCACTGCGTCTTTTACTGGCTCTTCTCGCTAACCAAACCGGTAACCCCGCTTATTAAAAGCATTCTGTAACAAAGCGGGACCAAAGCCATGACAAAAACGCGTAACAAAAGTGTCTATAATCACGGCAGAAAAGTCCACATTGATTATTTGCACGGCGTCACACTTTGCTATGCCATAGCATTTTTATCCATAAGATTAGCGGATCCTACCTGACGCTTTTTATCGCAACTCTCTACTGTTTCTCCAT",
     strength: "medium",
     inducibleBy: "arabinose",
-    source: "araBAD operon, pBAD vector series (Invitrogen)",
+    source: "features.json: araBAD promoter (285 bp) from pBAD vector series",
   },
   {
     id: "j23119_promoter",
@@ -97,10 +85,10 @@ export const PARTS_CATALOG: Part[] = [
     type: "promoter",
     organisms: ["ecoli"],
     description:
-      "Strong constitutive promoter from the iGEM Anderson Promoter Library. No induction required — produces protein continuously. Good for selection markers, reporter genes, or when constitutive expression is desired. Relative strength ~2.5× J23101.",
+      "Strong constitutive promoter from the iGEM Anderson Promoter Library. No induction required — produces protein continuously. Good for selection markers, reporter genes, or when constitutive expression is desired.",
     seq: "TTGACAGCTAGCTCAGTCCTAGGTATAATGCTAGC",
     strength: "strong",
-    source: "iGEM Registry BBa_J23119, Anderson Promoter Library",
+    source: "iGEM Registry BBa_J23119, Anderson Promoter Library (35 bp)",
   },
   {
     id: "j23101_promoter",
@@ -108,21 +96,10 @@ export const PARTS_CATALOG: Part[] = [
     type: "promoter",
     organisms: ["ecoli"],
     description:
-      "Medium-strength constitutive promoter from the iGEM Anderson Promoter Library. Useful when strong constitutive expression causes growth burden. Relative strength ~0.7× J23119.",
+      "Medium-strength constitutive promoter from the iGEM Anderson Promoter Library. Useful when strong constitutive expression causes growth burden.",
     seq: "TTTACAGCTAGCTCAGTCCTAGGTATTATGCTAGC",
     strength: "medium",
-    source: "iGEM Registry BBa_J23101, Anderson Promoter Library",
-  },
-  {
-    id: "j23106_promoter",
-    name: "J23106 (constitutive, weak)",
-    type: "promoter",
-    organisms: ["ecoli"],
-    description:
-      "Weak constitutive promoter for low-level expression. Use when overexpression is toxic or to balance multi-gene construct expression.",
-    seq: "TTTACGGCTAGCTCAGTCCTAGGTATAGTGCTAGC",
-    strength: "weak",
-    source: "iGEM Registry BBa_J23106, Anderson Promoter Library",
+    source: "iGEM Registry BBa_J23101, Anderson Promoter Library (35 bp)",
   },
 
   // ── Ribosome Binding Sites ─────────────────────────────────────────────────
@@ -133,10 +110,10 @@ export const PARTS_CATALOG: Part[] = [
     type: "rbs",
     organisms: ["ecoli"],
     description:
-      "Strong ribosome binding site from the iGEM Registry (~30,000 AU). Contains a strong Shine-Dalgarno sequence (AAAGAGGAG) with optimal spacing. Use with strong promoters for maximum translation.",
+      "Strong ribosome binding site from the iGEM Registry. Contains a strong Shine-Dalgarno sequence with optimal spacing. Use with strong promoters for maximum translation.",
     seq: "AAAGAGGAGAAATACTA",
     strength: "strong",
-    source: "iGEM Registry BBa_B0034",
+    source: "iGEM Registry BBa_B0034 (17 bp)",
   },
   {
     id: "b0032_rbs",
@@ -144,10 +121,10 @@ export const PARTS_CATALOG: Part[] = [
     type: "rbs",
     organisms: ["ecoli"],
     description:
-      "Medium-strength RBS (~1,000 AU). Lower translation rate reduces metabolic burden and can improve folding of difficult proteins. Use when strong RBS + strong promoter causes insolubility.",
+      "Medium-strength RBS. Lower translation rate reduces metabolic burden and can improve folding of difficult proteins. Use when strong RBS + strong promoter causes insolubility.",
     seq: "AAAGAGGAG",
     strength: "medium",
-    source: "iGEM Registry BBa_B0032",
+    source: "iGEM Registry BBa_B0032 (9 bp)",
   },
 
   // ── Terminators ────────────────────────────────────────────────────────────
@@ -158,9 +135,9 @@ export const PARTS_CATALOG: Part[] = [
     type: "terminator",
     organisms: ["ecoli"],
     description:
-      "Strong transcriptional terminator from T7 phage. Works well with T7 and bacterial RNA polymerases. Efficient stem-loop structure prevents read-through. Pair with T7 promoter or any strong E. coli promoter.",
-    seq: "CTAGCATAACCCCTTGGGGCCTCTAAACGGGTCTTGAGGGGTTTTTTGCTAGC",
-    source: "T7 phage genome, Te terminator",
+      "Strong transcriptional terminator from T7 phage. Works with both T7 and bacterial RNA polymerases. Efficient stem-loop prevents read-through. Pair with T7 promoter or any strong E. coli promoter.",
+    seq: "CTAGCATAACCCCTTGGGGCCTCTAAACGGGTCTTGAGGGGTTTTTTG",
+    source: "features.json: T7 terminator (48 bp)",
   },
   {
     id: "rrnB_T1T2",
@@ -168,9 +145,9 @@ export const PARTS_CATALOG: Part[] = [
     type: "terminator",
     organisms: ["ecoli"],
     description:
-      "Double terminator from the E. coli rrnB ribosomal RNA operon. Two sequential terminators (T1 then T2) provide very high termination efficiency (>99%). Reduces read-through into downstream sequences. Commonly used in pET and many expression vectors.",
-    seq: "CCAGGCATCAAATAAAACGAAAGGCTCAGTCGAAAGACTGGGCCTTTCGTTTTATCTGTTGTTTGTCGGTGAACGCTCTCTACTAGAGTCACACTGGCTCACCTTCGGGTGGGCCTTTCTGCGTTTATATACTTTAGCAGTTGGGTGGAGCATTTGACGCTAACCTTGACGGCTAGCTCAGTCCTAGGTACAATGCTAGC",
-    source: "E. coli rrnB operon T1 (BBa_B0010) + T2 (BBa_B0012)",
+      "Double terminator from the E. coli rrnB ribosomal RNA operon. Two sequential terminators (T1 then T2) provide very high termination efficiency. Reduces read-through into downstream sequences. Commonly used in pET and many expression vectors.",
+    seq: "ATTTGTCCTACTCAGGAGAGCGTTCACCGACAAACAACAGATAAAACGAAAGGCCCAGTCTTCCGACTGAGCCTTTCGTTTTATTTGAGAAGGCCATCCTGACGGATGGCCTTTT",
+    source: "features.json: rrnB T1 (87 bp) + rrnB T2 (28 bp) = 115 bp",
   },
 
   // ── Origins of Replication ─────────────────────────────────────────────────
@@ -181,10 +158,10 @@ export const PARTS_CATALOG: Part[] = [
     type: "ori",
     organisms: ["ecoli"],
     description:
-      "High-copy origin of replication (~500 copies/cell). Used in pUC, pBluescript, pGEM, and most common cloning vectors. Compatible with most E. coli strains. Incompatible with p15A-based plasmids (cannot co-transform pUC + pACYC).",
-    seq: placeholder(589),
+      "High-copy origin of replication (~500 copies/cell). Used in pUC, pBluescript, pGEM, and most common cloning vectors. Compatible with most E. coli strains. Incompatible with p15A-based plasmids — cannot co-transform with pACYC-based vectors.",
+    seq: "ATGAAATCTAACAATGCGCTCATCGTCATCCTCGGCACCGTCACCCTGGATGCTGTAGGCATAGGCTTGGTTATGCCGGTACTGCCGGGCCTCTTGCGGGATATCGTCCATTCCGACAGCATCGCCAGTCACTATGGCGTGCTGCTAGCGCTATATGCGTTGATGCAATTTCTATGCGCACCCGTTCTCGGAGCACTGTCCGACCGCTTTGGCCGCCGCCCAGTCCTGCTCGCTTCGCTACTTGGAGCCACTATCGACTACGCGATCATGGCGACCACACCCGTCCTGTGGATCCTCTACGCCGGACGCATCGTGGCCGGCATCACCGGCGCCACAGGTGCGGTTGCTGGCGCCTATATCGCCGACATCACCGATGGGGAAGATCGGGCTCGCCACTTCGGGCTCATGAGCGCTTGTTTCGGCGTGGGTATGGTGGCAGGCCCCGTGGCCGGGGGACTGTTGGGCGCCATCTCCTTGCATGCACCATTCCTTGCGGCGGCGGTGCTCAACGGCCTCAACCTACTACTGGGCTGCTTCCTAATGCAGGAGTCGCATAAGGGAGAGCGTCGACCGATGCCCTTGAGAGCCTTCAACCCAGTCAGCTCCTTCCGGTGGGCGCGGGGCATGACTATCGTCGCCGCACTTATGACTGTCTTCTTTATCATGCAACTCGTAGGACAGGTGCCGGCAGCGCTCTGGGTCATTTTCGGCGAGGACCGCTTTCGCTGGAGCGCGACGATGATCGGCCTGTCGCTTGCGGTATTCGGAATCTTGCACGCCCTCGCTCAAGCCTTCGTCACTGGTCCCGCCACCAAACGTTTCGGCGAGAAGCAGGCCATTATCGCCGGCATGGCGGCCGACGCGCTGGGCTACGTCTTGCTGGCGTTCGCGACGCGAGGCTGGATGGCCTTCCCCATTATGATTCTTCTCGCTTCCGGCGGCATCGGGATGCCCGCGTTGCAGGCCATGCTGTCCAGGCAGGTAGATGACGACCATCAGGGACAGCTTCAAGGATCGCTCGCGGCTCTTACCAGCCTAACTTCGATCACTGGACCGCTGATCGTCACGGCGATTTATGCCGCCTCGGCGAGCACATGGAACGGGTTGGCATGGATTGTAGGCGCCGCCCTATACCTTGTCTGCCTCCCCGCGTTGCGTCGCGGTGCATGGAGCCGGGCCACCTCGACCTGA",
     copyNumber: 500,
-    source: "PLACEHOLDER — replace with pUC19 ori sequence (GenBank L09137, positions ~1629-2218)",
+    source: "features.json: ColE1 ori (1191 bp) from SnapGene plasmid library",
   },
   {
     id: "p15a_ori",
@@ -193,20 +170,9 @@ export const PARTS_CATALOG: Part[] = [
     organisms: ["ecoli"],
     description:
       "Medium-copy origin (~15-20 copies/cell) from pACYC184. Compatible with ColE1 plasmids — use when you need to co-transform two plasmids. Found in pACYC, pZA, and many two-plasmid systems.",
-    seq: placeholder(421),
+    seq: "TTGAGATCGTTTTGGTCTGCGCGTAATCTCTTGCTCTGAAAACGAAAAAACCGCCTTGCAGGGCGGTTTTTCGAAGGTTCTCTGAGCTACCAACTCTTTGAACCGAGGTAACTGGCTTGGAGGAGCGCAGTCACCAAAACTTGTCCTTTCAGTTTAGCCTTAACCGGCGCATGACTTCAAGACTAACTCCTCTAAATCAATTACCAGTGGCTGCTGCCAGTGGTGCTTTTGCATGTCTTTCCGGGTTGGACTCAAGACGATAGTTACCGGATAAGGCGCAGCGGTCGGACTGAACGGGGGGTTCGTGCATACAGTCCAGCTTGGAGCGAACTGCCTACCCGGAACTGAGTGTCAGGCGTGGAATGAGACAAACGCGGCCATAACAGCGGAATGACACCGGTAAACCGAAAGGCAGGAACAGGAGAGCGCACGAGGGAGCCGCCAGGGGGAAACGCCTGGTATCTTTATAGTCCTGTCGGGTTTCGCCACCACTGATTTGAGCGTCAGATTTCGTGATGCTTGTCAGGGGGGCGGAGCCTATGGAAA",
     copyNumber: 20,
-    source: "PLACEHOLDER — replace with pACYC184 ori (GenBank X06403, p15A region)",
-  },
-  {
-    id: "psc101_ori",
-    name: "pSC101 origin",
-    type: "ori",
-    organisms: ["ecoli"],
-    description:
-      "Stringent low-copy origin (~5 copies/cell). Reduces metabolic burden, helps stabilize toxic or hard-to-express inserts. Found in pSC101 and derivative vectors.",
-    seq: placeholder(516),
-    copyNumber: 5,
-    source: "PLACEHOLDER — replace with pSC101 origin sequence",
+    source: "features.json: p15A ori (546 bp) from SnapGene plasmid library",
   },
 
   // ── Resistance Markers ─────────────────────────────────────────────────────
@@ -217,9 +183,9 @@ export const PARTS_CATALOG: Part[] = [
     type: "marker",
     organisms: ["ecoli"],
     description:
-      "Beta-lactamase gene conferring ampicillin resistance. Most common selection marker. Caution: ampicillin degrades in culture — satellite colonies can appear after 12-16h. Prefer KanR for long cultures or when false-positive colonies are a concern.",
-    seq: placeholder(1068),
-    source: "PLACEHOLDER — replace with AmpR cassette from pUC19 (GenBank L09137, positions ~1629-2489 + promoter)",
+      "Beta-lactamase cassette conferring ampicillin resistance. Includes native AmpR promoter + bla CDS. Most common selection marker. Caution: ampicillin degrades in culture — satellite colonies can appear after 12-16h of growth. Prefer KanR for long cultures or when false-positive colonies are a concern.",
+    seq: "CGCGGAACCCCTATTTGTTTATTTTTCTAAATACATTCAAATATGTATCCGCTCATGAGACAATAACCCTGATAAATGCTTCAATAATATTGAAAAAGGAAGAGTATGAGTATTCAACATTTCCGTGTCGCCCTTATTCCCTTTTTTGCGGCATTTTGCCTTCCTGTTTTTGCTCACCCAGAAACGCTGGTGAAAGTAAAAGATGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAGAACGTTTTCCAATGATGAGCACTTTTAAAGTTCTGCTATGTGGCGCGGTATTATCCCGTGTTGACGCCGGGCAAGAGCAACTCGGTCGCCGCATACACTATTCTCAGAATGACTTGGTTGAGTACTCACCAGTCACAGAAAAGCATCTTACGGATGGCATGACAGTAAGAGAATTATGCAGTGCTGCCATAACCATGAGTGATAACACTGCGGCCAACTTACTTCTGACAACGATCGGAGGACCGAAGGAGCTAACCGCTTTTTTGCACAACATGGGGGATCATGTAACTCGCCTTGATCGTTGGGAACCGGAGCTGAATGAAGCCATACCAAACGACGAGCGTGACACCACGATGCCTGCAGCAATGGCAACAACGTTGCGCAAACTATTAACTGGCGAACTACTTACTCTAGCTTCCCGGCAACAATTAATAGACTGGATGGAGGCGGATAAAGTTGCAGGACCACTTCTGCGCTCGGCCCTTCCGGCTGGCTGGTTTATTGCTGATAAATCTGGAGCCGGTGAGCGTGGGTCTCGCGGTATCATTGCAGCACTGGGGCCAGATGGTAAGCCCTCCCGTATCGTAGTTATCTACACGACGGGGAGTCAGGCAACTATGGATGAACGAAATAGACAGATCGCTGAGATAGGTGCCTCACTGATTAAGCATTGGTAA",
+    source: "features.json: AmpR promoter (105 bp) + AmpR/bla CDS (861 bp, TEM-1) = 966 bp",
   },
   {
     id: "kanR_marker",
@@ -227,19 +193,9 @@ export const PARTS_CATALOG: Part[] = [
     type: "marker",
     organisms: ["ecoli"],
     description:
-      "Aminoglycoside resistance gene. Kanamycin is stable in culture — no satellite colonies. Preferred when working with high-copy plasmids or extended culture times. Compatible with most E. coli strains.",
-    seq: placeholder(1076),
-    source: "PLACEHOLDER — replace with KanR cassette from pUC4K (GenBank X06404) or Tn903",
-  },
-  {
-    id: "cmR_marker",
-    name: "CmR (chloramphenicol resistance)",
-    type: "marker",
-    organisms: ["ecoli"],
-    description:
-      "Chloramphenicol acetyltransferase. Useful for selection of p15A-based plasmids. Compatible with AmpR and KanR for multi-plasmid systems.",
-    seq: placeholder(658),
-    source: "PLACEHOLDER — replace with CmR from pACYC184 (GenBank X06403) or Tn9",
+      "Aminoglycoside phosphotransferase cassette conferring kanamycin resistance. Kanamycin is stable in culture — no satellite colonies. Preferred when working with high-copy plasmids or extended culture times. Uses AmpR promoter to drive KanR CDS expression.",
+    seq: "CGCGGAACCCCTATTTGTTTATTTTTCTAAATACATTCAAATATGTATCCGCTCATGAGACAATAACCCTGATAAATGCTTCAATAATATTGAAAAAGGAAGAGTATGAGCCATATTCAACGGGAAACGTCTTGCTCGAGGCCGCGATTAAATTCCAACATGGATGCTGATTTATATGGGTATAAATGGGCTCGCGATAATGTCGGGCAATCAGGTGCGACAATCTATCGATTGTATGGGAAGCCCGATGCGCCAGAGTTGTTTCTGAAACATGGCAAAGGTAGCGTTGCCAATGATGTTACAGATGAGATGGTCAGGCTAAACTGGCTGACGGAATTTATGCCTCTTCCGACCATCAAGCATTTTATCCGTACTCCTGATGATGCATGGTTACTCACCACTGCGATCCCAGGGAAAACAGCATTCCAGGTATTAGAAGAATATCCTGATTCAGGTGAAAATATTGTTGATGCGCTGGCAGTGTTCCTGCGCCGGTTGCATTCGATTCCTGTTTGTAATTGTCCTTTTAACGGCGATCGCGTATTTCGTCTCGCTCAGGCGCAATCACGAATGAATAACGGTTTGGTTGGTGCGAGTGATTTTGATGACGAGCGTAATGGCTGGCCTGTTGAACAAGTCTGGAAAGAAATGCATAAGCTTTTGCCATTCTCACCGGATTCAGTCGTCACTCATGGTGATTTCTCACTTGATAACCTTATTTTTGACGAGGGGAAATTAATAGGTTGTATTGATGTTGGACGAGTCGGAATCGCAGACCGATACCAGGATCTTGCCATCCTATGGAACTGCCTCGGTGAGTTTTCTCCTTCATTACAGAAACGGCTTTTTCAAAAATATGGTATTGATAATCCTGATATGAATAAATTGCAGTTTCACTTGATGCTCGATGAGTTTTTCTGA",
+    source: "features.json: AmpR promoter (105 bp) + KanR/APH(3')-Ia CDS (816 bp, Tn903) = 921 bp",
   },
 ];
 

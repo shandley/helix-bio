@@ -21,6 +21,8 @@ export interface MultiplexPairResult {
 	targetIdx: number;
 	pair: PrimerPair | null;
 	avgTm: number; // (fwd.tm + rev.tm) / 2 — used for cross-pair ΔTm
+	ampliconTm?: number;  // Marmur-Schildkraut Tm of the amplicon (for melt curve)
+	ampliconSeq?: string; // the amplicon sequence (for melt curve steepness)
 	warning?: string;
 }
 
@@ -118,7 +120,15 @@ function designForTarget(
 
 	const pair = result.pairs[0]!;
 	const avgTm = (pair.fwd.tm + pair.rev.tm) / 2;
-	return { targetName: target.name, targetIdx: idx, pair, avgTm };
+
+	// Amplicon Tm via Marmur-Schildkraut-Doty (for long duplexes, not oligos)
+	const ampliconSeq = target.seq.slice(pair.fwd.start, pair.rev.end).toUpperCase();
+	const ampGCpct = (ampliconSeq.match(/[GC]/gi)?.length ?? 0) / ampliconSeq.length * 100;
+	const ampliconTm = ampliconSeq.length > 0
+		? 81.5 + 16.6 * Math.log10(0.05) + 0.41 * ampGCpct - 675 / ampliconSeq.length
+		: undefined;
+
+	return { targetName: target.name, targetIdx: idx, pair, avgTm, ampliconTm, ampliconSeq };
 }
 
 // ── Compatibility matrix ──────────────────────────────────────────────────────

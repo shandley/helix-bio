@@ -219,6 +219,77 @@ function SeqLine({
 	);
 }
 
+// ── Multiplex melt curve (all amplicons overlaid) ────────────────────────────
+
+function MultiplexMeltCurve({ pairs }: { pairs: import("./multiplex.worker").MultiplexPairResult[] }) {
+	const SPACER = 100;
+	let compositeSeq = "";
+	const meltPairs: { fwd: { start: number; end: number }; rev: { start: number; end: number }; productSize: number; ampliconTm: number }[] = [];
+	for (const p of pairs) {
+		if (!p.pair || p.ampliconTm === undefined) continue;
+		const offset = compositeSeq.length;
+		const ampSeq = p.ampliconSeq ?? "A".repeat(p.pair.productSize);
+		compositeSeq += ampSeq + "N".repeat(SPACER);
+		meltPairs.push({
+			fwd: { start: offset, end: offset + p.pair.fwd.len },
+			rev: { start: offset + ampSeq.length - p.pair.rev.len, end: offset + ampSeq.length },
+			productSize: p.pair.productSize,
+			ampliconTm: p.ampliconTm,
+		});
+	}
+	if (meltPairs.length === 0) return null;
+	return (
+		<div style={{ padding: "12px 20px 16px", borderTop: "1px solid #ddd8ce" }}>
+			<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.12em", color: "#9a9284", textTransform: "uppercase", marginBottom: "10px" }}>Amplicon melt curves</div>
+			<div style={{ background: "#faf7f2", borderRadius: "3px", border: "1px solid #ddd8ce", padding: "12px", display: "inline-block" }}>
+				<MeltCurve pairs={meltPairs} seq={compositeSeq} highlightIndex={0} />
+			</div>
+			<p style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8b0a4", margin: "6px 0 0", lineHeight: 1.6 }}>
+				Peaks overlaid — similar Tm means the panel works at one annealing temperature.
+			</p>
+		</div>
+	);
+}
+
+// ── Assembly plots (amplicon heatmap + pair scatter) ──────────────────────────
+
+function AssemblyPlots({ pair, allPairs, seq, tmTarget, activePlot, onTabChange }: {
+	pair: AssemblyPrimerPair;
+	allPairs: AssemblyPrimerPair[];
+	seq: string;
+	tmTarget: number;
+	activePlot: "heatmap" | "scatter";
+	onTabChange: (tab: "heatmap" | "scatter") => void;
+}) {
+	const heatmapPair = {
+		fwd: { start: pair.fwd.start, end: pair.fwd.end, len: pair.fwd.len },
+		rev: { start: pair.rev.start, end: pair.rev.end, len: pair.rev.len },
+		productSize: pair.productSize,
+	};
+	const scatterPairs = allPairs.map((p) => ({
+		fwd: { tm: p.fwd.tm },
+		rev: { tm: p.rev.tm },
+		productSize: p.productSize,
+		tmDiff: Math.abs(p.fwd.tm - p.rev.tm),
+	}));
+	return (
+		<div style={{ padding: "16px 20px" }}>
+			<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.12em", color: "#9a9284", textTransform: "uppercase", marginBottom: "10px" }}>Plots</div>
+			<div style={{ display: "flex", gap: "0", marginBottom: "12px", borderBottom: "1px solid #ddd8ce" }}>
+				{(["heatmap", "scatter"] as const).map((tab) => (
+					<button key={tab} type="button" onClick={() => onTabChange(tab)} style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.08em", textTransform: "uppercase", padding: "7px 14px", background: "none", border: "none", borderBottom: activePlot === tab ? "2px solid #1a4731" : "2px solid transparent", color: activePlot === tab ? "#1a4731" : "#9a9284", cursor: "pointer", marginBottom: "-1px" }}>
+						{tab === "heatmap" ? "Amplicon Structure" : "Pair Overview"}
+					</button>
+				))}
+			</div>
+			<div style={{ background: "#faf7f2", borderRadius: "3px", border: "1px solid #ddd8ce", padding: "12px", display: "inline-block" }}>
+				{activePlot === "heatmap" && <AmpliconHeatmap pair={heatmapPair} seq={seq} temperature={tmTarget - 5} />}
+				{activePlot === "scatter" && <PairScatter pairs={scatterPairs} mode="pcr" />}
+			</div>
+		</div>
+	);
+}
+
 // ── Specificity badge ─────────────────────────────────────────────────────────
 
 function SpecBadge({
@@ -558,7 +629,7 @@ function AssemblySeqLine({
 	);
 }
 
-function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: number }) {
+function AssemblyPairCard({ pair, rank, selected, onClick }: { pair: AssemblyPrimerPair; rank: number; selected?: boolean; onClick?: () => void }) {
 	const [copiedFwd, setCopiedFwd] = useState(false);
 	const [copiedRev, setCopiedRev] = useState(false);
 	const [copiedAll, setCopiedAll] = useState(false);
@@ -587,10 +658,13 @@ function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: numb
 
 	return (
 		<div
+			onClick={onClick}
 			style={{
 				padding: "12px 14px",
 				borderBottom: "1px solid rgba(221,216,206,0.5)",
-				background: isBest ? "rgba(26,71,49,0.03)" : "transparent",
+				background: selected ? "rgba(26,71,49,0.07)" : isBest ? "rgba(26,71,49,0.03)" : "transparent",
+				borderLeft: selected ? "3px solid #1a4731" : "3px solid transparent",
+				cursor: onClick ? "pointer" : "default",
 			}}
 		>
 			<div
@@ -703,6 +777,10 @@ export function PrimerTool() {
 	const [specState, setSpecState] = useState<SpecCheckState>("idle");
 	const [specResults, setSpecResults] = useState<Map<string, SpecHit[]> | null>(null);
 
+	// Assembly plot state
+	const [assemblySelectedPair, setAssemblySelectedPair] = useState(0);
+	const [assemblyActivePlot, setAssemblyActivePlot] = useState<"heatmap" | "scatter">("heatmap");
+
 	// Multiplex PCR
 	const [multiplexTargets, setMultiplexTargets] = useState("");
 	const [maxCrossTmDiff, setMaxCrossTmDiff] = useState(3);
@@ -805,6 +883,88 @@ export function PrimerTool() {
 		};
 		worker.postMessage(req);
 	}, [pairs]);
+
+	// Specificity check for Walking primers
+	useEffect(() => {
+		if (!walkingResult || walkingResult.primers.length === 0) return;
+		const unique = new Map<string, string>();
+		for (const [i, p] of walkingResult.primers.entries()) {
+			unique.set(p.seq, `walk${i}`);
+		}
+		setSpecState("loading");
+		setSpecResults(null);
+		if (!specWorkerRef.current) {
+			specWorkerRef.current = new Worker(new URL("./specificity.worker.ts", import.meta.url));
+		}
+		const worker = specWorkerRef.current;
+		worker.onmessage = (e: MessageEvent<SpecResponse>) => {
+			if (e.data.type === "error") { setSpecState("idle"); return; }
+			const map = new Map<string, SpecHit[]>();
+			for (const { id, hits } of e.data.results) {
+				for (const [seq2, uid] of unique) { if (uid === id) { map.set(seq2, hits); break; } }
+			}
+			setSpecResults(map);
+			setSpecState("done");
+		};
+		worker.onerror = () => setSpecState("idle");
+		worker.postMessage({ primers: [...unique.entries()].map(([seq2, id]) => ({ seq: seq2, id })) } satisfies SpecRequest);
+	}, [walkingResult]);
+
+	// Specificity check for Exon-junction primers
+	useEffect(() => {
+		if (!exonJunctionResult || exonJunctionResult.pairs.length === 0) return;
+		const unique = new Map<string, string>();
+		for (const [i, pair] of exonJunctionResult.pairs.entries()) {
+			unique.set(pair.fwd.seq, `ej${i}_fwd`);
+			unique.set(pair.rev.seq, `ej${i}_rev`);
+		}
+		setSpecState("loading");
+		setSpecResults(null);
+		if (!specWorkerRef.current) {
+			specWorkerRef.current = new Worker(new URL("./specificity.worker.ts", import.meta.url));
+		}
+		const worker = specWorkerRef.current;
+		worker.onmessage = (e: MessageEvent<SpecResponse>) => {
+			if (e.data.type === "error") { setSpecState("idle"); return; }
+			const map = new Map<string, SpecHit[]>();
+			for (const { id, hits } of e.data.results) {
+				for (const [seq2, uid] of unique) { if (uid === id) { map.set(seq2, hits); break; } }
+			}
+			setSpecResults(map);
+			setSpecState("done");
+		};
+		worker.onerror = () => setSpecState("idle");
+		worker.postMessage({ primers: [...unique.entries()].map(([seq2, id]) => ({ seq: seq2, id })) } satisfies SpecRequest);
+	}, [exonJunctionResult]);
+
+	// Specificity check for Multiplex primers
+	useEffect(() => {
+		if (!multiplexResult) return;
+		const unique = new Map<string, string>();
+		for (const [i, p] of multiplexResult.pairs.entries()) {
+			if (!p.pair) continue;
+			unique.set(p.pair.fwd.seq, `mx${i}_fwd`);
+			unique.set(p.pair.rev.seq, `mx${i}_rev`);
+		}
+		if (unique.size === 0) return;
+		setSpecState("loading");
+		setSpecResults(null);
+		if (!specWorkerRef.current) {
+			specWorkerRef.current = new Worker(new URL("./specificity.worker.ts", import.meta.url));
+		}
+		const worker = specWorkerRef.current;
+		worker.onmessage = (e: MessageEvent<SpecResponse>) => {
+			if (e.data.type === "error") { setSpecState("idle"); return; }
+			const map = new Map<string, SpecHit[]>();
+			for (const { id, hits } of e.data.results) {
+				for (const [seq2, uid] of unique) { if (uid === id) { map.set(seq2, hits); break; } }
+			}
+			setSpecResults(map);
+			setSpecState("done");
+		};
+		worker.onerror = () => setSpecState("idle");
+		worker.postMessage({ primers: [...unique.entries()].map(([seq2, id]) => ({ seq: seq2, id })) } satisfies SpecRequest);
+	}, [multiplexResult]);
 
 	// When seq changes, reset region end
 	useEffect(() => {
@@ -2183,8 +2343,26 @@ export function PrimerTool() {
 								</button>
 							</div>
 							{assemblyPairs.map((pair, i) => (
-								<AssemblyPairCard key={i} pair={pair} rank={i + 1} />
+								<AssemblyPairCard
+									key={i}
+									pair={pair}
+									rank={i + 1}
+									selected={assemblySelectedPair === i}
+									onClick={() => setAssemblySelectedPair(i)}
+								/>
 							))}
+
+							{/* Assembly plots — inside the outer div */}
+							{assemblyPairs[assemblySelectedPair] && (
+								<AssemblyPlots
+									pair={assemblyPairs[assemblySelectedPair]!}
+									allPairs={assemblyPairs}
+									seq={seq}
+									tmTarget={tmTarget}
+									activePlot={assemblyActivePlot}
+									onTabChange={setAssemblyActivePlot}
+								/>
+							)}
 						</div>
 					)}
 
@@ -2294,6 +2472,11 @@ export function PrimerTool() {
 											<div style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#1c1a16", letterSpacing: "0.04em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
 												{primer.direction === "fwd" ? "→ " : "← "}{primer.seq}
 											</div>
+											{specState !== "idle" && (
+												<div style={{ display: "flex", gap: "10px", marginTop: "4px" }}>
+													<SpecBadge label={primer.direction === "fwd" ? "Fwd" : "Rev"} hits={specResults?.get(primer.seq)} loading={specState === "loading"} />
+												</div>
+											)}
 										</div>
 									);
 								})}
@@ -2492,8 +2675,9 @@ export function PrimerTool() {
 											</div>
 											<div style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284", marginTop: "3px" }}>
 												gray = exon N · blue = exon N+1 (3′ end) · click to copy
-											</div>
 										</div>
+										{specState !== "idle" && <div style={{ marginTop: "4px" }}><SpecBadge label="Fwd" hits={specResults?.get(pair.fwd.seq)} loading={specState === "loading"} /></div>}
+																				</div>
 										{/* Reverse primer */}
 										<div style={{ padding: "8px 10px", background: "rgba(180,83,9,0.04)", border: "1px solid rgba(180,83,9,0.15)", borderRadius: "3px" }}>
 											<div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
@@ -2507,6 +2691,7 @@ export function PrimerTool() {
 											>
 												{pair.rev.seq}
 											</div>
+											{specState !== "idle" && <div style={{ marginTop: "4px" }}><SpecBadge label="Rev" hits={specResults?.get(pair.rev.seq)} loading={specState === "loading"} /></div>}
 										</div>
 									</div>
 								);
@@ -2601,10 +2786,21 @@ export function PrimerTool() {
 											<div style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#1c1a16", letterSpacing: "0.04em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", cursor: "pointer", marginTop: "2px" }} onClick={() => void navigator.clipboard.writeText(p.pair!.rev.seq)}>
 												← {p.pair.rev.seq}
 											</div>
+											{specState !== "idle" && (
+												<div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
+													<SpecBadge label="Fwd" hits={specResults?.get(p.pair.fwd.seq)} loading={specState === "loading"} />
+													<SpecBadge label="Rev" hits={specResults?.get(p.pair.rev.seq)} loading={specState === "loading"} />
+												</div>
+											)}
 										</div>
 									);
 								})}
 							</div>
+
+							{/* Multiplex melt curve — all amplicons overlaid */}
+							{multiplexResult.pairs.some((p) => p.ampliconTm !== undefined) && (
+								<MultiplexMeltCurve pairs={multiplexResult.pairs} />
+							)}
 						</div>
 					)}
 				</div>

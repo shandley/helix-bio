@@ -10,10 +10,12 @@ import type { PrimerWorkerRequest, PrimerWorkerResponse } from "@/components/seq
 import type { SpecHit, SpecRequest, SpecResponse } from "./specificity.worker";
 import type { WalkingRequest, WalkingResponse, WalkingResult } from "./walking.worker";
 import { CoverageMap } from "./coverage-map";
+import type { ConservationRequest, ConservationResponse, ConservationResult, ConsensusPrimer } from "./conservation.worker";
+import { ConservationTrack } from "./conservation-track";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Mode = "pcr" | "qpcr" | "assembly" | "walking";
+type Mode = "pcr" | "qpcr" | "assembly" | "walking" | "consensus";
 type SpecCheckState = "idle" | "loading" | "done";
 type AssemblyMethod = "gibson" | "golden_gate";
 type PlotTab = "heatmap" | "scatter" | "melt";
@@ -698,6 +700,16 @@ export function PrimerTool() {
 	const [specState, setSpecState] = useState<SpecCheckState>("idle");
 	const [specResults, setSpecResults] = useState<Map<string, SpecHit[]> | null>(null);
 
+	// Conservation primer design
+	const [alignmentRaw, setAlignmentRaw] = useState("");
+	const [consThreshold, setConsThreshold] = useState(0.85);
+	const [maxDegeneracy, setMaxDegeneracy] = useState(2);
+	const [consResult, setConsResult] = useState<ConservationResult | null>(null);
+	const [consRunning, setConsRunning] = useState(false);
+	const [consError, setConsError] = useState<string | null>(null);
+	const [consSelectedIdx, setConsSelectedIdx] = useState<number | null>(null);
+	const consWorkerRef = useRef<Worker | null>(null);
+
 	// Walking / Sanger coverage
 	const [walkReadLen, setWalkReadLen] = useState(700);
 	const [walkOverlap, setWalkOverlap] = useState(100);
@@ -718,6 +730,7 @@ export function PrimerTool() {
 		workerRef.current?.terminate();
 		specWorkerRef.current?.terminate();
 		walkWorkerRef.current?.terminate();
+		consWorkerRef.current?.terminate();
 	}, []);
 
 	// Re-run design when a quick-fix button triggers a retry
@@ -950,6 +963,42 @@ export function PrimerTool() {
 		worker.postMessage(req);
 	}, [seq, seqError, walkReadLen, walkOverlap, walkDirection, minLen, maxLen, tmTarget, gcMin, gcMax]);
 
+	const designConservation = useCallback(() => {
+		if (!alignmentRaw.trim()) return;
+		consWorkerRef.current?.terminate();
+		setConsRunning(true);
+		setConsResult(null);
+		setConsError(null);
+		setConsSelectedIdx(null);
+
+		const worker = new Worker(new URL("./conservation.worker.ts", import.meta.url));
+		consWorkerRef.current = worker;
+
+		const req: ConservationRequest = {
+			alignment: alignmentRaw,
+			conservationThreshold: consThreshold,
+			maxDegeneracy,
+			primerLenRange: [minLen, maxLen],
+			tmTarget,
+			gcRange: [gcMin / 100, gcMax / 100],
+			numReturn: 5,
+		};
+
+		worker.onmessage = (e: MessageEvent<ConservationResponse>) => {
+			setConsRunning(false);
+			if (e.data.type === "error") {
+				setConsError(e.data.message);
+			} else {
+				setConsResult(e.data.result);
+			}
+		};
+		worker.onerror = (ev) => {
+			setConsRunning(false);
+			setConsError(ev.message || "Conservation design failed");
+		};
+		worker.postMessage(req);
+	}, [alignmentRaw, consThreshold, maxDegeneracy, minLen, maxLen, tmTarget, gcMin, gcMax]);
+
 	const hasPairs = (pairs && pairs.length > 0) || (assemblyPairs && assemblyPairs.length > 0);
 	const currentPair = pairs?.[selectedPair] ?? null;
 
@@ -1080,39 +1129,70 @@ export function PrimerTool() {
 					</div>
 
 					<div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "16px" }}>
-						{/* Sequence input */}
-						<div>
-							<label style={labelStyle}>Sequence</label>
-							<textarea
-								value={rawSeq}
-								onChange={(e) => setRawSeq(e.target.value)}
-								placeholder="Paste DNA sequence (FASTA or plain)..."
-								rows={7}
-								style={{
-									...inputStyle,
-									resize: "vertical",
-									lineHeight: 1.5,
-									fontSize: "10px",
-									letterSpacing: "0.04em",
-									fontFamily: "var(--font-courier)",
-								}}
-							/>
-							{seq.length > 0 && (
-								<div
+						{/* Sequence input — hidden in consensus mode */}
+						{mode !== "consensus" && (
+							<div>
+								<label style={labelStyle}>Sequence</label>
+								<textarea
+									value={rawSeq}
+									onChange={(e) => setRawSeq(e.target.value)}
+									placeholder="Paste DNA sequence (FASTA or plain)..."
+									rows={7}
 									style={{
-										marginTop: "4px",
+										...inputStyle,
+										resize: "vertical",
+										lineHeight: 1.5,
+										fontSize: "10px",
+										letterSpacing: "0.04em",
 										fontFamily: "var(--font-courier)",
-										fontSize: "9px",
-										color: seqError ? "#a02828" : "#9a9284",
 									}}
-								>
-									{seqError ?? `${seq.length.toLocaleString()} bp`}
-								</div>
-							)}
-						</div>
+								/>
+								{seq.length > 0 && (
+									<div
+										style={{
+											marginTop: "4px",
+											fontFamily: "var(--font-courier)",
+											fontSize: "9px",
+											color: seqError ? "#a02828" : "#9a9284",
+										}}
+									>
+										{seqError ?? `${seq.length.toLocaleString()} bp`}
+									</div>
+								)}
+							</div>
+						)}
 
-						{/* Region */}
-						<div>
+						{/* Alignment input — consensus mode only */}
+						{mode === "consensus" && (
+							<div>
+								<label style={labelStyle}>Alignment (multi-FASTA)</label>
+								<textarea
+									value={alignmentRaw}
+									onChange={(e) => setAlignmentRaw(e.target.value)}
+									placeholder={">Seq1\nATCGATCG...\n>Seq2\nATCGATCG..."}
+									rows={8}
+									style={{
+										...inputStyle,
+										resize: "vertical",
+										lineHeight: 1.5,
+										fontSize: "10px",
+										letterSpacing: "0.04em",
+										fontFamily: "var(--font-courier)",
+									}}
+								/>
+								{alignmentRaw.trim() && (() => {
+									const nSeqs = (alignmentRaw.match(/^>/gm) ?? []).length;
+									return (
+										<div style={{ marginTop: "4px", fontFamily: "var(--font-courier)", fontSize: "9px", color: nSeqs >= 2 ? "#9a9284" : "#b8933a" }}>
+											{nSeqs >= 2 ? `${nSeqs} sequences` : `Need ≥ 2 sequences (found ${nSeqs})`}
+										</div>
+									);
+								})()}
+							</div>
+						)}
+
+						{/* Region — not applicable in consensus mode */}
+						{mode !== "consensus" && <div>
 							<label style={labelStyle}>Target Region</label>
 							<label
 								style={{
@@ -1181,7 +1261,7 @@ export function PrimerTool() {
 										: `Region: ${regionInfo.len} bp`}
 								</div>
 							)}
-						</div>
+						</div>}
 
 						{/* Mode tabs */}
 						<div>
@@ -1189,13 +1269,13 @@ export function PrimerTool() {
 							<div
 								style={{
 									display: "grid",
-									gridTemplateColumns: "1fr 1fr 1fr 1fr",
+									gridTemplateColumns: "1fr 1fr 1fr 1fr 1fr",
 									border: "1px solid #ddd8ce",
 									borderRadius: "3px",
 									overflow: "hidden",
 								}}
 							>
-								{(["pcr", "qpcr", "assembly", "walking"] as const).map((m, i) => (
+								{(["pcr", "qpcr", "assembly", "walking", "consensus"] as const).map((m, i) => (
 									<button
 										key={m}
 										type="button"
@@ -1226,7 +1306,7 @@ export function PrimerTool() {
 											transition: "background 0.15s, color 0.15s",
 										}}
 									>
-										{m === "pcr" ? "PCR" : m === "qpcr" ? "qPCR" : m === "assembly" ? "Assembly" : "Walking"}
+										{m === "pcr" ? "PCR" : m === "qpcr" ? "qPCR" : m === "assembly" ? "Assembly" : m === "walking" ? "Walking" : "Consensus"}
 									</button>
 								))}
 							</div>
@@ -1343,6 +1423,44 @@ export function PrimerTool() {
 								</div>
 								<p style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", margin: 0, lineHeight: 1.6 }}>
 									Step: {walkReadLen - walkOverlap} bp · ~{Math.ceil((seq.length || 1000) / (walkReadLen - walkOverlap))} primers for {seq.length > 0 ? `${seq.length} bp` : "this sequence"}
+								</p>
+							</div>
+						)}
+
+						{/* Consensus sub-options */}
+						{mode === "consensus" && (
+							<div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+								<div>
+									<label style={labelStyle}>
+										Conservation threshold — {Math.round(consThreshold * 100)}%
+									</label>
+									<input
+										type="range"
+										min={60}
+										max={100}
+										value={Math.round(consThreshold * 100)}
+										onChange={(e) => setConsThreshold(Number(e.target.value) / 100)}
+										style={{ width: "100%", accentColor: "#1a4731" }}
+									/>
+									<div style={{ display: "flex", justifyContent: "space-between", fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8b0a4" }}>
+										<span>60% (permissive)</span>
+										<span>100% (identical)</span>
+									</div>
+								</div>
+								<div>
+									<span style={labelStyle}>Max degenerate positions</span>
+									<input
+										type="number"
+										value={maxDegeneracy}
+										min={0}
+										max={6}
+										onChange={(e) => setMaxDegeneracy(Number(e.target.value))}
+										style={inputStyle}
+									/>
+								</div>
+								<p style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", margin: 0, lineHeight: 1.6 }}>
+									Degenerate bases (R, Y, S, W…) cover polymorphic positions.
+									Set to 0 for fully conserved primers only.
 								</p>
 							</div>
 						)}
@@ -1488,8 +1606,14 @@ export function PrimerTool() {
 						{/* Design button */}
 						<button
 							type="button"
-							onClick={mode === "walking" ? designWalking : design}
-							disabled={!seq || !!seqError || (mode === "walking" ? walkingRunning : running)}
+							onClick={mode === "walking" ? designWalking : mode === "consensus" ? designConservation : design}
+							disabled={
+								mode === "consensus"
+									? !alignmentRaw.trim() || consRunning
+									: mode === "walking"
+										? !seq || !!seqError || walkingRunning
+										: !seq || !!seqError || running
+							}
 							style={{
 								fontFamily: "var(--font-karla)",
 								fontSize: "13px",
@@ -1504,9 +1628,11 @@ export function PrimerTool() {
 								letterSpacing: "0.02em",
 							}}
 						>
-							{mode === "walking"
-							? (walkingRunning ? "Designing…" : "Design Walking Primers")
-							: (running ? "Designing…" : "Design Primers")}
+							{mode === "consensus"
+							? (consRunning ? "Designing…" : "Design Consensus Primers")
+							: mode === "walking"
+								? (walkingRunning ? "Designing…" : "Design Walking Primers")
+								: (running ? "Designing…" : "Design Primers")}
 						</button>
 
 						{/* Info note */}
@@ -1527,7 +1653,7 @@ export function PrimerTool() {
 				{/* Right: results */}
 				<div style={{ overflowY: "auto", background: "#f5f0e8" }}>
 					{/* Empty state */}
-					{!running && !hasPairs && !warning && !error && !walkingRunning && !walkingResult && !walkingError && (
+					{!running && !hasPairs && !warning && !error && !walkingRunning && !walkingResult && !walkingError && !consRunning && !consResult && !consError && (
 						<div
 							style={{
 								display: "flex",
@@ -1963,6 +2089,118 @@ export function PrimerTool() {
 												</button>
 											</div>
 											<div style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#1c1a16", letterSpacing: "0.04em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+												{primer.direction === "fwd" ? "→ " : "← "}{primer.seq}
+											</div>
+										</div>
+									);
+								})}
+							</div>
+						</div>
+					)}
+
+					{/* Conservation / consensus results */}
+					{consRunning && (
+						<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "200px", gap: "10px" }}>
+							<span style={{ width: "16px", height: "16px", border: "2px solid #ddd8ce", borderTopColor: "#1a4731", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
+							<span style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#9a9284" }}>Scanning alignment…</span>
+						</div>
+					)}
+					{consError && (
+						<div style={{ margin: "24px", padding: "14px 16px", background: "rgba(160,40,40,0.06)", border: "1px solid rgba(160,40,40,0.2)", borderRadius: "3px", fontFamily: "var(--font-karla)", fontSize: "13px", color: "#a02828" }}>
+							{consError}
+						</div>
+					)}
+					{consResult && (
+						<div>
+							{/* Header */}
+							<div style={{ padding: "14px 20px 10px", borderBottom: "1px solid #ddd8ce", display: "flex", alignItems: "center", gap: "10px" }}>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.12em", color: "#1a4731", textTransform: "uppercase" }}>
+									{consResult.primers.length} primers
+								</span>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#b8b0a4" }}>
+									· {consResult.sequences.length} sequences · {consResult.alignmentLen} bp alignment
+								</span>
+								{consResult.warning && (
+									<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#b8933a" }}>
+										⚠ {consResult.warning}
+									</span>
+								)}
+								<button
+									type="button"
+									onClick={() => {
+										const rows = ["Name,Sequence,Position,Direction,Tm,Ta,Conservation,Degenerate,Notes"];
+										for (const [i, p] of consResult.primers.entries()) {
+											const ta = computeTa(p.tm, polymerase).toFixed(0);
+											const mmNote = p.mismatches.map((m) => `${m.count}mm:${m.nSeqs}seqs`).join(" ");
+											rows.push(`Cons${i + 1}_${p.direction === "fwd" ? "Fwd" : "Rev"},${p.seq},${p.alignPos + 1},${p.direction},${p.tm.toFixed(1)},${ta},${(p.conservation * 100).toFixed(0)}%,${p.numDegenerate},"${mmNote}"`);
+										}
+										const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+										const url = URL.createObjectURL(blob);
+										const a = document.createElement("a"); a.href = url; a.download = "consensus-primers.csv"; a.click();
+										URL.revokeObjectURL(url);
+									}}
+									style={{ marginLeft: "auto", fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.06em", padding: "4px 10px", background: "none", border: "1px solid #ddd8ce", borderRadius: "3px", color: "#5a5648", cursor: "pointer" }}
+								>
+									↓ CSV
+								</button>
+							</div>
+
+							{/* Conservation track */}
+							<div style={{ padding: "16px 20px" }}>
+								<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.12em", color: "#9a9284", textTransform: "uppercase", marginBottom: "10px" }}>
+									Conservation track
+								</div>
+								<ConservationTrack
+									result={consResult}
+									selectedIdx={consSelectedIdx}
+									threshold={consThreshold}
+								/>
+							</div>
+
+							{/* Primer cards */}
+							<div style={{ borderTop: "1px solid #ddd8ce" }}>
+								{consResult.primers.map((primer, i) => {
+									const isSelected = consSelectedIdx === i;
+									const ta = computeTa(primer.tm, polymerase);
+									const color = primer.direction === "fwd" ? "#0891b2" : "#b45309";
+									const mm0 = primer.mismatches.find((m) => m.count === 0);
+									const mmNote = mm0
+										? `${mm0.nSeqs}/${consResult.sequences.length} seqs: perfect match`
+										: `best: ${primer.mismatches[0]?.count ?? "?"} mm in ${primer.mismatches[0]?.nSeqs ?? "?"} seqs`;
+									return (
+										<div
+											key={i}
+											onClick={() => setConsSelectedIdx(i)}
+											style={{
+												padding: "10px 14px",
+												borderBottom: "1px solid rgba(221,216,206,0.5)",
+												background: isSelected ? "rgba(26,71,49,0.07)" : "transparent",
+												borderLeft: isSelected ? "3px solid #1a4731" : "3px solid transparent",
+												cursor: "pointer",
+											}}
+										>
+											<div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px", flexWrap: "wrap" }}>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: isSelected ? "#1a4731" : "#9a9284", fontWeight: isSelected ? 700 : 400 }}>#{i + 1}</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#5a5648" }}>pos {primer.alignPos + 1}</span>
+												<span style={{ color: "#ddd8ce" }}>·</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#1a4731", fontWeight: 600 }}>
+													{(primer.conservation * 100).toFixed(0)}% conserved
+												</span>
+												<span style={{ color: "#ddd8ce" }}>·</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}>Tm {primer.tm.toFixed(1)}°</span>
+												<span style={{ color: "#ddd8ce" }}>·</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#1a4731", fontWeight: 600 }}>Ta {ta.toFixed(0)}°C</span>
+												{primer.numDegenerate > 0 && (
+													<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8933a" }}>{primer.numDegenerate} deg</span>
+												)}
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8b0a4" }}>{mmNote}</span>
+												<button
+													type="button"
+													onClick={(ev) => { ev.stopPropagation(); void navigator.clipboard.writeText(primer.seq); }}
+													style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}
+												>copy</button>
+											</div>
+											<div style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color, letterSpacing: "0.04em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
 												{primer.direction === "fwd" ? "→ " : "← "}{primer.seq}
 											</div>
 										</div>

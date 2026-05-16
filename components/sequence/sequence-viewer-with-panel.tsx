@@ -304,6 +304,28 @@ export function SequenceViewerWithPanel({
 		return anns;
 	});
 
+	// Primer pair as annotations on the map (set from the PRIMERS tab best pair)
+	const primerAnnotations = bestPair
+		? [
+				{
+					start: bestPair.fwd.start,
+					end: bestPair.fwd.end,
+					name: `Fwd primer`,
+					color: "#0891b2",
+					direction: 1 as const,
+					type: "primer",
+				},
+				{
+					start: bestPair.rev.start,
+					end: bestPair.rev.end,
+					name: `Rev primer`,
+					color: "#b45309",
+					direction: -1 as const,
+					type: "primer",
+				},
+			]
+		: [];
+
 	// Build the annotation-merged parsed object (GenBank overridden + auto + search hits)
 	const parsedWithAll = {
 		...parsed,
@@ -326,6 +348,7 @@ export function SequenceViewerWithPanel({
 				direction: (m.strand === "+" ? 1 : -1) as 1 | -1,
 				type: "search_hit",
 			})),
+			...primerAnnotations,
 		],
 	};
 

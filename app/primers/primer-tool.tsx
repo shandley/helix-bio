@@ -36,6 +36,63 @@ function validateSeq(seq: string): string | null {
 	return null;
 }
 
+// ── Polymerase annealing temperature ─────────────────────────────────────────
+
+type Polymerase = "Q5" | "Phusion" | "KAPA HiFi" | "Taq" | "Custom";
+
+const POLYMERASES: Polymerase[] = ["Q5", "Phusion", "KAPA HiFi", "Taq", "Custom"];
+
+// Ta offset from the lower-Tm primer in the pair (empirical, from NEB/manufacturer guidelines)
+const POLYMERASE_OFFSET: Record<Polymerase, number> = {
+	Q5: 1,        // NEB: Ta = Tm(lower) + 1°C
+	Phusion: 3,   // NEB/Thermo: Ta = Tm(lower) + 3°C
+	"KAPA HiFi": 1,
+	Taq: -5,      // conservative standard; many labs use Tm(lower) - 5
+	Custom: 0,
+};
+
+function computeTa(lowerTm: number, poly: Polymerase): number {
+	return lowerTm + POLYMERASE_OFFSET[poly];
+}
+
+// ── CSV export ────────────────────────────────────────────────────────────────
+
+function downloadCsv(
+	pairs: (PrimerPair & { ampliconTm?: number; efficiencyScore?: number })[],
+	assemblyPairs: AssemblyPrimerPair[],
+	mode: Mode,
+	polymerase: Polymerase,
+) {
+	const rows: string[] = ["Name,Sequence,Scale,Purification,Notes"];
+
+	if (mode === "assembly" && assemblyPairs.length > 0) {
+		for (const [i, pair] of assemblyPairs.entries()) {
+			const base = `Pair${i + 1}`;
+			const note = `${pair.productSize}bp amplicon | ann ${pair.annealingTm.toFixed(1)}°C | Assembly`;
+			rows.push(`${base}-Fwd,${pair.fwd.fullSeq},25nm,STD,"${note}"`);
+			rows.push(`${base}-Rev,${pair.rev.fullSeq},25nm,STD,"${note}"`);
+		}
+	} else {
+		for (const [i, pair] of pairs.entries()) {
+			const base = `Pair${i + 1}`;
+			const ta = computeTa(Math.min(pair.fwd.tm, pair.rev.tm), polymerase);
+			const modeLabel = mode === "qpcr" ? "qPCR" : "PCR";
+			const effNote = pair.efficiencyScore != null ? ` | eff ${(pair.efficiencyScore * 100).toFixed(0)}%` : "";
+			const note = `Tm_fwd=${pair.fwd.tm.toFixed(1)} Tm_rev=${pair.rev.tm.toFixed(1)} Ta=${ta.toFixed(0)}°C(${polymerase}) ${pair.productSize}bp ${modeLabel}${effNote}`;
+			rows.push(`${base}-Fwd,${pair.fwd.seq},25nm,STD,"${note}"`);
+			rows.push(`${base}-Rev,${pair.rev.seq},25nm,STD,"${note}"`);
+		}
+	}
+
+	const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	a.href = url;
+	a.download = "primers.csv";
+	a.click();
+	URL.revokeObjectURL(url);
+}
+
 // ── Color helpers ─────────────────────────────────────────────────────────────
 
 function effColor(eff: number) {
@@ -158,6 +215,7 @@ function PairCard({
 	rank,
 	tmTarget,
 	mode,
+	polymerase,
 	selected,
 	onClick,
 }: {
@@ -165,10 +223,12 @@ function PairCard({
 	rank: number;
 	tmTarget: number;
 	mode: Mode;
+	polymerase: Polymerase;
 	selected: boolean;
 	onClick: () => void;
 }) {
 	const [copiedPair, setCopiedPair] = useState(false);
+	const ta = computeTa(Math.min(pair.fwd.tm, pair.rev.tm), polymerase);
 	function copyPair(e: React.MouseEvent) {
 		e.stopPropagation();
 		const text = `Fwd (${pair.fwd.len}bp, Tm ${pair.fwd.tm.toFixed(1)}°C): ${pair.fwd.seq}\nRev (${pair.rev.len}bp, Tm ${pair.rev.tm.toFixed(1)}°C): ${pair.rev.seq}`;
@@ -230,6 +290,18 @@ function PairCard({
 						}}
 					>
 						ΔTm {pair.tmDiff.toFixed(1)}°
+					</span>
+					<span style={{ color: "#ddd8ce" }}>·</span>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							color: "#1a4731",
+							fontWeight: 600,
+						}}
+						title={`Recommended annealing temperature for ${polymerase}`}
+					>
+						Ta {ta.toFixed(0)}°C
 					</span>
 					{dimerWarn && <Badge label="dimer" value={pair.heteroDimerDG.toFixed(1)} warn />}
 					{pair.ampliconTm !== undefined && (
@@ -486,6 +558,9 @@ export function PrimerTool() {
 	const [assemblyMethod, setAssemblyMethod] = useState<AssemblyMethod>("gibson");
 	const [gibsonOverlap, setGibsonOverlap] = useState(20);
 	const [ggEnzyme, setGgEnzyme] = useState<"BsaI" | "BbsI" | "BsmBI">("BsaI");
+
+	// Polymerase
+	const [polymerase, setPolymerase] = useState<Polymerase>("Q5");
 
 	// Options
 	const [optionsOpen, setOptionsOpen] = useState(false);
@@ -1119,6 +1194,20 @@ export function PrimerTool() {
 							)}
 						</div>
 
+						{/* Polymerase selector */}
+						<div>
+							<label style={labelStyle}>Polymerase</label>
+							<select
+								value={polymerase}
+								onChange={(e) => setPolymerase(e.target.value as Polymerase)}
+								style={inputStyle}
+							>
+								{POLYMERASES.map((p) => (
+									<option key={p} value={p}>{p}{p !== "Custom" ? ` (Ta = Tm${POLYMERASE_OFFSET[p] >= 0 ? "+" : ""}${POLYMERASE_OFFSET[p]}°C)` : " (no offset)"}</option>
+								))}
+							</select>
+						</div>
+
 						{/* Design button */}
 						<button
 							type="button"
@@ -1342,6 +1431,24 @@ export function PrimerTool() {
 								<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#b8b0a4" }}>
 									· click a pair to highlight in plots
 								</span>
+								<button
+									type="button"
+									onClick={() => downloadCsv(pairs, [], mode, polymerase)}
+									style={{
+										marginLeft: "auto",
+										fontFamily: "var(--font-courier)",
+										fontSize: "9px",
+										letterSpacing: "0.06em",
+										padding: "4px 10px",
+										background: "none",
+										border: "1px solid #ddd8ce",
+										borderRadius: "3px",
+										color: "#5a5648",
+										cursor: "pointer",
+									}}
+								>
+									↓ CSV
+								</button>
 							</div>
 
 							{/* Pair cards */}
@@ -1353,6 +1460,7 @@ export function PrimerTool() {
 										rank={i + 1}
 										tmTarget={tmTarget}
 										mode={mode}
+										polymerase={polymerase}
 										selected={selectedPair === i}
 										onClick={() => setSelectedPair(i)}
 									/>
@@ -1445,6 +1553,24 @@ export function PrimerTool() {
 								<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#b8b0a4" }}>
 									· {assemblyMethod === "gibson" ? `${gibsonOverlap}bp Gibson overlap` : `${ggEnzyme} Golden Gate`}
 								</span>
+								<button
+									type="button"
+									onClick={() => downloadCsv([], assemblyPairs, mode, polymerase)}
+									style={{
+										marginLeft: "auto",
+										fontFamily: "var(--font-courier)",
+										fontSize: "9px",
+										letterSpacing: "0.06em",
+										padding: "4px 10px",
+										background: "none",
+										border: "1px solid #ddd8ce",
+										borderRadius: "3px",
+										color: "#5a5648",
+										cursor: "pointer",
+									}}
+								>
+									↓ CSV
+								</button>
 							</div>
 							{assemblyPairs.map((pair, i) => (
 								<AssemblyPairCard key={i} pair={pair} rank={i + 1} />

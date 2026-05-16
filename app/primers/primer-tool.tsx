@@ -8,10 +8,12 @@ import { MeltCurve } from "@/components/primer-viz/melt-curve";
 import { PairScatter } from "@/components/primer-viz/pair-scatter";
 import type { PrimerWorkerRequest, PrimerWorkerResponse } from "@/components/sequence/primer-design.worker";
 import type { SpecHit, SpecRequest, SpecResponse } from "./specificity.worker";
+import type { WalkingRequest, WalkingResponse, WalkingResult } from "./walking.worker";
+import { CoverageMap } from "./coverage-map";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Mode = "pcr" | "qpcr" | "assembly";
+type Mode = "pcr" | "qpcr" | "assembly" | "walking";
 type SpecCheckState = "idle" | "loading" | "done";
 type AssemblyMethod = "gibson" | "golden_gate";
 type PlotTab = "heatmap" | "scatter" | "melt";
@@ -696,6 +698,16 @@ export function PrimerTool() {
 	const [specState, setSpecState] = useState<SpecCheckState>("idle");
 	const [specResults, setSpecResults] = useState<Map<string, SpecHit[]> | null>(null);
 
+	// Walking / Sanger coverage
+	const [walkReadLen, setWalkReadLen] = useState(700);
+	const [walkOverlap, setWalkOverlap] = useState(100);
+	const [walkDirection, setWalkDirection] = useState<"fwd" | "both">("fwd");
+	const [walkingResult, setWalkingResult] = useState<WalkingResult | null>(null);
+	const [walkingRunning, setWalkingRunning] = useState(false);
+	const [walkingError, setWalkingError] = useState<string | null>(null);
+	const [walkSelectedIdx, setWalkSelectedIdx] = useState<number | null>(null);
+	const walkWorkerRef = useRef<Worker | null>(null);
+
 	// Incremented by quick-fix buttons to trigger a re-run after state settles
 	const [retryTrigger, setRetryTrigger] = useState(0);
 
@@ -705,6 +717,7 @@ export function PrimerTool() {
 	useEffect(() => () => {
 		workerRef.current?.terminate();
 		specWorkerRef.current?.terminate();
+		walkWorkerRef.current?.terminate();
 	}, []);
 
 	// Re-run design when a quick-fix button triggers a retry
@@ -785,7 +798,7 @@ export function PrimerTool() {
 	})();
 
 	const design = useCallback(() => {
-		if (!seq || seqError) return;
+		if (!seq || seqError || mode === "walking") return;
 		// When amplifying the full sequence, inset by ~10% so primers have a
 		// substantial search window at each end. Minimum 80 bp, maximum 200 bp.
 		const FULL_INSET = Math.min(200, Math.max(80, Math.floor(seq.length * 0.1)));
@@ -869,7 +882,7 @@ export function PrimerTool() {
 			regionEnd: e0,
 			opts,
 			assemblyOpts,
-			mode,
+			mode: mode as "pcr" | "qpcr" | "assembly",
 		};
 
 		worker.onmessage = (e: MessageEvent<PrimerWorkerResponse>) => {
@@ -895,6 +908,47 @@ export function PrimerTool() {
 		};
 		worker.postMessage(req);
 	}, [seq, seqError, useFullSeq, regionStart, regionEnd, mode, assemblyMethod, gibsonOverlap, ggEnzyme, tmTarget, minLen, maxLen, gcMin, gcMax, maxTmDiff, qpcrAmpliconMin, qpcrAmpliconMax]);
+
+	const designWalking = useCallback(() => {
+		if (!seq || seqError) return;
+		if (seq.length < walkReadLen) {
+			setWalkingError(`Sequence (${seq.length} bp) is shorter than one read length (${walkReadLen} bp).`);
+			return;
+		}
+		walkWorkerRef.current?.terminate();
+		setWalkingRunning(true);
+		setWalkingResult(null);
+		setWalkingError(null);
+		setWalkSelectedIdx(null);
+
+		const worker = new Worker(new URL("./walking.worker.ts", import.meta.url));
+		walkWorkerRef.current = worker;
+
+		const req: WalkingRequest = {
+			seq,
+			readLen: walkReadLen,
+			overlap: walkOverlap,
+			direction: walkDirection,
+			primerLenRange: [minLen, maxLen],
+			tmTarget,
+			gcRange: [gcMin / 100, gcMax / 100],
+			searchWindow: 35,
+		};
+
+		worker.onmessage = (e: MessageEvent<WalkingResponse>) => {
+			setWalkingRunning(false);
+			if (e.data.type === "error") {
+				setWalkingError(e.data.message);
+			} else {
+				setWalkingResult(e.data.result);
+			}
+		};
+		worker.onerror = (e) => {
+			setWalkingRunning(false);
+			setWalkingError(e.message || "Walking design failed");
+		};
+		worker.postMessage(req);
+	}, [seq, seqError, walkReadLen, walkOverlap, walkDirection, minLen, maxLen, tmTarget, gcMin, gcMax]);
 
 	const hasPairs = (pairs && pairs.length > 0) || (assemblyPairs && assemblyPairs.length > 0);
 	const currentPair = pairs?.[selectedPair] ?? null;
@@ -1135,13 +1189,13 @@ export function PrimerTool() {
 							<div
 								style={{
 									display: "grid",
-									gridTemplateColumns: "1fr 1fr 1fr",
+									gridTemplateColumns: "1fr 1fr 1fr 1fr",
 									border: "1px solid #ddd8ce",
 									borderRadius: "3px",
 									overflow: "hidden",
 								}}
 							>
-								{(["pcr", "qpcr", "assembly"] as const).map((m, i) => (
+								{(["pcr", "qpcr", "assembly", "walking"] as const).map((m, i) => (
 									<button
 										key={m}
 										type="button"
@@ -1172,7 +1226,7 @@ export function PrimerTool() {
 											transition: "background 0.15s, color 0.15s",
 										}}
 									>
-										{m === "pcr" ? "PCR" : m === "qpcr" ? "qPCR" : "Assembly"}
+										{m === "pcr" ? "PCR" : m === "qpcr" ? "qPCR" : m === "assembly" ? "Assembly" : "Walking"}
 									</button>
 								))}
 							</div>
@@ -1232,6 +1286,66 @@ export function PrimerTool() {
 								</div>
 							)}
 						</div>
+
+						{/* Walking sub-options */}
+						{mode === "walking" && (
+							<div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+								<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+									<div>
+										<span style={labelStyle}>Read length (bp)</span>
+										<input
+											type="number"
+											value={walkReadLen}
+											min={300}
+											max={1200}
+											step={50}
+											onChange={(e) => setWalkReadLen(Number(e.target.value))}
+											style={inputStyle}
+										/>
+									</div>
+									<div>
+										<span style={labelStyle}>Overlap (bp)</span>
+										<input
+											type="number"
+											value={walkOverlap}
+											min={50}
+											max={300}
+											step={25}
+											onChange={(e) => setWalkOverlap(Number(e.target.value))}
+											style={inputStyle}
+										/>
+									</div>
+								</div>
+								<div>
+									<span style={labelStyle}>Direction</span>
+									<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", border: "1px solid #ddd8ce", borderRadius: "3px", overflow: "hidden" }}>
+										{(["fwd", "both"] as const).map((d, i) => (
+											<button
+												key={d}
+												type="button"
+												onClick={() => setWalkDirection(d)}
+												style={{
+													fontFamily: "var(--font-courier)",
+													fontSize: "9px",
+													letterSpacing: "0.06em",
+													padding: "6px 4px",
+													background: walkDirection === d ? "#1a4731" : "transparent",
+													color: walkDirection === d ? "white" : "#5a5648",
+													border: "none",
+													borderLeft: i > 0 ? "1px solid #ddd8ce" : "none",
+													cursor: "pointer",
+												}}
+											>
+												{d === "fwd" ? "Forward only" : "Both strands"}
+											</button>
+										))}
+									</div>
+								</div>
+								<p style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284", margin: 0, lineHeight: 1.6 }}>
+									Step: {walkReadLen - walkOverlap} bp · ~{Math.ceil((seq.length || 1000) / (walkReadLen - walkOverlap))} primers for {seq.length > 0 ? `${seq.length} bp` : "this sequence"}
+								</p>
+							</div>
+						)}
 
 						{/* Options accordion */}
 						<div>
@@ -1374,8 +1488,8 @@ export function PrimerTool() {
 						{/* Design button */}
 						<button
 							type="button"
-							onClick={design}
-							disabled={!seq || !!seqError || running}
+							onClick={mode === "walking" ? designWalking : design}
+							disabled={!seq || !!seqError || (mode === "walking" ? walkingRunning : running)}
 							style={{
 								fontFamily: "var(--font-karla)",
 								fontSize: "13px",
@@ -1390,7 +1504,9 @@ export function PrimerTool() {
 								letterSpacing: "0.02em",
 							}}
 						>
-							{running ? "Designing…" : "Design Primers"}
+							{mode === "walking"
+							? (walkingRunning ? "Designing…" : "Design Walking Primers")
+							: (running ? "Designing…" : "Design Primers")}
 						</button>
 
 						{/* Info note */}
@@ -1411,7 +1527,7 @@ export function PrimerTool() {
 				{/* Right: results */}
 				<div style={{ overflowY: "auto", background: "#f5f0e8" }}>
 					{/* Empty state */}
-					{!running && !hasPairs && !warning && !error && (
+					{!running && !hasPairs && !warning && !error && !walkingRunning && !walkingResult && !walkingError && (
 						<div
 							style={{
 								display: "flex",
@@ -1740,6 +1856,119 @@ export function PrimerTool() {
 							{assemblyPairs.map((pair, i) => (
 								<AssemblyPairCard key={i} pair={pair} rank={i + 1} />
 							))}
+						</div>
+					)}
+
+					{/* Walking / Sanger coverage results */}
+					{walkingRunning && (
+						<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "200px", gap: "10px" }}>
+							<span style={{ width: "16px", height: "16px", border: "2px solid #ddd8ce", borderTopColor: "#1a4731", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
+							<span style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#9a9284" }}>Designing walking primers…</span>
+						</div>
+					)}
+					{walkingError && (
+						<div style={{ margin: "24px", padding: "14px 16px", background: "rgba(160,40,40,0.06)", border: "1px solid rgba(160,40,40,0.2)", borderRadius: "3px", fontFamily: "var(--font-karla)", fontSize: "13px", color: "#a02828" }}>
+							{walkingError}
+						</div>
+					)}
+					{walkingResult && (
+						<div>
+							{/* Header */}
+							<div style={{ padding: "14px 20px 10px", borderBottom: "1px solid #ddd8ce", display: "flex", alignItems: "center", gap: "10px" }}>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.12em", color: "#1a4731", textTransform: "uppercase" }}>
+									{walkingResult.primers.length} primers
+								</span>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#b8b0a4" }}>
+									· {walkingResult.gaps.length === 0
+										? "✓ complete coverage"
+										: `${walkingResult.gaps.length} gap${walkingResult.gaps.length > 1 ? "s" : ""} — increase overlap`}
+								</span>
+								<button
+									type="button"
+									onClick={() => {
+										const rows = ["Name,Sequence,Position,Direction,Tm,Ta,Notes"];
+										for (const [i, p] of walkingResult.primers.entries()) {
+											const ta = computeTa(p.tm, polymerase).toFixed(0);
+											rows.push(`Walk${i + 1}_${p.direction === "fwd" ? "Fwd" : "Rev"},${p.seq},${p.position + 1},${p.direction},${p.tm.toFixed(1)},${ta},"read ${p.position + 1}-${p.readEnd}"`);
+										}
+										const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+										const url = URL.createObjectURL(blob);
+										const a = document.createElement("a");
+										a.href = url; a.download = "walking-primers.csv"; a.click();
+										URL.revokeObjectURL(url);
+									}}
+									style={{ marginLeft: "auto", fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.06em", padding: "4px 10px", background: "none", border: "1px solid #ddd8ce", borderRadius: "3px", color: "#5a5648", cursor: "pointer" }}
+								>
+									↓ CSV
+								</button>
+							</div>
+
+							{/* Coverage map */}
+							<div style={{ padding: "16px 20px" }}>
+								<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.12em", color: "#9a9284", textTransform: "uppercase", marginBottom: "10px" }}>
+									Coverage map
+								</div>
+								<CoverageMap
+									result={walkingResult}
+									selectedIdx={walkSelectedIdx}
+									onSelectPrimer={setWalkSelectedIdx}
+								/>
+							</div>
+
+							{/* Primer table */}
+							<div style={{ borderTop: "1px solid #ddd8ce" }}>
+								{walkingResult.primers.map((primer, i) => {
+									const isSelected = walkSelectedIdx === i;
+									const ta = computeTa(primer.tm, polymerase);
+									const [copied, setCopied] = [false, () => {}]; // handled inline
+									return (
+										<div
+											key={i}
+											onClick={() => setWalkSelectedIdx(i)}
+											style={{
+												padding: "10px 14px",
+												borderBottom: "1px solid rgba(221,216,206,0.5)",
+												background: isSelected ? "rgba(26,71,49,0.07)" : "transparent",
+												borderLeft: isSelected ? "3px solid #1a4731" : "3px solid transparent",
+												cursor: "pointer",
+											}}
+										>
+											<div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px", flexWrap: "wrap" }}>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: isSelected ? "#1a4731" : "#9a9284", fontWeight: isSelected ? 700 : 400 }}>
+													#{i + 1}
+												</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#5a5648" }}>
+													pos {primer.position + 1}
+												</span>
+												<span style={{ color: "#ddd8ce" }}>·</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#5a5648" }}>
+													Tm {primer.tm.toFixed(1)}°
+												</span>
+												<span style={{ color: "#ddd8ce" }}>·</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#1a4731", fontWeight: 600 }}>
+													Ta {ta.toFixed(0)}°C
+												</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8b0a4" }}>
+													read → {primer.readEnd}
+												</span>
+												<button
+													type="button"
+													onClick={(e) => {
+														e.stopPropagation();
+														void navigator.clipboard.writeText(primer.seq);
+													}}
+													style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}
+												>
+													copy
+												</button>
+											</div>
+											<div style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#1c1a16", letterSpacing: "0.04em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
+												{primer.direction === "fwd" ? "→ " : "← "}{primer.seq}
+											</div>
+										</div>
+									);
+								})}
+							</div>
 						</div>
 					)}
 				</div>

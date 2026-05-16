@@ -23,7 +23,9 @@ type DesignPair = PrimerPair & {
 // ── Sequence validation ───────────────────────────────────────────────────────
 
 function cleanSeq(raw: string): string {
-	return raw.replace(/\s|\d/g, "").toUpperCase();
+	// Strip FASTA header lines before removing non-sequence characters
+	const noHeaders = raw.replace(/^>.*$/gm, "");
+	return noHeaders.replace(/\s|\d/g, "").toUpperCase();
 }
 
 function validateSeq(seq: string): string | null {
@@ -547,7 +549,11 @@ export function PrimerTool() {
 			gcRange: [gcMin / 100, gcMax / 100] as [number, number],
 			maxTmDiff,
 			numReturn: 5,
-			...(mode === "qpcr" ? { productSizeRange: [qpcrAmpliconMin, qpcrAmpliconMax] as [number, number] } : {}),
+			...(mode === "qpcr"
+				? { productSizeRange: [qpcrAmpliconMin, qpcrAmpliconMax] as [number, number] }
+				: useFullSeq
+					? { productSizeRange: [100, Math.ceil(seq.length * 1.1)] as [number, number] }
+					: {}),
 		};
 
 		const assemblyOpts =

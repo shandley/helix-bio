@@ -7,10 +7,12 @@ import { AmpliconHeatmap } from "@/components/primer-viz/amplicon-heatmap";
 import { MeltCurve } from "@/components/primer-viz/melt-curve";
 import { PairScatter } from "@/components/primer-viz/pair-scatter";
 import type { PrimerWorkerRequest, PrimerWorkerResponse } from "@/components/sequence/primer-design.worker";
+import type { SpecHit, SpecRequest, SpecResponse } from "./specificity.worker";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Mode = "pcr" | "qpcr" | "assembly";
+type SpecCheckState = "idle" | "loading" | "done";
 type AssemblyMethod = "gibson" | "golden_gate";
 type PlotTab = "heatmap" | "scatter" | "melt";
 
@@ -210,12 +212,90 @@ function SeqLine({
 	);
 }
 
+// ── Specificity badge ─────────────────────────────────────────────────────────
+
+function SpecBadge({
+	label,
+	hits,
+	loading,
+}: {
+	label: string;
+	hits: SpecHit[] | undefined;
+	loading: boolean;
+}) {
+	if (loading) {
+		return (
+			<span
+				style={{
+					fontFamily: "var(--font-courier)",
+					fontSize: "8px",
+					color: "#b8b0a4",
+					letterSpacing: "0.04em",
+				}}
+			>
+				{label} ···
+			</span>
+		);
+	}
+
+	if (!hits) return null;
+
+	if (hits.length === 0) {
+		return (
+			<span
+				style={{
+					display: "inline-flex",
+					alignItems: "center",
+					gap: "3px",
+					fontFamily: "var(--font-courier)",
+					fontSize: "8px",
+					color: "#1a4731",
+					letterSpacing: "0.04em",
+				}}
+			>
+				{label} ✓
+			</span>
+		);
+	}
+
+	// Sort hits: CDS and promoter first
+	const sorted = [...hits].sort((a, b) => {
+		const rank = (t: string) => (t === "CDS" ? 0 : t === "promoter" ? 1 : t === "rep_origin" ? 2 : 3);
+		return rank(a.featureType) - rank(b.featureType);
+	});
+
+	const shown = sorted.slice(0, 2);
+	const extra = sorted.length - shown.length;
+	const tooltip = sorted.map((h) => `${h.featureName} (${h.featureType})`).join(", ");
+
+	return (
+		<span
+			title={tooltip}
+			style={{
+				display: "inline-flex",
+				alignItems: "center",
+				gap: "3px",
+				fontFamily: "var(--font-courier)",
+				fontSize: "8px",
+				color: "#b8933a",
+				letterSpacing: "0.04em",
+				cursor: "help",
+			}}
+		>
+			{label} ⚠ {shown.map((h) => h.featureName).join(", ")}
+			{extra > 0 && ` +${extra}`}
+		</span>
+	);
+}
+
 function PairCard({
 	pair,
 	rank,
 	tmTarget,
 	mode,
 	polymerase,
+	specResults,
+	specState,
 	selected,
 	onClick,
 }: {
@@ -224,6 +304,8 @@ function PairCard({
 	tmTarget: number;
 	mode: Mode;
 	polymerase: Polymerase;
+	specResults: Map<string, SpecHit[]> | null;
+	specState: SpecCheckState;
 	selected: boolean;
 	onClick: () => void;
 }) {
@@ -345,6 +427,32 @@ function PairCard({
 			</div>
 			<SeqLine dir="→" primer={pair.fwd} tmTarget={tmTarget} />
 			<SeqLine dir="←" primer={pair.rev} tmTarget={tmTarget} />
+
+			{/* Specificity row */}
+			{specState !== "idle" && (
+				<div
+					style={{
+						display: "flex",
+						gap: "12px",
+						marginTop: "5px",
+						paddingTop: "5px",
+						borderTop: "1px solid rgba(221,216,206,0.4)",
+						flexWrap: "wrap",
+					}}
+				>
+					<SpecBadge
+						label="Fwd"
+						hits={specResults?.get(pair.fwd.seq)}
+						loading={specState === "loading"}
+					/>
+					<SpecBadge
+						label="Rev"
+						hits={specResults?.get(pair.rev.seq)}
+						loading={specState === "loading"}
+					/>
+				</div>
+			)}
+
 			{mode === "qpcr" && eff !== undefined && (
 				<div
 					style={{
@@ -584,12 +692,20 @@ export function PrimerTool() {
 	const [selectedPair, setSelectedPair] = useState(0);
 	const [activePlot, setActivePlot] = useState<PlotTab>("heatmap");
 
+	// Specificity check
+	const [specState, setSpecState] = useState<SpecCheckState>("idle");
+	const [specResults, setSpecResults] = useState<Map<string, SpecHit[]> | null>(null);
+
 	// Incremented by quick-fix buttons to trigger a re-run after state settles
 	const [retryTrigger, setRetryTrigger] = useState(0);
 
 	const workerRef = useRef<Worker | null>(null);
+	const specWorkerRef = useRef<Worker | null>(null);
 
-	useEffect(() => () => { workerRef.current?.terminate(); }, []);
+	useEffect(() => () => {
+		workerRef.current?.terminate();
+		specWorkerRef.current?.terminate();
+	}, []);
 
 	// Re-run design when a quick-fix button triggers a retry
 	useEffect(() => {
@@ -597,6 +713,51 @@ export function PrimerTool() {
 		design();
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [retryTrigger]);
+
+	// Auto-run specificity check when PCR/qPCR pairs arrive
+	useEffect(() => {
+		if (!pairs || pairs.length === 0) return;
+
+		// Deduplicate primer sequences across all pairs
+		const unique = new Map<string, string>(); // seq → id
+		for (const [i, pair] of pairs.entries()) {
+			unique.set(pair.fwd.seq, `pair${i}_fwd`);
+			unique.set(pair.rev.seq, `pair${i}_rev`);
+		}
+
+		setSpecState("loading");
+		setSpecResults(null);
+
+		// Reuse the spec worker across checks (features.json is cached inside it)
+		if (!specWorkerRef.current) {
+			specWorkerRef.current = new Worker(
+				new URL("./specificity.worker.ts", import.meta.url),
+			);
+		}
+		const worker = specWorkerRef.current;
+
+		worker.onmessage = (e: MessageEvent<SpecResponse>) => {
+			if (e.data.type === "error") {
+				setSpecState("idle"); // silently fail — specificity is bonus info
+				return;
+			}
+			const map = new Map<string, SpecHit[]>();
+			for (const { id, hits } of e.data.results) {
+				// Recover seq from id: find it in unique map
+				for (const [seq, uid] of unique) {
+					if (uid === id) { map.set(seq, hits); break; }
+				}
+			}
+			setSpecResults(map);
+			setSpecState("done");
+		};
+		worker.onerror = () => setSpecState("idle");
+
+		const req: SpecRequest = {
+			primers: [...unique.entries()].map(([seq, id]) => ({ seq, id })),
+		};
+		worker.postMessage(req);
+	}, [pairs]);
 
 	// When seq changes, reset region end
 	useEffect(() => {
@@ -669,6 +830,8 @@ export function PrimerTool() {
 		setWarning(null);
 		setError(null);
 		setSelectedPair(0);
+		setSpecState("idle");
+		setSpecResults(null);
 
 		const worker = new Worker(
 			new URL("../../components/sequence/primer-design.worker.ts", import.meta.url),
@@ -1461,6 +1624,8 @@ export function PrimerTool() {
 										tmTarget={tmTarget}
 										mode={mode}
 										polymerase={polymerase}
+										specResults={specResults}
+										specState={specState}
 										selected={selectedPair === i}
 										onClick={() => setSelectedPair(i)}
 									/>

@@ -529,11 +529,17 @@ export function PrimerTool() {
 			setError("Start must be less than end.");
 			return;
 		}
-		// qPCR amplicons must fit within the configured size range
+		// qPCR: the region PLUS two primers must fit within the amplicon size range.
+		// Primers are at least minLen bp each, so the effective region ceiling is
+		// qpcrAmpliconMax − 2×minLen.
 		const regionLen = e0 - s0;
-		if (mode === "qpcr" && regionLen > qpcrAmpliconMax) {
+		const qpcrRegionMax = qpcrAmpliconMax - 2 * minLen;
+		if (mode === "qpcr" && regionLen > qpcrRegionMax) {
+			setPairs(null);
+			setAssemblyPairs(null);
+			setWarning(null);
 			setError(
-				`Target region is ${regionLen} bp — too large for qPCR. The amplicon range is ${qpcrAmpliconMin}–${qpcrAmpliconMax} bp. Narrow the start/end to a short stretch you want to quantify.`,
+				`Target region is ${regionLen} bp — too large for qPCR. With ${minLen}–${maxLen} bp primers the amplicon would exceed ${qpcrAmpliconMax} bp. Narrow the region to ≤ ${qpcrRegionMax} bp.`,
 			);
 			return;
 		}
@@ -794,7 +800,7 @@ export function PrimerTool() {
 							</label>
 							{mode === "qpcr" && (
 							<p style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#b8933a", margin: "0 0 4px", lineHeight: 1.5 }}>
-								Select a 70–200 bp target region for qPCR amplicon sizing.
+								Select an 80–150 bp region — primers add ~36 bp, keeping the amplicon within 70–200 bp.
 							</p>
 						)}
 						{!useFullSeq && (
@@ -845,11 +851,12 @@ export function PrimerTool() {
 											setMode(m);
 											if (m === "qpcr") {
 												setUseFullSeq(false);
-												// Auto-center a 120 bp target region so qPCR runs immediately
-												if (seq.length >= 120) {
+												// Auto-center a 100 bp target region so the amplicon (~140 bp
+												// with primers) lands comfortably within the 70-200 bp range
+												if (seq.length >= 100) {
 													const mid = Math.floor(seq.length / 2);
-													setRegionStart(String(Math.max(1, mid - 60)));
-													setRegionEnd(String(Math.min(seq.length, mid + 60)));
+													setRegionStart(String(Math.max(1, mid - 50)));
+													setRegionEnd(String(Math.min(seq.length, mid + 50)));
 												}
 											}
 										}}

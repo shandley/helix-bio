@@ -542,6 +542,7 @@ function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: numb
 		tail,
 		annealing,
 		tm,
+		fullPrimerTm,
 		copied,
 		onCopy,
 	}: {
@@ -549,13 +550,14 @@ function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: numb
 		tail: string;
 		annealing: string;
 		tm: number;
+		fullPrimerTm: number;
 		copied: boolean;
 		onCopy: () => void;
 	}) {
 		return (
 			<div
 				onClick={onCopy}
-				title={`Click to copy full primer · ${tail}${annealing}`}
+				title={`Click to copy · ann ${tm.toFixed(1)}° · full ${fullPrimerTm.toFixed(1)}° · ${tail}${annealing}`}
 				style={{
 					display: "flex",
 					alignItems: "center",
@@ -597,7 +599,7 @@ function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: numb
 						flexShrink: 0,
 					}}
 				>
-					{tm.toFixed(1)}°
+					{fullPrimerTm.toFixed(1)}°
 				</span>
 			</div>
 		);
@@ -664,6 +666,7 @@ function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: numb
 				tail={pair.fwd.tail}
 				annealing={pair.fwd.seq}
 				tm={pair.fwd.tm}
+				fullPrimerTm={pair.fwd.fullPrimerTm}
 				copied={copiedFwd}
 				onCopy={copyFwd}
 			/>
@@ -672,6 +675,7 @@ function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: numb
 				tail={pair.rev.tail}
 				annealing={pair.rev.seq}
 				tm={pair.rev.tm}
+				fullPrimerTm={pair.rev.fullPrimerTm}
 				copied={copiedRev}
 				onCopy={copyRev}
 			/>
@@ -984,7 +988,6 @@ export function PrimerPanel({
 				},
 				...(mode === "assembly"
 					? {
-							// productSizeRange will be in AssemblyPrimerOptions after primd 0.3.2 — cast until then
 							assemblyOpts: {
 								method: assemblyMethod,
 								annealingLenRange: [minLen, maxLen] as [number, number],

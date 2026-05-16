@@ -77,9 +77,9 @@ function downloadCsv(
 	if (mode === "assembly" && assemblyPairs.length > 0) {
 		for (const [i, pair] of assemblyPairs.entries()) {
 			const base = `Pair${i + 1}`;
-			const note = `${pair.productSize}bp amplicon | ann ${pair.annealingTm.toFixed(1)}°C | Assembly`;
-			rows.push(`${base}-Fwd,${pair.fwd.fullSeq},25nm,STD,"${note}"`);
-			rows.push(`${base}-Rev,${pair.rev.fullSeq},25nm,STD,"${note}"`);
+			const method = pair.fwd.tail.includes("GGTCTC") ? "Golden Gate" : "Gibson";
+			rows.push(`${base}-Fwd,${pair.fwd.fullSeq},25nm,STD,"${pair.productSize}bp | ann ${pair.annealingTm.toFixed(1)}°C | full ${pair.fwd.fullPrimerTm.toFixed(1)}°C | ${method}"`);
+			rows.push(`${base}-Rev,${pair.rev.fullSeq},25nm,STD,"${pair.productSize}bp | ann ${pair.annealingTm.toFixed(1)}°C | full ${pair.rev.fullPrimerTm.toFixed(1)}°C | ${method}"`);
 		}
 	} else {
 		for (const [i, pair] of pairs.entries()) {
@@ -593,6 +593,7 @@ function AssemblySeqLine({
 	tail,
 	annealing,
 	tm,
+	fullPrimerTm,
 	onCopy,
 	copied,
 }: {
@@ -600,13 +601,14 @@ function AssemblySeqLine({
 	tail: string;
 	annealing: string;
 	tm: number;
+	fullPrimerTm: number;
 	onCopy: () => void;
 	copied: boolean;
 }) {
 	return (
 		<div
 			onClick={onCopy}
-			title="Click to copy full sequence"
+			title={`Click to copy · ann ${tm.toFixed(1)}° · full ${fullPrimerTm.toFixed(1)}°`}
 			style={{
 				display: "flex",
 				alignItems: "center",
@@ -623,7 +625,7 @@ function AssemblySeqLine({
 				<span style={{ color: copied ? "#1a4731" : "#1c1a16", transition: "color 0.15s" }}>{annealing}</span>
 			</span>
 			<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284", flexShrink: 0 }}>
-				{tm.toFixed(1)}°
+				{fullPrimerTm.toFixed(1)}°
 			</span>
 		</div>
 	);
@@ -698,8 +700,8 @@ function AssemblyPairCard({ pair, rank, selected, onClick }: { pair: AssemblyPri
 					{copiedAll ? "copied" : "copy"}
 				</button>
 			</div>
-			<AssemblySeqLine dir="→" tail={pair.fwd.tail} annealing={pair.fwd.seq} tm={pair.fwd.tm} onCopy={copyFwd} copied={copiedFwd} />
-			<AssemblySeqLine dir="←" tail={pair.rev.tail} annealing={pair.rev.seq} tm={pair.rev.tm} onCopy={copyRev} copied={copiedRev} />
+			<AssemblySeqLine dir="→" tail={pair.fwd.tail} annealing={pair.fwd.seq} tm={pair.fwd.tm} fullPrimerTm={pair.fwd.fullPrimerTm} onCopy={copyFwd} copied={copiedFwd} />
+			<AssemblySeqLine dir="←" tail={pair.rev.tail} annealing={pair.rev.seq} tm={pair.rev.tm} fullPrimerTm={pair.rev.fullPrimerTm} onCopy={copyRev} copied={copiedRev} />
 		</div>
 	);
 }

@@ -529,6 +529,14 @@ export function PrimerTool() {
 			setError("Start must be less than end.");
 			return;
 		}
+		// qPCR amplicons must fit within the configured size range
+		const regionLen = e0 - s0;
+		if (mode === "qpcr" && regionLen > qpcrAmpliconMax) {
+			setError(
+				`Target region is ${regionLen} bp — too large for qPCR. The amplicon range is ${qpcrAmpliconMin}–${qpcrAmpliconMax} bp. Narrow the start/end to a short stretch you want to quantify.`,
+			);
+			return;
+		}
 
 		workerRef.current?.terminate();
 		setRunning(true);
@@ -835,8 +843,15 @@ export function PrimerTool() {
 										type="button"
 										onClick={() => {
 											setMode(m);
-											// qPCR needs a specific short region — full sequence never makes sense
-											if (m === "qpcr") setUseFullSeq(false);
+											if (m === "qpcr") {
+												setUseFullSeq(false);
+												// Auto-center a 120 bp target region so qPCR runs immediately
+												if (seq.length >= 120) {
+													const mid = Math.floor(seq.length / 2);
+													setRegionStart(String(Math.max(1, mid - 60)));
+													setRegionEnd(String(Math.min(seq.length, mid + 60)));
+												}
+											}
 										}}
 										style={{
 											fontFamily: "var(--font-courier)",

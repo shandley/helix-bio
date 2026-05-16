@@ -784,7 +784,12 @@ export function PrimerTool() {
 									Full sequence
 								</span>
 							</label>
-							{!useFullSeq && (
+							{mode === "qpcr" && (
+							<p style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#b8933a", margin: "0 0 4px", lineHeight: 1.5 }}>
+								Select a 70–200 bp target region for qPCR amplicon sizing.
+							</p>
+						)}
+						{!useFullSeq && (
 								<div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
 									<div>
 										<span style={{ ...labelStyle, marginBottom: "3px" }}>Start</span>
@@ -828,7 +833,11 @@ export function PrimerTool() {
 									<button
 										key={m}
 										type="button"
-										onClick={() => setMode(m)}
+										onClick={() => {
+											setMode(m);
+											// qPCR needs a specific short region — full sequence never makes sense
+											if (m === "qpcr") setUseFullSeq(false);
+										}}
 										style={{
 											fontFamily: "var(--font-courier)",
 											fontSize: "9px",

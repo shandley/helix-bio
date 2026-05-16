@@ -11,6 +11,7 @@ import type { SpecHit, SpecRequest, SpecResponse } from "./specificity.worker";
 import type { WalkingRequest, WalkingResponse, WalkingResult } from "./walking.worker";
 import { CoverageMap } from "./coverage-map";
 import type { ConservationRequest, ConservationResponse, ConservationResult, ConsensusPrimer } from "./conservation.worker";
+import type { ExonJunctionRequest, ExonJunctionResponse, ExonJunctionResult, ExonJunctionPair, JunctionPrimer } from "./exon-junction.worker";
 import { ConservationTrack } from "./conservation-track";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -700,6 +701,14 @@ export function PrimerTool() {
 	const [specState, setSpecState] = useState<SpecCheckState>("idle");
 	const [specResults, setSpecResults] = useState<Map<string, SpecHit[]> | null>(null);
 
+	// Exon-junction qPCR
+	const [useExonSpanning, setUseExonSpanning] = useState(false);
+	const [junctionPositionsRaw, setJunctionPositionsRaw] = useState("");
+	const [exonJunctionResult, setExonJunctionResult] = useState<ExonJunctionResult | null>(null);
+	const [exonJunctionRunning, setExonJunctionRunning] = useState(false);
+	const [exonJunctionError, setExonJunctionError] = useState<string | null>(null);
+	const exonJunctionWorkerRef = useRef<Worker | null>(null);
+
 	// Conservation primer design
 	const [alignmentRaw, setAlignmentRaw] = useState("");
 	const [consThreshold, setConsThreshold] = useState(0.85);
@@ -731,6 +740,7 @@ export function PrimerTool() {
 		specWorkerRef.current?.terminate();
 		walkWorkerRef.current?.terminate();
 		consWorkerRef.current?.terminate();
+		exonJunctionWorkerRef.current?.terminate();
 	}, []);
 
 	// Re-run design when a quick-fix button triggers a retry
@@ -962,6 +972,57 @@ export function PrimerTool() {
 		};
 		worker.postMessage(req);
 	}, [seq, seqError, walkReadLen, walkOverlap, walkDirection, minLen, maxLen, tmTarget, gcMin, gcMax]);
+
+	const designExonJunction = useCallback(() => {
+		if (!seq || seqError) return;
+
+		// Parse junction positions (1-indexed from UI → 0-indexed in worker)
+		const junctions = junctionPositionsRaw
+			.split(/[,\s]+/)
+			.map((s) => Number(s.trim()))
+			.filter((n) => !isNaN(n) && n > 0)
+			.map((n) => n - 1); // convert to 0-indexed
+
+		if (junctions.length === 0) {
+			setExonJunctionError("Enter at least one exon junction position (e.g. '150, 300').");
+			return;
+		}
+
+		exonJunctionWorkerRef.current?.terminate();
+		setExonJunctionRunning(true);
+		setExonJunctionResult(null);
+		setExonJunctionError(null);
+
+		const worker = new Worker(new URL("./exon-junction.worker.ts", import.meta.url));
+		exonJunctionWorkerRef.current = worker;
+
+		const req: ExonJunctionRequest = {
+			seq,
+			junctions,
+			primerLenRange: [minLen, maxLen],
+			tmTarget,
+			gcRange: [gcMin / 100, gcMax / 100],
+			maxTmDiff,
+			productSizeRange: [qpcrAmpliconMin, qpcrAmpliconMax],
+			numReturn: 5,
+			minUpstreamBases: 5,
+			minDownstreamBases: 8,
+		};
+
+		worker.onmessage = (e: MessageEvent<ExonJunctionResponse>) => {
+			setExonJunctionRunning(false);
+			if (e.data.type === "error") {
+				setExonJunctionError(e.data.message);
+			} else {
+				setExonJunctionResult(e.data.result);
+			}
+		};
+		worker.onerror = (ev) => {
+			setExonJunctionRunning(false);
+			setExonJunctionError(ev.message || "Exon-junction design failed");
+		};
+		worker.postMessage(req);
+	}, [seq, seqError, junctionPositionsRaw, minLen, maxLen, tmTarget, gcMin, gcMax, maxTmDiff, qpcrAmpliconMin, qpcrAmpliconMax]);
 
 	const designConservation = useCallback(() => {
 		if (!alignmentRaw.trim()) return;
@@ -1213,9 +1274,14 @@ export function PrimerTool() {
 									Full sequence
 								</span>
 							</label>
-							{mode === "qpcr" && (
+							{mode === "qpcr" && !useExonSpanning && (
 							<p style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#b8933a", margin: "0 0 4px", lineHeight: 1.5 }}>
 								Select an 80–150 bp region — primers add ~36 bp, keeping the amplicon within 70–200 bp.
+							</p>
+						)}
+						{mode === "qpcr" && useExonSpanning && (
+							<p style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#1a4731", margin: "0 0 4px", lineHeight: 1.5 }}>
+								Exon-spanning mode: forward primer straddles the junction — won't amplify gDNA.
 							</p>
 						)}
 						{!useFullSeq && (
@@ -1427,6 +1493,41 @@ export function PrimerTool() {
 							</div>
 						)}
 
+						{/* Exon-junction sub-options (qPCR only) */}
+						{mode === "qpcr" && (
+							<div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+								<label style={{ display: "flex", alignItems: "center", gap: "7px", cursor: "pointer" }}>
+									<input
+										type="checkbox"
+										checked={useExonSpanning}
+										onChange={(e) => {
+											setUseExonSpanning(e.target.checked);
+											if (e.target.checked) setUseFullSeq(true);
+										}}
+										style={{ accentColor: "#1a4731" }}
+									/>
+									<span style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#1a4731", fontWeight: 600 }}>
+										Exon-spanning (gDNA-free)
+									</span>
+								</label>
+								{useExonSpanning && (
+									<div>
+										<span style={labelStyle}>Exon junction positions (1-indexed, comma-separated)</span>
+										<input
+											type="text"
+											value={junctionPositionsRaw}
+											onChange={(e) => setJunctionPositionsRaw(e.target.value)}
+											placeholder="e.g. 150, 300, 450"
+											style={inputStyle}
+										/>
+										<p style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284", margin: "4px 0 0", lineHeight: 1.6 }}>
+											Position in mRNA where each new exon begins. From NCBI/Ensembl gene page.
+										</p>
+									</div>
+								)}
+							</div>
+						)}
+
 						{/* Consensus sub-options */}
 						{mode === "consensus" && (
 							<div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -1606,24 +1707,31 @@ export function PrimerTool() {
 						{/* Design button */}
 						<button
 							type="button"
-							onClick={mode === "walking" ? designWalking : mode === "consensus" ? designConservation : design}
+							onClick={
+							mode === "walking" ? designWalking
+							: mode === "consensus" ? designConservation
+							: (mode === "qpcr" && useExonSpanning) ? designExonJunction
+							: design
+						}
 							disabled={
 								mode === "consensus"
 									? !alignmentRaw.trim() || consRunning
 									: mode === "walking"
 										? !seq || !!seqError || walkingRunning
-										: !seq || !!seqError || running
+										: (mode === "qpcr" && useExonSpanning)
+											? !seq || !!seqError || exonJunctionRunning
+											: !seq || !!seqError || running
 							}
 							style={{
 								fontFamily: "var(--font-karla)",
 								fontSize: "13px",
 								fontWeight: 500,
 								padding: "11px 20px",
-								background: (mode === "consensus" ? (!alignmentRaw.trim() || consRunning) : mode === "walking" ? (!seq || !!seqError || walkingRunning) : (!seq || !!seqError || running)) ? "#9a9284" : "#1a4731",
+								background: (mode === "consensus" ? (!alignmentRaw.trim() || consRunning) : mode === "walking" ? (!seq || !!seqError || walkingRunning) : (mode === "qpcr" && useExonSpanning) ? (!seq || !!seqError || exonJunctionRunning) : (!seq || !!seqError || running)) ? "#9a9284" : "#1a4731",
 								color: "white",
 								border: "none",
 								borderRadius: "3px",
-								cursor: (mode === "consensus" ? (!alignmentRaw.trim() || consRunning) : mode === "walking" ? (!seq || !!seqError || walkingRunning) : (!seq || !!seqError || running)) ? "not-allowed" : "pointer",
+								cursor: (mode === "consensus" ? (!alignmentRaw.trim() || consRunning) : mode === "walking" ? (!seq || !!seqError || walkingRunning) : (mode === "qpcr" && useExonSpanning) ? (!seq || !!seqError || exonJunctionRunning) : (!seq || !!seqError || running)) ? "not-allowed" : "pointer",
 								transition: "background 0.15s",
 								letterSpacing: "0.02em",
 							}}
@@ -1632,7 +1740,9 @@ export function PrimerTool() {
 							? (consRunning ? "Designing…" : "Design Consensus Primers")
 							: mode === "walking"
 								? (walkingRunning ? "Designing…" : "Design Walking Primers")
-								: (running ? "Designing…" : "Design Primers")}
+								: (mode === "qpcr" && useExonSpanning)
+									? (exonJunctionRunning ? "Designing…" : "Design Exon-Spanning Primers")
+									: (running ? "Designing…" : "Design Primers")}
 						</button>
 
 						{/* Info note */}
@@ -1653,7 +1763,7 @@ export function PrimerTool() {
 				{/* Right: results */}
 				<div style={{ overflowY: "auto", background: "#f5f0e8" }}>
 					{/* Empty state */}
-					{!running && !hasPairs && !warning && !error && !walkingRunning && !walkingResult && !walkingError && !consRunning && !consResult && !consError && (
+					{!running && !hasPairs && !warning && !error && !walkingRunning && !walkingResult && !walkingError && !consRunning && !consResult && !consError && !exonJunctionRunning && !exonJunctionResult && !exonJunctionError && (
 						<div
 							style={{
 								display: "flex",
@@ -2207,6 +2317,107 @@ export function PrimerTool() {
 									);
 								})}
 							</div>
+						</div>
+					)}
+
+					{/* Exon-junction qPCR results */}
+					{exonJunctionRunning && (
+						<div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "200px", gap: "10px" }}>
+							<span style={{ width: "16px", height: "16px", border: "2px solid #ddd8ce", borderTopColor: "#1a4731", borderRadius: "50%", display: "inline-block", animation: "spin 0.7s linear infinite" }} />
+							<span style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#9a9284" }}>Designing exon-spanning primers…</span>
+						</div>
+					)}
+					{exonJunctionError && (
+						<div style={{ margin: "24px", padding: "14px 16px", background: "rgba(160,40,40,0.06)", border: "1px solid rgba(160,40,40,0.2)", borderRadius: "3px", fontFamily: "var(--font-karla)", fontSize: "13px", color: "#a02828" }}>
+							{exonJunctionError}
+						</div>
+					)}
+					{exonJunctionResult && (
+						<div>
+							<div style={{ padding: "14px 20px 10px", borderBottom: "1px solid #ddd8ce", display: "flex", alignItems: "center", gap: "10px" }}>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.12em", color: "#1a4731", textTransform: "uppercase" }}>
+									{exonJunctionResult.pairs.length} exon-spanning pairs
+								</span>
+								<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#b8b0a4" }}>
+									· gDNA-specific
+								</span>
+								<button
+									type="button"
+									onClick={() => {
+										const rows = ["Name,Sequence,Type,Position,Tm,Ta,Junction,Upstream,Downstream,ProductSize"];
+										for (const [i, pair] of exonJunctionResult.pairs.entries()) {
+											const ta = computeTa(pair.fwd.tm, polymerase).toFixed(0);
+											const taRev = computeTa(pair.rev.tm, polymerase).toFixed(0);
+											rows.push(`Pair${i+1}_Fwd,${pair.fwd.seq},spanning,${pair.fwd.start+1},${pair.fwd.tm.toFixed(1)},${ta},${pair.fwd.junctionPos+1},${pair.fwd.upstreamBases}bp,${pair.fwd.downstreamBases}bp,${pair.productSize}`);
+											rows.push(`Pair${i+1}_Rev,${pair.rev.seq},normal,${pair.rev.start+1},${pair.rev.tm.toFixed(1)},${taRev},,,, ${pair.productSize}bp amplicon`);
+										}
+										const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+										const url = URL.createObjectURL(blob);
+										const a = document.createElement("a"); a.href = url; a.download = "exon-junction-primers.csv"; a.click();
+										URL.revokeObjectURL(url);
+									}}
+									style={{ marginLeft: "auto", fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.06em", padding: "4px 10px", background: "none", border: "1px solid #ddd8ce", borderRadius: "3px", color: "#5a5648", cursor: "pointer" }}
+								>
+									↓ CSV
+								</button>
+							</div>
+							{exonJunctionResult.warning && (
+								<div style={{ margin: "24px", padding: "14px 16px", background: "rgba(184,147,58,0.07)", border: "1px solid rgba(184,147,58,0.25)", borderRadius: "3px" }}>
+									<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.1em", color: "#b8933a", marginBottom: "5px" }}>NO PAIRS FOUND</div>
+									<div style={{ fontFamily: "var(--font-karla)", fontSize: "13px", color: "#5a5648", lineHeight: 1.6 }}>{exonJunctionResult.warning}</div>
+								</div>
+							)}
+							{exonJunctionResult.pairs.map((pair, i) => {
+								const ta = computeTa(pair.fwd.tm, polymerase);
+								const taRev = computeTa(pair.rev.tm, polymerase);
+								return (
+									<div key={i} style={{ padding: "14px 20px", borderBottom: "1px solid rgba(221,216,206,0.5)", background: i === 0 ? "rgba(26,71,49,0.03)" : "transparent" }}>
+										<div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px", flexWrap: "wrap" }}>
+											<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: i === 0 ? "#1a4731" : "#9a9284", fontWeight: i === 0 ? 700 : 400 }}>#{i + 1}</span>
+											<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#5a5648" }}>{pair.productSize} bp amplicon</span>
+											<span style={{ color: "#ddd8ce" }}>·</span>
+											<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: pair.tmDiff > 2 ? "#b8933a" : "#9a9284" }}>ΔTm {pair.tmDiff.toFixed(1)}°</span>
+											<button type="button" onClick={() => void navigator.clipboard.writeText(`Fwd: ${pair.fwd.seq}\nRev: ${pair.rev.seq}`)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}>copy pair</button>
+										</div>
+										{/* Forward spanning primer */}
+										<div style={{ marginBottom: "8px", padding: "8px 10px", background: "rgba(8,145,178,0.05)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "3px" }}>
+											<div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px", flexWrap: "wrap" }}>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#0891b2", fontWeight: 700, letterSpacing: "0.06em" }}>FWD · SPANS JUNCTION</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#5a5648" }}>junction pos {pair.fwd.junctionPos + 1}</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284" }}>{pair.fwd.upstreamBases}bp ← | → {pair.fwd.downstreamBases}bp</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#1a4731", fontWeight: 600 }}>Tm {pair.fwd.tm.toFixed(1)}° · Ta {ta.toFixed(0)}°C</span>
+											</div>
+											{/* Junction visualisation: color-coded upstream|downstream split */}
+											<div
+												style={{ fontFamily: "var(--font-courier)", fontSize: "10px", letterSpacing: "0.04em", cursor: "pointer" }}
+												onClick={() => void navigator.clipboard.writeText(pair.fwd.seq)}
+												title="Click to copy"
+											>
+												<span style={{ color: "#5a5648" }}>{pair.fwd.seq.slice(0, pair.fwd.upstreamBases)}</span>
+												<span style={{ color: "#b8b0a4", fontSize: "9px" }}>┃</span>
+												<span style={{ color: "#0891b2", fontWeight: 600 }}>{pair.fwd.seq.slice(pair.fwd.upstreamBases)}</span>
+											</div>
+											<div style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284", marginTop: "3px" }}>
+												gray = exon N · blue = exon N+1 (3′ end) · click to copy
+											</div>
+										</div>
+										{/* Reverse primer */}
+										<div style={{ padding: "8px 10px", background: "rgba(180,83,9,0.04)", border: "1px solid rgba(180,83,9,0.15)", borderRadius: "3px" }}>
+											<div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b45309", fontWeight: 700, letterSpacing: "0.06em" }}>REV</span>
+												<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#9a9284" }}>pos {pair.rev.start + 1} · Tm {pair.rev.tm.toFixed(1)}° · Ta {taRev.toFixed(0)}°C</span>
+											</div>
+											<div
+												style={{ fontFamily: "var(--font-courier)", fontSize: "10px", color: "#b45309", letterSpacing: "0.04em", cursor: "pointer" }}
+												onClick={() => void navigator.clipboard.writeText(pair.rev.seq)}
+												title="Click to copy"
+											>
+												{pair.rev.seq}
+											</div>
+										</div>
+									</div>
+								);
+							})}
 						</div>
 					)}
 				</div>

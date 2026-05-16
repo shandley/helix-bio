@@ -1619,11 +1619,11 @@ export function PrimerTool() {
 								fontSize: "13px",
 								fontWeight: 500,
 								padding: "11px 20px",
-								background: !seq || !!seqError || running ? "#9a9284" : "#1a4731",
+								background: (mode === "consensus" ? (!alignmentRaw.trim() || consRunning) : mode === "walking" ? (!seq || !!seqError || walkingRunning) : (!seq || !!seqError || running)) ? "#9a9284" : "#1a4731",
 								color: "white",
 								border: "none",
 								borderRadius: "3px",
-								cursor: !seq || !!seqError || running ? "not-allowed" : "pointer",
+								cursor: (mode === "consensus" ? (!alignmentRaw.trim() || consRunning) : mode === "walking" ? (!seq || !!seqError || walkingRunning) : (!seq || !!seqError || running)) ? "not-allowed" : "pointer",
 								transition: "background 0.15s",
 								letterSpacing: "0.02em",
 							}}

@@ -509,23 +509,66 @@ export function PrimerTool() {
 	const [selectedPair, setSelectedPair] = useState(0);
 	const [activePlot, setActivePlot] = useState<PlotTab>("heatmap");
 
+	// Incremented by quick-fix buttons to trigger a re-run after state settles
+	const [retryTrigger, setRetryTrigger] = useState(0);
+
 	const workerRef = useRef<Worker | null>(null);
 
 	useEffect(() => () => { workerRef.current?.terminate(); }, []);
+
+	// Re-run design when a quick-fix button triggers a retry
+	useEffect(() => {
+		if (retryTrigger === 0) return;
+		design();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [retryTrigger]);
 
 	// When seq changes, reset region end
 	useEffect(() => {
 		if (seq.length > 0) setRegionEnd(String(seq.length));
 	}, [seq.length]);
 
+	// ── Live region / amplicon estimate (shown below region inputs) ──────────────
+	const regionInfo = (() => {
+		if (!seq || seq.length === 0) return null;
+		const FULL_INSET = Math.min(200, Math.max(80, Math.floor(seq.length * 0.1)));
+		const s = useFullSeq ? FULL_INSET : Math.max(0, Number(regionStart) - 1);
+		const e = useFullSeq ? seq.length - FULL_INSET : Math.min(seq.length, Number(regionEnd));
+		const len = e - s;
+		if (len <= 0) return null;
+		// Estimated amplicon range: region + both primers at min/max length
+		const ampMin = len + 2 * minLen;
+		const ampMax = len + 2 * maxLen;
+		if (mode === "qpcr") {
+			const fits = ampMin <= qpcrAmpliconMax && ampMax >= qpcrAmpliconMin;
+			const label = fits ? "✓" : "✗ too large";
+			const color = fits ? "#1a4731" : "#b8933a";
+			return { len, ampMin, ampMax, color, label, mode: "qpcr" as const };
+		}
+		return { len, ampMin, ampMax, color: "#9a9284", label: "", mode: "pcr" as const };
+	})();
+
 	const design = useCallback(() => {
 		if (!seq || seqError) return;
 		// When amplifying the full sequence, inset by ~10% so primers have a
 		// substantial search window at each end. Minimum 80 bp, maximum 200 bp.
 		const FULL_INSET = Math.min(200, Math.max(80, Math.floor(seq.length * 0.1)));
+		// Guard: full-seq mode requires at least 2× the inset to leave a non-empty region
+		if (useFullSeq && seq.length < FULL_INSET * 2 + 20) {
+			setPairs(null);
+			setAssemblyPairs(null);
+			setWarning(null);
+			setError(
+				`Sequence is too short for full-sequence mode (${seq.length} bp). Need ≥ ${FULL_INSET * 2 + 20} bp, or uncheck "Full sequence" and specify a region manually.`,
+			);
+			return;
+		}
 		const s0 = useFullSeq ? FULL_INSET : Math.max(0, Number(regionStart) - 1);
 		const e0 = useFullSeq ? seq.length - FULL_INSET : Math.min(seq.length, Number(regionEnd));
 		if (s0 >= e0) {
+			setPairs(null);
+			setAssemblyPairs(null);
+			setWarning(null);
 			setError("Start must be less than end.");
 			return;
 		}
@@ -566,7 +609,7 @@ export function PrimerTool() {
 			...(mode === "qpcr"
 				? { productSizeRange: [qpcrAmpliconMin, qpcrAmpliconMax] as [number, number] }
 				: useFullSeq
-					? { productSizeRange: [100, Math.ceil(seq.length * 1.1)] as [number, number] }
+					? { productSizeRange: [Math.floor(seq.length * 0.9), Math.ceil(seq.length * 1.1)] as [number, number] }
 					: {}),
 		};
 
@@ -827,6 +870,23 @@ export function PrimerTool() {
 											style={inputStyle}
 										/>
 									</div>
+								</div>
+							)}
+
+							{/* Live region / amplicon readout */}
+							{regionInfo && (mode === "qpcr" || (mode === "pcr" && !useFullSeq)) && (
+								<div
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "9px",
+										color: regionInfo.color,
+										lineHeight: 1.6,
+										paddingTop: "5px",
+									}}
+								>
+									{mode === "qpcr"
+										? `Region: ${regionInfo.len} bp · amplicon ~${regionInfo.ampMin}–${regionInfo.ampMax} bp ${regionInfo.label}`
+										: `Region: ${regionInfo.len} bp`}
 								</div>
 							)}
 						</div>
@@ -1210,9 +1270,56 @@ export function PrimerTool() {
 							<div style={{ fontFamily: "var(--font-courier)", fontSize: "9px", letterSpacing: "0.1em", color: "#b8933a", marginBottom: "5px" }}>
 								NO PAIRS FOUND
 							</div>
-							<div style={{ fontFamily: "var(--font-karla)", fontSize: "13px", color: "#5a5648", lineHeight: 1.6 }}>
+							<div style={{ fontFamily: "var(--font-karla)", fontSize: "13px", color: "#5a5648", lineHeight: 1.6, marginBottom: "12px" }}>
 								{warning}
 							</div>
+							{/* Quick-fix buttons for the most common failure mode */}
+							{warning.includes("no compatible pairs") && (
+								<div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+									<button
+										type="button"
+										onClick={() => {
+											setMaxTmDiff((prev) => Math.min(prev + 1, 8));
+											setRetryTrigger((n) => n + 1);
+										}}
+										style={{
+											fontFamily: "var(--font-courier)",
+											fontSize: "9px",
+											letterSpacing: "0.06em",
+											padding: "5px 10px",
+											background: "rgba(184,147,58,0.12)",
+											border: "1px solid rgba(184,147,58,0.35)",
+											borderRadius: "3px",
+											color: "#b8933a",
+											cursor: "pointer",
+										}}
+									>
+										Relax ΔTm (+1°)
+									</button>
+									{mode === "qpcr" && (
+										<button
+											type="button"
+											onClick={() => {
+												setQpcrAmpliconMax((prev) => Math.min(prev + 30, 500));
+												setRetryTrigger((n) => n + 1);
+											}}
+											style={{
+												fontFamily: "var(--font-courier)",
+												fontSize: "9px",
+												letterSpacing: "0.06em",
+												padding: "5px 10px",
+												background: "rgba(184,147,58,0.12)",
+												border: "1px solid rgba(184,147,58,0.35)",
+												borderRadius: "3px",
+												color: "#b8933a",
+												cursor: "pointer",
+											}}
+										>
+											Widen amplicon (+30 bp)
+										</button>
+									)}
+								</div>
+							)}
 						</div>
 					)}
 

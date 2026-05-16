@@ -1312,7 +1312,7 @@ export function PrimerTool() {
 							)}
 
 							{/* Live region / amplicon readout */}
-							{regionInfo && (mode === "qpcr" || (mode === "pcr" && !useFullSeq)) && (
+							{regionInfo && (mode === "qpcr" && !useExonSpanning || (mode === "pcr" && !useFullSeq)) && (
 								<div
 									style={{
 										fontFamily: "var(--font-courier)",

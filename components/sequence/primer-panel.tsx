@@ -1898,7 +1898,7 @@ export function PrimerPanel({
 					style={{
 						fontFamily: "var(--font-courier)",
 						fontSize: "7.5px",
-						color: "#b8b0a4",
+						color: "#5a5648",
 						letterSpacing: "0.04em",
 						textAlign: "right",
 						marginTop: "4px",

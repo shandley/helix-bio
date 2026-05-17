@@ -345,10 +345,11 @@ export function AIPanel({ context }: AIPanelProps) {
 			>
 				<span
 					style={{
-						fontFamily: "var(--font-playfair)",
-						fontSize: "15px",
+						fontFamily: "var(--font-karla)",
+						fontSize: "14px",
+						fontWeight: 600,
 						color: "#1c1a16",
-						letterSpacing: "-0.01em",
+						letterSpacing: "normal",
 					}}
 				>
 					AI

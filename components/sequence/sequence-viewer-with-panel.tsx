@@ -584,6 +584,22 @@ export function SequenceViewerWithPanel({
 						))}
 					</div>
 
+					{/* Global keyboard hint — persists across all panels */}
+					<div
+						style={{
+							padding: "3px 12px",
+							borderBottom: "1px solid rgba(221,216,206,0.4)",
+							fontFamily: "var(--font-courier)",
+							fontSize: "7px",
+							color: "#9a9284",
+							letterSpacing: "0.04em",
+							flexShrink: 0,
+							textAlign: "right",
+						}}
+					>
+						Alt+1–7 · switch panels
+					</div>
+
 					{/* Panel content */}
 					<div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
 						{/* Annotation editor — inside content area, below the tab bar.

@@ -1317,10 +1317,11 @@ export function PrimerPanel({
 				>
 					<span
 						style={{
-							fontFamily: "var(--font-playfair)",
-							fontSize: "15px",
+							fontFamily: "var(--font-karla)",
+							fontSize: "14px",
+							fontWeight: 600,
 							color: "#1c1a16",
-							letterSpacing: "-0.01em",
+							letterSpacing: "normal",
 						}}
 					>
 						Primers
@@ -1854,13 +1855,13 @@ export function PrimerPanel({
 						style={{
 							width: "100%",
 							padding: "8px",
-							background: "#f5f0e8",
-							color: "#5a5648",
+							background: "rgba(184,147,58,0.06)",
+							color: "#b8933a",
 							fontFamily: "var(--font-courier)",
 							fontSize: "9px",
 							letterSpacing: "0.12em",
 							textTransform: "uppercase",
-							border: "1px solid #ddd8ce",
+							border: "1px solid rgba(184,147,58,0.35)",
 							borderRadius: "3px",
 							cursor: "pointer",
 							transition: "background 0.1s",
@@ -2344,7 +2345,7 @@ export function PrimerPanel({
 				}
 			`}</style>
 
-			{/* Persistent Plots affordance — visible before design runs so users know it exists */}
+			{/* Persistent Plots + Diagnose affordance — visible before design runs */}
 			{(mode === "pcr" || mode === "qpcr") && onShowPlots && !(pairs && pairs.length > 0) && (
 				<div
 					style={{
@@ -2360,9 +2361,9 @@ export function PrimerPanel({
 							color: "#b8b0a4",
 							letterSpacing: "0.04em",
 						}}
-						title="After a design run, view melt curve, amplicon secondary structure, and pair overview plots"
+						title="After a design run: view melt curve, amplicon structure, and pair overview (Plots); or run AI-powered PCR failure analysis (Diagnose)"
 					>
-						Plots · melt curve, structure &amp; pairs — available after design
+						After design: Diagnose with AI · view Plots
 					</span>
 				</div>
 			)}

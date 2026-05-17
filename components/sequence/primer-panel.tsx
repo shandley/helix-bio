@@ -361,7 +361,7 @@ function PairCard({ pair, rank, tmTarget, mode }: { pair: DesignPair; rank: numb
 										: pair.efficiencyScore >= 0.6
 											? "#b8933a"
 											: "#a02828",
-								transition: "width 0.3s ease",
+								transition: "none",
 							}}
 						/>
 					</div>
@@ -820,7 +820,7 @@ function DiagnoseResultCard({
 					fontSize: "8px",
 					letterSpacing: "0.1em",
 					textTransform: "uppercase",
-					color: "#2d4a7a",
+					color: "#5a5648",
 					marginBottom: "10px",
 				}}
 			>
@@ -1265,6 +1265,7 @@ export function PrimerPanel({
 									type="button"
 									onClick={onEditAnnotation}
 									title="Edit this annotation"
+									aria-label="Edit this annotation"
 									style={{
 										fontFamily: "var(--font-courier)",
 										fontSize: "10px",
@@ -2221,9 +2222,9 @@ export function PrimerPanel({
 									fontSize: "9px",
 									letterSpacing: "0.08em",
 									textTransform: "uppercase",
-									background: "#2d4a7a",
-									color: "white",
-									border: "none",
+									background: "#f5f0e8",
+									color: "#5a5648",
+									border: "1px solid #ddd8ce",
 									borderRadius: "2px",
 									cursor: "pointer",
 									padding: "5px 12px",

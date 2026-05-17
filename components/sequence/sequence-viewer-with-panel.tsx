@@ -55,7 +55,7 @@ const TAB_LABELS: Record<PanelTab, string> = {
 	digest: "Digest",
 	orfs: "ORFs",
 	search: "Search",
-	ai: "Ask Ori",
+	ai: "AI",
 	align: "Align",
 };
 
@@ -197,8 +197,24 @@ export function SequenceViewerWithPanel({
 
 	if (error) {
 		return (
-			<div className="flex h-full items-center justify-center text-sm text-destructive">
-				{error}
+			<div className="flex h-full flex-col items-center justify-center gap-3">
+				<span className="text-sm text-destructive">{error}</span>
+				<a
+					href="/dashboard"
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "9px",
+						letterSpacing: "0.08em",
+						textTransform: "uppercase",
+						color: "#5a5648",
+						textDecoration: "none",
+						border: "1px solid #ddd8ce",
+						padding: "3px 10px",
+						borderRadius: "2px",
+					}}
+				>
+					← Back to library
+				</a>
 			</div>
 		);
 	}
@@ -410,7 +426,7 @@ export function SequenceViewerWithPanel({
 							) : (
 								<>
 									<span style={{ color: "#2d7a54" }}>●</span>
-									{dedupedAuto.length} feature{dedupedAuto.length !== 1 ? "s" : ""} detected
+									{dedupedAuto.length} auto-detected feature{dedupedAuto.length !== 1 ? "s" : ""}
 								</>
 							)}
 						</div>
@@ -469,7 +485,7 @@ export function SequenceViewerWithPanel({
 								padding: "4px 8px",
 							}}
 						>
-							↓ Annotated
+							↓ Export .gb
 						</button>
 						<CloningModal seq={parsed.seq} seqName={name} topology={topology} />
 					</div>
@@ -513,6 +529,7 @@ export function SequenceViewerWithPanel({
 										{TAB_LABELS[tab]}
 										{tab === "primers" && selection !== null && (
 											<span
+												aria-hidden="true"
 												style={{
 													display: "inline-block",
 													width: "4px",
@@ -527,6 +544,7 @@ export function SequenceViewerWithPanel({
 										)}
 										{tab === "search" && searchMatches.length > 0 && (
 											<span
+												aria-hidden="true"
 												style={{
 													display: "inline-block",
 													width: "4px",

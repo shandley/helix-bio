@@ -1002,8 +1002,9 @@ export function AlignPanel({
 									title="AI-powered clone verification"
 									style={{
 										...btnStyle,
-										background: "#2d4a7a",
-										color: "white",
+										background: "#f5f0e8",
+										color: "#5a5648",
+										border: "1px solid #ddd8ce",
 										flexShrink: 0,
 										letterSpacing: "0.06em",
 									}}

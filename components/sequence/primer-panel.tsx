@@ -1302,6 +1302,9 @@ export function PrimerPanel({
 								setWarning(null);
 								setDiagnoseState({ status: "idle" });
 								abortDiagnoseRef.current?.abort();
+								// Auto-open Options in Assembly mode so overlap/enzyme/search
+								// controls are visible without an extra click
+								if (m === "assembly") setOptionsOpen(true);
 							}}
 							style={{
 								padding: "3px 10px",
@@ -1335,173 +1338,43 @@ export function PrimerPanel({
 					)}
 				</div>
 
-				{/* Assembly method + parameter controls */}
+				{/* Assembly method toggle — primary choice, always visible in Assembly mode */}
 				{mode === "assembly" && (
-					<>
-						{/* Method row */}
-						<div
-							style={{
-								display: "flex",
-								gap: "0",
-								marginBottom: "8px",
-								border: "1px solid #ddd8ce",
-								borderRadius: "3px",
-								overflow: "hidden",
-							}}
-						>
-							{(["gibson", "golden_gate"] as const).map((m) => (
-								<button
-									key={m}
-									type="button"
-									onClick={() => setAssemblyMethod(m)}
-									style={{
-										flex: 1,
-										fontFamily: "var(--font-courier)",
-										fontSize: "9px",
-										letterSpacing: "0.08em",
-										textTransform: "uppercase",
-										color: assemblyMethod === m ? "white" : "#9a9284",
-										background: assemblyMethod === m ? "#1a4731" : "transparent",
-										border: "none",
-										cursor: "pointer",
-										padding: "6px 0",
-										transition: "background 0.12s, color 0.12s",
-									}}
-								>
-									{m === "gibson" ? "Gibson" : "Golden Gate"}
-								</button>
-							))}
-						</div>
-					</>
-				)}
-
-				{/* Assembly-specific controls */}
-				{mode === "assembly" && (
-					<div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
-						{assemblyMethod === "gibson" ? (
-							<div style={{ flex: 1 }}>
-								<div
-									style={{
-										fontFamily: "var(--font-courier)",
-										fontSize: "8px",
-										letterSpacing: "0.1em",
-										textTransform: "uppercase",
-										color: "#9a9284",
-										marginBottom: "4px",
-									}}
-								>
-									<span title="Length of shared sequence between adjacent fragments in Gibson Assembly. Longer overlaps (≥20 bp) improve ligation efficiency; keep below 40 bp to avoid recombination artifacts. Default: 20 bp.">Overlap (bp)</span>
-								</div>
-								<input
-									type="number"
-									value={gibsonOverlap}
-									min={10}
-									max={40}
-									step={1}
-									onChange={(e) =>
-										setGibsonOverlap(Math.max(10, Math.min(40, Number(e.target.value))))
-									}
-									style={{
-										width: "100%",
-										padding: "5px 8px",
-										fontFamily: "var(--font-courier)",
-										fontSize: "11px",
-										color: "#1c1a16",
-										background: "#f5f0e8",
-										border: "1px solid #ddd8ce",
-										borderRadius: "3px",
-										outline: "none",
-									}}
-								/>
-							</div>
-						) : (
-							<div style={{ flex: 1 }}>
-								<div
-									style={{
-										fontFamily: "var(--font-courier)",
-										fontSize: "8px",
-										letterSpacing: "0.1em",
-										textTransform: "uppercase",
-										color: "#9a9284",
-										marginBottom: "4px",
-									}}
-								>
-									<span title="Type IIS restriction enzyme for Golden Gate cloning. BsaI (GGTCTC) is most common; choose BbsI or BsmBI if your insert contains internal BsaI sites.">Enzyme</span>
-								</div>
-								<select
-									value={ggEnzyme}
-									onChange={(e) => setGgEnzyme(e.target.value as "BsaI" | "BbsI" | "BsmBI")}
-									style={{
-										width: "100%",
-										padding: "5px 8px",
-										fontFamily: "var(--font-courier)",
-										fontSize: "11px",
-										color: "#1c1a16",
-										background: "#f5f0e8",
-										border: "1px solid #ddd8ce",
-										borderRadius: "3px",
-										outline: "none",
-									}}
-								>
-									<option value="BsaI">BsaI (GGTCTC)</option>
-									<option value="BbsI">BbsI (GAAGAC)</option>
-									<option value="BsmBI">BsmBI (CGTCTC)</option>
-								</select>
-							</div>
-						)}
-					</div>
-				)}
-
-				{mode === "assembly" && (
-					<div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "center" }}>
-						<div
-							style={{
-								fontFamily: "var(--font-courier)",
-								fontSize: "8px",
-								letterSpacing: "0.08em",
-								textTransform: "uppercase",
-								color: "#9a9284",
-								marginBottom: "4px",
-								whiteSpace: "nowrap",
-							}}
-						>
-							<span title="Extra flanking sequence (bp) beyond the target region to search for primer annealing sites. Increase if AT-rich flanking regions prevent primers from landing within range. Default: 200 bp.">Search ±</span>
-						</div>
-						<div style={{ flex: 1 }}>
-							<input
-								type="number"
-								value={assemblySearchExt}
-								min={100}
-								max={2000}
-								step={100}
-								onChange={(e) =>
-									setAssemblySearchExt(Math.max(100, Math.min(2000, Number(e.target.value))))
-								}
+					<div
+						style={{
+							display: "flex",
+							gap: "0",
+							marginBottom: "8px",
+							border: "1px solid #ddd8ce",
+							borderRadius: "3px",
+							overflow: "hidden",
+						}}
+					>
+						{(["gibson", "golden_gate"] as const).map((m) => (
+							<button
+								key={m}
+								type="button"
+								onClick={() => setAssemblyMethod(m)}
 								style={{
-									width: "100%",
-									padding: "5px 8px",
+									flex: 1,
 									fontFamily: "var(--font-courier)",
-									fontSize: "11px",
-									color: "#1c1a16",
-									background: "#f5f0e8",
-									border: "1px solid #ddd8ce",
-									borderRadius: "3px",
-									outline: "none",
+									fontSize: "9px",
+									letterSpacing: "0.08em",
+									textTransform: "uppercase",
+									color: assemblyMethod === m ? "white" : "#9a9284",
+									background: assemblyMethod === m ? "#1a4731" : "transparent",
+									border: "none",
+									cursor: "pointer",
+									padding: "6px 0",
+									transition: "background 0.12s, color 0.12s",
 								}}
-							/>
-						</div>
-						<span
-							style={{
-								fontFamily: "var(--font-courier)",
-								fontSize: "9px",
-								color: "#9a9284",
-								whiteSpace: "nowrap",
-							}}
-						>
-							bp flanking
-						</span>
+							>
+								{m === "gibson" ? "Gibson" : "Golden Gate"}
+							</button>
+						))}
 					</div>
 				)}
+
 
 				<div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
 					{[
@@ -1801,6 +1674,61 @@ export function PrimerPanel({
 											/>
 											<span style={unitStyle}>bp</span>
 										</div>
+									)}
+									{/* Assembly: overlap/enzyme and search extension */}
+									{mode === "assembly" && (
+										<>
+											{assemblyMethod === "gibson" ? (
+												<div style={rowStyle}>
+													<span style={labelStyle} title="Length of shared sequence between adjacent fragments in Gibson Assembly. Longer overlaps (≥20 bp) improve ligation efficiency; keep below 40 bp to avoid recombination artifacts. Default: 20 bp.">Overlap</span>
+													<input
+														type="number"
+														value={gibsonOverlap}
+														min={10}
+														max={40}
+														step={1}
+														onChange={(e) => setGibsonOverlap(Math.max(10, Math.min(40, Number(e.target.value))))}
+														style={numStyle}
+													/>
+													<span style={unitStyle}>bp</span>
+												</div>
+											) : (
+												<div style={rowStyle}>
+													<span style={labelStyle} title="Type IIS restriction enzyme for Golden Gate cloning. BsaI (GGTCTC) is most common; choose BbsI or BsmBI if your insert contains internal BsaI sites.">Enzyme</span>
+													<select
+														value={ggEnzyme}
+														onChange={(e) => setGgEnzyme(e.target.value as "BsaI" | "BbsI" | "BsmBI")}
+														style={{
+															padding: "3px 5px",
+															fontFamily: "var(--font-courier)",
+															fontSize: "11px",
+															color: "#1c1a16",
+															background: "#f5f0e8",
+															border: "1px solid #ddd8ce",
+															borderRadius: "3px",
+															outline: "none",
+														}}
+													>
+														<option value="BsaI">BsaI</option>
+														<option value="BbsI">BbsI</option>
+														<option value="BsmBI">BsmBI</option>
+													</select>
+												</div>
+											)}
+											<div style={rowStyle}>
+												<span style={labelStyle} title="Extra flanking sequence beyond the target region to search for primer annealing sites. Increase if AT-rich flanking prevents primers from landing within range. Default: 200 bp.">Search ±</span>
+												<input
+													type="number"
+													value={assemblySearchExt}
+													min={100}
+													max={2000}
+													step={100}
+													onChange={(e) => setAssemblySearchExt(Math.max(100, Math.min(2000, Number(e.target.value))))}
+													style={{ ...numStyle, width: "52px" }}
+												/>
+												<span style={unitStyle}>bp</span>
+											</div>
+										</>
 									)}
 								</div>
 							);

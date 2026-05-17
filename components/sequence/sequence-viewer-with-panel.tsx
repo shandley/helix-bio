@@ -86,6 +86,22 @@ export function SequenceViewerWithPanel({
 	const [annotating, setAnnotating] = useState(false);
 	const annotationWorkerRef = useRef<Worker | null>(null);
 
+	// Alt+1–7: switch panel tabs
+	useEffect(() => {
+		const TABS: PanelTab[] = ["enzymes", "primers", "digest", "align", "orfs", "search", "ai"];
+		const handler = (e: KeyboardEvent) => {
+			if (!e.altKey) return;
+			const n = parseInt(e.key, 10);
+			if (n >= 1 && n <= TABS.length) {
+				e.preventDefault();
+				setActiveTab(TABS[n - 1]!);
+				setShowAnnotationEditor(false);
+			}
+		};
+		document.addEventListener("keydown", handler);
+		return () => document.removeEventListener("keydown", handler);
+	}, []);
+
 	// Load persisted overrides on mount — Supabase when sequenceId available, else localStorage
 	useEffect(() => {
 		if (sequenceId) {
@@ -503,10 +519,14 @@ export function SequenceViewerWithPanel({
 									borderBottom: rowIdx === 0 ? "1px solid rgba(221,216,206,0.4)" : undefined,
 								}}
 							>
-								{row.map((tab) => (
+								{row.map((tab, tabIdx) => {
+									const TABS: PanelTab[] = ["enzymes", "primers", "digest", "align", "orfs", "search", "ai"];
+									const globalIdx = TABS.indexOf(tab) + 1;
+									return (
 									<button
 										type="button"
 										key={tab}
+										title={`${TAB_LABELS[tab]} (Alt+${globalIdx})`}
 										onClick={() => { setActiveTab(tab); setShowAnnotationEditor(false); }}
 										style={{
 											flex: 1,
@@ -558,7 +578,8 @@ export function SequenceViewerWithPanel({
 											/>
 										)}
 									</button>
-								))}
+								);
+								})}
 							</div>
 						))}
 					</div>

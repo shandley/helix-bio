@@ -187,7 +187,7 @@ function SeqLine({
 }
 
 // Ranked pair card — primary result view
-function PairCard({ pair, rank, tmTarget, mode }: { pair: DesignPair; rank: number; tmTarget: number; mode?: string }) {
+function PairCard({ pair, rank, tmTarget, mode, focused }: { pair: DesignPair; rank: number; tmTarget: number; mode?: string; focused?: boolean }) {
 	const [copied, setCopied] = useState(false);
 	function copyPair() {
 		const text = `Fwd (${pair.fwd.len}bp, Tm ${pair.fwd.tm.toFixed(1)}°C): ${pair.fwd.seq}\nRev (${pair.rev.len}bp, Tm ${pair.rev.tm.toFixed(1)}°C): ${pair.rev.seq}`;
@@ -244,10 +244,13 @@ function PairCard({ pair, rank, tmTarget, mode }: { pair: DesignPair; rank: numb
 	const isBest = rank === 1;
 	return (
 		<div
+			id={`pair-card-${rank - 1}`}
 			style={{
 				padding: "10px 12px",
 				borderBottom: "1px solid rgba(221,216,206,0.5)",
 				background: isBest ? "rgba(26,71,49,0.04)" : "transparent",
+				outline: focused ? "1px solid rgba(26,71,49,0.35)" : "none",
+				outlineOffset: "-1px",
 			}}
 		>
 			{/* Metrics row */}
@@ -860,6 +863,7 @@ export function PrimerPanel({
 	const [assemblySearchExt, setAssemblySearchExt] = useState(200); // bp beyond region to search
 	const [pairs, setPairs] = useState<DesignPair[] | null>(null);
 	const [assemblyPairs, setAssemblyPairs] = useState<AssemblyPrimerPair[] | null>(null);
+	const [focusedPairIndex, setFocusedPairIndex] = useState(0);
 	const [warning, setWarning] = useState<string | null>(null);
 	const [running, setRunning] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -911,6 +915,45 @@ export function PrimerPanel({
 		},
 		[],
 	);
+
+	// Keyboard shortcuts:
+	//   ↑/↓  — navigate ranked primer pairs (when not in an input)
+	//   Escape — clear results
+	useEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			const tag = (document.activeElement as HTMLElement)?.tagName?.toUpperCase();
+			const inInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+
+			if (e.key === "Escape" && !inInput) {
+				setPairs(null);
+				setAssemblyPairs(null);
+				setWarning(null);
+				setFocusedPairIndex(0);
+				return;
+			}
+
+			const pairCount = pairs?.length ?? 0;
+			if (pairCount === 0 || inInput) return;
+
+			if (e.key === "ArrowDown") {
+				e.preventDefault();
+				setFocusedPairIndex((i) => {
+					const next = Math.min(i + 1, pairCount - 1);
+					document.getElementById(`pair-card-${next}`)?.scrollIntoView({ block: "nearest" });
+					return next;
+				});
+			} else if (e.key === "ArrowUp") {
+				e.preventDefault();
+				setFocusedPairIndex((i) => {
+					const next = Math.max(i - 1, 0);
+					document.getElementById(`pair-card-${next}`)?.scrollIntoView({ block: "nearest" });
+					return next;
+				});
+			}
+		};
+		document.addEventListener("keydown", handler);
+		return () => document.removeEventListener("keydown", handler);
+	}, [pairs]);
 
 	// Core worker launch — accepts explicit 1-indexed coords so annotation auto-run
 	// can bypass state (which may not yet reflect the latest selectionStart/End props).
@@ -1023,6 +1066,7 @@ export function PrimerPanel({
 				const msg = ev.data;
 				if (msg.type === "success") {
 					setResultsMode(mode);
+					setFocusedPairIndex(0);
 					if (msg.mode === "assembly") {
 						// Assembly results — no position un-rotation needed (tails don't affect coords)
 						const asmPairs = msg.result.pairs as AssemblyPrimerPair[];
@@ -1419,6 +1463,7 @@ export function PrimerPanel({
 								min={1}
 								max={seqLen}
 								onChange={(ev) => (setter as (v: string) => void)(ev.target.value)}
+								onKeyDown={(ev) => { if (ev.key === "Enter") { ev.preventDefault(); design(); } }}
 								style={{
 									width: "100%",
 									padding: "5px 8px",
@@ -1799,6 +1844,18 @@ export function PrimerPanel({
 								? "Design Assembly Primers"
 								: "Design Primers"}
 				</button>
+				<div
+					style={{
+						fontFamily: "var(--font-courier)",
+						fontSize: "7.5px",
+						color: "#b8b0a4",
+						letterSpacing: "0.04em",
+						textAlign: "right",
+						marginTop: "4px",
+					}}
+				>
+					⏎ design · ↑↓ navigate · Esc clear
+				</div>
 			</div>
 
 			{/* Results — or diagnosis card when active */}
@@ -2028,9 +2085,12 @@ export function PrimerPanel({
 										{pairs.length} ranked ·{" "}
 										{mode === "qpcr" ? "by efficiency" : "click seq to copy"}
 									</span>
+									<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8b0a4", letterSpacing: "0.03em" }}>
+										↑↓ navigate
+									</span>
 								</div>
 								{pairs.map((pair, i) => (
-									<PairCard key={i} pair={pair} rank={i + 1} tmTarget={tmTarget} mode={mode} />
+									<PairCard key={i} pair={pair} rank={i + 1} tmTarget={tmTarget} mode={mode} focused={i === focusedPairIndex} />
 								))}
 
 								{/* ── Individual primers (collapsible) ── */}

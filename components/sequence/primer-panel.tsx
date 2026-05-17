@@ -863,6 +863,13 @@ export function PrimerPanel({
 	const [warning, setWarning] = useState<string | null>(null);
 	const [running, setRunning] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	// Per-mode result cache — switching modes saves current results and restores the new
+	// mode's last results instead of clearing. Design run clears and replaces.
+	type PrimerMode = "pcr" | "qpcr" | "assembly";
+	type ModeResult = { pairs: DesignPair[] | null; assemblyPairs: AssemblyPrimerPair[] | null; warning: string | null };
+	const [modeResultCache, setModeResultCache] = useState<Partial<Record<PrimerMode, ModeResult>>>({});
+	// Which mode generated the currently displayed results
+	const [resultsMode, setResultsMode] = useState<PrimerMode | null>(null);
 	const workerRef = useRef<Worker | null>(null);
 
 	// Design parameters — shown in collapsible Options section
@@ -1012,6 +1019,7 @@ export function PrimerPanel({
 				workerRef.current = null;
 				const msg = ev.data;
 				if (msg.type === "success") {
+					setResultsMode(mode);
 					if (msg.mode === "assembly") {
 						// Assembly results — no position un-rotation needed (tails don't affect coords)
 						const asmPairs = msg.result.pairs as AssemblyPrimerPair[];
@@ -1296,10 +1304,18 @@ export function PrimerPanel({
 							key={m}
 							type="button"
 							onClick={() => {
+								// Save current mode's results before leaving
+								setModeResultCache(prev => ({
+									...prev,
+									[mode]: { pairs, assemblyPairs, warning },
+								}));
+								// Restore the new mode's cached results (null if never run)
+								const cached = modeResultCache[m];
+								setPairs(cached?.pairs ?? null);
+								setAssemblyPairs(cached?.assemblyPairs ?? null);
+								setWarning(cached?.warning ?? null);
 								setMode(m);
-								setPairs(null);
-								setAssemblyPairs(null);
-								setWarning(null);
+								setError(null);
 								setDiagnoseState({ status: "idle" });
 								abortDiagnoseRef.current?.abort();
 								// Auto-open Options in Assembly mode so overlap/enzyme/search
@@ -1784,6 +1800,22 @@ export function PrimerPanel({
 
 			{/* Results — or diagnosis card when active */}
 			<div style={{ flex: 1, overflowY: "auto" }}>
+				{/* Stale results banner — shown when cached results are from a different mode */}
+				{diagnoseState.status === "idle" && resultsMode !== null && resultsMode !== mode && !!(pairs?.length ?? assemblyPairs?.length) && (
+					<div
+						style={{
+							padding: "7px 12px",
+							background: "rgba(184,147,58,0.06)",
+							borderBottom: "1px solid rgba(184,147,58,0.18)",
+							fontFamily: "var(--font-courier)",
+							fontSize: "8px",
+							color: "#b8933a",
+							letterSpacing: "0.04em",
+						}}
+					>
+						{resultsMode === "qpcr" ? "qPCR" : resultsMode === "assembly" ? "Assembly" : "PCR"} results cached · click Design to run {mode === "qpcr" ? "qPCR" : mode === "assembly" ? "Assembly" : "PCR"}
+					</div>
+				)}
 				{diagnoseState.status !== "idle" ? (
 					diagnoseState.status === "error" ? (
 						<div

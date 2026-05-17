@@ -2135,9 +2135,6 @@ export function PrimerPanel({
 										{pairs.length} ranked ·{" "}
 										{mode === "qpcr" ? "by efficiency" : "click seq to copy"}
 									</span>
-									<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8b0a4", letterSpacing: "0.03em" }}>
-										↑↓ navigate
-									</span>
 								</div>
 								{pairs.map((pair, i) => (
 									<PairCard key={i} pair={pair} rank={i + 1} tmTarget={tmTarget} mode={mode} focused={i === focusedPairIndex} />

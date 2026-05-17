@@ -45,10 +45,7 @@ export async function login(formData: FormData) {
 			return { error: "Incorrect email or password." };
 		}
 		if (error.message.toLowerCase().includes("email not confirmed")) {
-			return {
-				error:
-					"Please confirm your email before signing in. Check your inbox for the confirmation link.",
-			};
+			return { error: "Incorrect email or password. If you recently signed up, check your inbox to confirm your account." };
 		}
 		return { error: error.message };
 	}
@@ -80,7 +77,10 @@ export async function signup(formData: FormData) {
 			return { error: "Please wait a moment before trying again." };
 		}
 		if (error.message.toLowerCase().includes("already registered")) {
-			return { error: "An account with this email already exists. Sign in instead." };
+			// Don't reveal whether the address is registered — show the same
+			// "check your email" state. Supabase sends the existing user a
+			// "someone tried to sign up with your address" notification.
+			return { requiresConfirmation: true, email: formData.get("email") as string };
 		}
 		return { error: error.message };
 	}
@@ -105,20 +105,7 @@ export async function deleteAccount(): Promise<{ error: string } | never> {
 	const { data: { user } } = await supabase.auth.getUser();
 	if (!user) return { error: "Not authenticated." };
 
-	// 1. Collect all storage files owned by this user
-	const { data: files } = await supabase.storage
-		.from("sequences")
-		.list(user.id, { limit: 1000 });
-
-	if (files && files.length > 0) {
-		const paths = files.map((f) => `${user.id}/${f.name}`);
-		await supabase.storage.from("sequences").remove(paths);
-	}
-
-	// 2. Hard-delete all sequence rows (including soft-deleted)
-	await supabase.from("sequences").delete().eq("user_id", user.id);
-
-	// 3. Delete the auth user — requires service role key
+	// 1. Fail fast — verify service key before touching any data
 	const adminUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 	const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 	if (!serviceKey) return { error: "Server configuration error. Contact support." };
@@ -126,10 +113,34 @@ export async function deleteAccount(): Promise<{ error: string } | never> {
 	const admin = createAdminClient(adminUrl, serviceKey, {
 		auth: { autoRefreshToken: false, persistSession: false },
 	});
+
+	// 2. Collect storage file paths while the user session is still valid.
+	//    Paginate so users with >1000 files get full cleanup.
+	const storagePaths: string[] = [];
+	const pageSize = 1000;
+	let offset = 0;
+	while (true) {
+		const { data: page } = await supabase.storage
+			.from("sequences")
+			.list(user.id, { limit: pageSize, offset });
+		if (!page || page.length === 0) break;
+		for (const f of page) storagePaths.push(`${user.id}/${f.name}`);
+		if (page.length < pageSize) break;
+		offset += pageSize;
+	}
+
+	// 3. Delete the auth user. The sequences table has ON DELETE CASCADE on
+	//    user_id, so all sequence rows are removed automatically.
 	const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
 	if (deleteError) return { error: deleteError.message };
 
-	// 4. Sign out locally and redirect home
+	// 4. Remove storage files using the admin client — the user no longer
+	//    exists so the anon client would fail RLS on storage.objects.
+	if (storagePaths.length > 0) {
+		await admin.storage.from("sequences").remove(storagePaths);
+	}
+
+	// 5. Clear the local session and redirect home
 	await supabase.auth.signOut();
 	redirect("/");
 }

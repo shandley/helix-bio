@@ -633,6 +633,14 @@ export function SequenceViewerWithPanel({
 								annotationName={annotationName}
 								onShowPlots={setPrimerPlotsData}
 								onEditAnnotation={selectedAnnotation ? () => setShowAnnotationEditor(true) : undefined}
+								crisprUrl={
+									selectedAnnotation && parsed.seq.length > 0 &&
+									selectedAnnotation.end - selectedAnnotation.start <= 8000
+										? `/crispr?seq=${encodeURIComponent(
+												parsed.seq.slice(selectedAnnotation.start, selectedAnnotation.end),
+											)}&name=${encodeURIComponent(selectedAnnotation.name)}`
+										: undefined
+								}
 							/>
 						)}
 						{activeTab === "digest" && (

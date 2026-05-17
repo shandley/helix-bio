@@ -38,6 +38,7 @@ export default function LandingPage() {
 						["/library", "Library"],
 						["/primers", "Primers"],
 						["/sanger", "Sanger"],
+						["/crispr", "CRISPR"],
 						["https://github.com/shandley/ori-bio", "GitHub"],
 					].map(([href, label]) => (
 						<Link

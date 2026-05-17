@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { AssemblyPrimerPair, PrimerCandidate, PrimerPair } from "@shandley/primd";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PrimerPlotsData } from "@/components/primer-viz/primer-plots-drawer";
@@ -34,6 +35,8 @@ interface PrimerPanelProps {
 	onShowPlots?: (data: PrimerPlotsData) => void;
 	/** Called when user clicks the edit button on the annotation name badge. */
 	onEditAnnotation?: () => void;
+	/** When set, renders a "CRISPR" deep-link button on the annotation badge. */
+	crisprUrl?: string;
 }
 
 function Badge({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
@@ -847,6 +850,7 @@ export function PrimerPanel({
 	sequenceName,
 	onShowPlots,
 	onEditAnnotation,
+	crisprUrl,
 }: PrimerPanelProps) {
 	const [start, setStart] = useState<string>(
 		selectionStart !== undefined ? String(selectionStart + 1) : String(Math.floor(seqLen / 3) + 1),
@@ -1362,6 +1366,28 @@ export function PrimerPanel({
 								>
 									✎
 								</button>
+							)}
+							{crisprUrl && (
+								<Link
+									href={crisprUrl}
+									target="_blank"
+									rel="noopener"
+									title="Design CRISPR guides for this feature"
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "7.5px",
+										letterSpacing: "0.06em",
+										color: "#9a9284",
+										background: "none",
+										border: "1px solid #c8c0b8",
+										borderRadius: "2px",
+										padding: "1px 4px",
+										textDecoration: "none",
+										flexShrink: 0,
+									}}
+								>
+									CRISPR
+								</Link>
 							)}
 						</span>
 					) : selectionStart !== undefined ? (

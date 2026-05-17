@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-16T00:00:00.000Z",
+  "title": "Design System: Ori",
+  "extensions": {
+    "colorMeta": {
+      "deep-forest": {
+        "role": "primary",
+        "displayName": "Deep Forest",
+        "canonical": "oklch(0.42 0.10 153)",
+        "tonalRamp": ["#091911", "#0f2b1c", "#174027", "#1a4731", "#2d6b49", "#4a8e68", "#7ab594", "#b8d8c6"]
+      },
+      "forest-mid": {
+        "role": "primary-light",
+        "displayName": "Forest Mid",
+        "canonical": "oklch(0.54 0.09 153)",
+        "tonalRamp": ["#0f2b1c", "#174027", "#1a4731", "#2d7a54", "#4a9e72", "#78c49a", "#aadbbe", "#d1eddf"]
+      },
+      "burnished-amber": {
+        "role": "secondary",
+        "displayName": "Burnished Amber",
+        "canonical": "oklch(0.67 0.10 78)",
+        "tonalRamp": ["#1e1208", "#352010", "#4f3018", "#6d4222", "#8e5c2e", "#b8933a", "#d4b468", "#ecd9a8"]
+      },
+      "bone": {
+        "role": "neutral-bg",
+        "displayName": "Bone",
+        "canonical": "oklch(0.96 0.005 85)",
+        "tonalRamp": ["#1c1a15", "#302d27", "#4c4840", "#635f56", "#7e7a6e", "#9c9890", "#c5bfb3", "#f5f0e8"]
+      },
+      "bone-light": {
+        "role": "neutral-surface",
+        "displayName": "Bone Light",
+        "canonical": "oklch(0.98 0.004 85)",
+        "tonalRamp": ["#1e1c17", "#332f29", "#504c44", "#686460", "#878070", "#a5a098", "#cbc6bc", "#faf7f2"]
+      },
+      "bone-mid": {
+        "role": "neutral-muted",
+        "displayName": "Bone Mid",
+        "canonical": "oklch(0.92 0.006 85)",
+        "tonalRamp": ["#1c1a15", "#302d27", "#4c4840", "#635f56", "#7e7a6e", "#9c9890", "#c5bfb3", "#ece6d8"]
+      },
+      "ink": {
+        "role": "neutral-fg",
+        "displayName": "Ink",
+        "canonical": "oklch(0.18 0.008 60)",
+        "tonalRamp": ["#1c1a16", "#2e2c26", "#434039", "#5a5648", "#726e64", "#928e82", "#bab6ac", "#e8e4dc"]
+      },
+      "ink-muted": {
+        "role": "neutral-fg-secondary",
+        "displayName": "Ink Muted",
+        "canonical": "oklch(0.42 0.006 60)",
+        "tonalRamp": ["#1c1a16", "#2e2c26", "#3e3b34", "#4a4740", "#5a5648", "#6e6a5e", "#908c82", "#c0bbb2"]
+      },
+      "ink-faint": {
+        "role": "neutral-fg-tertiary",
+        "displayName": "Ink Faint",
+        "canonical": "oklch(0.62 0.005 60)",
+        "tonalRamp": ["#2e2c26", "#3e3b34", "#524f48", "#635f58", "#767268", "#9a9284", "#b8b4ac", "#d8d4cc"]
+      },
+      "ash": {
+        "role": "neutral-border",
+        "displayName": "Ash",
+        "canonical": "oklch(0.87 0.007 75)",
+        "tonalRamp": ["#302d27", "#454240", "#5e5b54", "#787470", "#9a9284", "#b8b4ac", "#ccc8c2", "#ddd8ce"]
+      },
+      "terra": {
+        "role": "tertiary",
+        "displayName": "Terra",
+        "canonical": "oklch(0.42 0.10 25)",
+        "tonalRamp": ["#1e0c08", "#3a1510", "#5c2118", "#8b3a2a", "#b05040", "#cc7060", "#e0a098", "#f2d0cc"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Landing page hero headings only. One per view." },
+      "headline": { "displayName": "Headline", "purpose": "Landing page section headers and feature names. Never inside the app shell." },
+      "title": { "displayName": "Title", "purpose": "Panel headers, card titles, modal headings inside the app. Karla 600, not Playfair." },
+      "body": { "displayName": "Body", "purpose": "All prose copy, descriptions, tooltips, warning messages. Max 72ch." },
+      "label": { "displayName": "Label / Data", "purpose": "Scientific data exclusively: sequences, primer sequences, Tm, GC%, coordinates, Phred scores, file formats." }
+    },
+    "shadows": [
+      {
+        "name": "card-ring",
+        "value": "0 0 0 1px rgba(28,26,22,0.10)",
+        "purpose": "Card edge definition. The only 'elevation' in this flat system. Use outline or ring CSS properties, not box-shadow."
+      },
+      {
+        "name": "focus-ring-primary",
+        "value": "0 0 0 3px rgba(26,71,49,0.25)",
+        "purpose": "Focus ring for primary buttons. Applied alongside border-color: #1a4731."
+      },
+      {
+        "name": "focus-ring-default",
+        "value": "0 0 0 3px rgba(26,71,49,0.20)",
+        "purpose": "Focus ring for inputs and outline elements."
+      },
+      {
+        "name": "nav-blur",
+        "value": "backdrop-filter: blur(8px)",
+        "purpose": "Navigation bar. The sole use of blur in the system. Structural, not decorative."
+      }
+    ],
+    "motion": [
+      { "name": "ease-state", "value": "0.15s ease", "purpose": "Default duration and easing for color/background state changes." },
+      { "name": "ease-transform", "value": "0.1s ease", "purpose": "Button active transform (translateY 1px)." },
+      { "name": "ease-spin-slow", "value": "spin 80s linear infinite", "purpose": "Plasmid SVG rotation on landing page. Purely atmospheric; no interactive meaning." },
+      { "name": "ease-fade-up", "value": "fade-up 0.6s ease-out forwards", "purpose": "Landing page hero entrance. One-shot, not repeatable." },
+      { "name": "ease-rule-grow", "value": "rule-grow 0.8s ease-out forwards", "purpose": "Landing page rule line entrance. One-shot." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The primary action. Deep Forest background. Used for submit, design, upload, confirm.",
+      "html": "<button class=\"ds-btn-primary\">Design Construct</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 10px; background: #1a4731; color: #ffffff; font-family: Karla, system-ui, sans-serif; font-size: 14px; font-weight: 500; border: 1px solid transparent; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: background 0.15s ease, transform 0.1s ease; outline: none; user-select: none; } .ds-btn-primary:hover { background: rgba(26,71,49,0.85); } .ds-btn-primary:focus-visible { border-color: #1a4731; box-shadow: 0 0 0 3px rgba(26,71,49,0.25); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action. Bone background, Ash border. Used for cancel, export, secondary navigation.",
+      "html": "<button class=\"ds-btn-outline\">Export CSV</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 10px; background: #f5f0e8; color: #1c1a16; font-family: Karla, system-ui, sans-serif; font-size: 14px; font-weight: 500; border: 1px solid #ddd8ce; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: background 0.15s ease; outline: none; } .ds-btn-outline:hover { background: #ece6d8; } .ds-btn-outline:focus-visible { border-color: #1a4731; box-shadow: 0 0 0 3px rgba(26,71,49,0.20); } .ds-btn-outline:disabled { opacity: 0.5; pointer-events: none; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Tertiary action. No visible background or border at rest. Used in toolbars, icon actions, tab-style controls.",
+      "html": "<button class=\"ds-btn-ghost\">Cancel</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; justify-content: center; height: 32px; padding: 0 10px; background: transparent; color: #1c1a16; font-family: Karla, system-ui, sans-serif; font-size: 14px; font-weight: 500; border: 1px solid transparent; border-radius: 4px; cursor: pointer; white-space: nowrap; transition: background 0.15s ease; outline: none; } .ds-btn-ghost:hover { background: #ece6d8; } .ds-btn-ghost:focus-visible { border-color: #1a4731; box-shadow: 0 0 0 3px rgba(26,71,49,0.20); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Standard text input. Transparent on Bone ground. Used for search, form fields, sequence entry.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Search sequences…\" />",
+      "css": ".ds-input { height: 32px; width: 100%; padding: 0 10px; background: transparent; color: #1c1a16; font-family: Karla, system-ui, sans-serif; font-size: 14px; border: 1px solid #ddd8ce; border-radius: 4px; outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease; } .ds-input::placeholder { color: #9a9284; } .ds-input:focus { border-color: #1a4731; box-shadow: 0 0 0 3px rgba(26,71,49,0.20); } .ds-input:disabled { opacity: 0.5; background: #ece6d8; cursor: not-allowed; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Container surface. Bone Light, hairline ring, minimal rounding. Used for sequence records, primer results, digest output.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">pUC19 <span class=\"ds-tag\">4686 bp</span></div><div class=\"ds-card-body\">Standard E. coli cloning vector carrying AmpR and lacZ-alpha.</div></div>",
+      "css": ".ds-card { background: #faf7f2; border-radius: 6px; outline: 1px solid rgba(28,26,22,0.10); padding: 16px; display: flex; flex-direction: column; gap: 8px; } .ds-card-title { display: flex; align-items: center; gap: 8px; font-family: Karla, system-ui, sans-serif; font-size: 15px; font-weight: 600; color: #1c1a16; } .ds-card-body { font-family: Karla, system-ui, sans-serif; font-size: 13px; color: #5a5648; line-height: 1.5; } .ds-tag { display: inline-flex; align-items: center; padding: 1px 6px; background: #ece6d8; border-radius: 4px; font-family: Courier Prime, Courier New, monospace; font-size: 10px; color: #5a5648; letter-spacing: 0.04em; }"
+    },
+    {
+      "name": "Primary Badge",
+      "kind": "chip",
+      "refersTo": "badge-primary",
+      "description": "Status and feature-type labels. Pill shape. Deep Forest for primary status, Bone Mid for neutral.",
+      "html": "<span class=\"ds-badge-primary\">GenBank</span> <span class=\"ds-badge-outline\">CDS</span>",
+      "css": ".ds-badge-primary { display: inline-flex; align-items: center; justify-content: center; height: 20px; padding: 0 8px; background: #1a4731; color: #ffffff; font-family: Karla, system-ui, sans-serif; font-size: 12px; font-weight: 500; border-radius: 9999px; border: 1px solid transparent; white-space: nowrap; } .ds-badge-outline { display: inline-flex; align-items: center; justify-content: center; height: 20px; padding: 0 8px; background: transparent; color: #1c1a16; font-family: Karla, system-ui, sans-serif; font-size: 12px; font-weight: 500; border-radius: 9999px; border: 1px solid #ddd8ce; white-space: nowrap; }"
+    },
+    {
+      "name": "Top Navigation",
+      "kind": "nav",
+      "refersTo": "button-ghost",
+      "description": "52px app chrome. Bone background with backdrop blur. Deep Forest gradient accent line at top. Playfair wordmark + Courier Beta badge.",
+      "html": "<header class=\"ds-nav\"><div class=\"ds-nav-accent\"></div><a class=\"ds-nav-logo\" href=\"#\"><span class=\"ds-nav-wordmark\">Ori</span><span class=\"ds-nav-badge\">beta</span></a><span class=\"ds-nav-user\">researcher@lab.edu</span></header>",
+      "css": ".ds-nav { height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(245,240,232,0.97); border-bottom: 1px solid #ddd8ce; backdrop-filter: blur(8px); position: relative; flex-shrink: 0; } .ds-nav-accent { position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #1a4731 0%, #2d7a54 50%, transparent 100%); opacity: 0.6; pointer-events: none; } .ds-nav-logo { display: flex; align-items: baseline; gap: 10px; text-decoration: none; } .ds-nav-wordmark { font-family: Playfair Display, Georgia, serif; font-size: 22px; font-weight: 400; color: #1c1a16; letter-spacing: -0.01em; } .ds-nav-badge { font-family: Courier Prime, Courier New, monospace; font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: #1a4731; border: 1px solid rgba(26,71,49,0.35); padding: 2px 7px; border-radius: 2px; } .ds-nav-user { font-family: Courier Prime, Courier New, monospace; font-size: 11px; color: #9a9284; letter-spacing: 0.04em; cursor: pointer; }"
+    },
+    {
+      "name": "Feature Annotation Label",
+      "kind": "custom",
+      "refersTo": "badge-primary",
+      "description": "The 'margin note' of the annotated manuscript. Tight Courier Prime label for sequence feature annotations (AmpR, lacZ, pMB1 ori). Distinctive signature component.",
+      "html": "<div class=\"ds-annotation\"><span class=\"ds-annotation-name\">AmpR</span><span class=\"ds-annotation-meta\">1629–2489</span></div>",
+      "css": ".ds-annotation { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; background: rgba(26,71,49,0.07); border: 1px solid rgba(26,71,49,0.20); border-radius: 3px; } .ds-annotation-name { font-family: Courier Prime, Courier New, monospace; font-size: 11px; font-weight: 700; color: #1a4731; letter-spacing: 0.02em; } .ds-annotation-meta { font-family: Courier Prime, Courier New, monospace; font-size: 10px; color: #5a5648; letter-spacing: 0.04em; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Annotated Manuscript",
+    "overview": "Ori is a molecular biology workbench where the interface is itself a kind of annotation. Sequences are marked up with features. Primers are designed in the margins. Restriction sites are noted and digests simulated. The design system honors this: it looks like a well-kept, well-annotated scientific record, not a SaaS dashboard.\n\nThe palette is warm parchment, deep forest green, and burnished amber — the colors of aged paper, botanical ink, and a brass-capped centrifuge tube. The body background carries actual horizontal ruled lines at 28px intervals and a barely-there paper grain overlay. These are not decorative gestures; they are the substrate that makes the content legible as scientific rather than commercial.\n\nType is handled with the same deliberateness. Playfair Display carries section headings. Karla handles all prose and UI copy. Courier Prime speaks exclusively in the language of data: sequences, primer sequences, thermodynamic values, position coordinates, Phred scores. These three families never trade roles.",
+    "keyCharacteristics": [
+      "Warm tonal palette rooted in parchment, not white",
+      "Ruled-line body background recalling a physical lab notebook",
+      "Three-family type system with strictly enforced role separation",
+      "Nearly square corners (4px) throughout; components do not round themselves",
+      "Flat/tonal elevation: rings and tonal stacking, no box-shadows",
+      "Forest green as the sole interactive signal color; amber as the sole warm accent",
+      "Courier Prime reserved exclusively for scientific data, never prose"
+    ],
+    "rules": [
+      { "name": "The One Green Rule", "body": "Deep Forest is the only interactive signal color. If an element is green, it is acting or focused. If it is not green, it is not. Use Deep Forest for primary buttons, focus rings, hover states on text links, and annotation labels. Do not use it for decorative purposes.", "section": "colors" },
+      { "name": "The Warm Ground Rule", "body": "Every surface tints toward the brand hue. Bone, not white. Ink, not black. Ash, not cool gray. Cold neutrals are prohibited at every scale step.", "section": "colors" },
+      { "name": "The Amber Scarcity Rule", "body": "Burnished Amber appears on fewer than 10% of any screen at any given time. It marks warnings and thematic warmth; it is not a highlight color for information hierarchy.", "section": "colors" },
+      { "name": "The Courier Signal Rule", "body": "Courier Prime is the language of scientific data, and only scientific data. Prose text never appears in Courier. If a value could appear in a GenBank file or a gel report, it speaks in Courier. If it is UI copy, it speaks in Karla.", "section": "typography" },
+      { "name": "The Playfair Boundary Rule", "body": "Playfair Display is prohibited inside the app shell. It belongs to landing-page headings and the nav wordmark. Inside the dashboard, sequence viewer, and primer tool, title-level text uses Karla 600.", "section": "typography" },
+      { "name": "The Ring-Not-Shadow Rule", "body": "Cards and containers use outline: 1px solid rgba(28,26,22,0.10) for edge definition. Box-shadow is prohibited. The UI does not float; it rests on the manuscript surface.", "section": "elevation" },
+      { "name": "The Accent Line Rule", "body": "The navigation bar carries a 2px gradient line at its top edge (deep-forest to transparent). This is the only decorative element that uses a gradient. It is not replicated anywhere else in the UI.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Bone (#f5f0e8) as every page surface. Never replace it with white.",
+      "Do use Courier Prime for every scientific value: sequences, Tm, GC%, position coordinates, Phred scores, file sizes.",
+      "Do keep Deep Forest (#1a4731) as the sole signal color for interactive elements.",
+      "Do use the tonal lift system: Bone for ground, Bone Light for cards, Bone Mid for secondary surfaces and hover states.",
+      "Do keep borders and rings at Ash (#ddd8ce) or weaker.",
+      "Do use 4px radius on buttons and inputs. 6px on cards.",
+      "Do rely on the 1px outline ring (rgba(28,26,22,0.10)) for card edge definition, not box-shadow.",
+      "Do reserve Playfair Display for the landing page and nav wordmark.",
+      "Do keep Burnished Amber (#b8933a) for warnings and thematic warmth, fewer than 10% of any screen.",
+      "Do ensure WCAG 2.1 AA contrast ratios; verify Ink on Bone and Ink Muted on Bone Light pass AA at body size."
+    ],
+    "donts": [
+      "Don't look like SnapGene: no clinical whiteness, no feature-dense panel chrome, no Windows-native widget aesthetics.",
+      "Don't look like Benchling: no corporate blue palette, no heavy left-nav chrome, no grid of identical management cards.",
+      "Don't use dark mode with neon accents or cyan-on-black typography.",
+      "Don't sand down the manuscript aesthetic with generic warm-neutral SaaS patterns.",
+      "Don't use box-shadow for elevation. The UI rests on the page; it does not float.",
+      "Don't use border-left or border-right greater than 1px as a colored stripe accent on cards, alerts, or list items.",
+      "Don't use gradient text (background-clip: text). Use Deep Forest solid for emphasis.",
+      "Don't use Playfair Display inside the app shell for panel headings or card titles.",
+      "Don't use Courier Prime for prose, buttons, nav copy, or any UI text that is not scientific data or metadata.",
+      "Don't use cold grays or cool-tinted neutrals anywhere. Every neutral tints toward the brand hue.",
+      "Don't put color as the sole indicator of meaning in sequence annotations or primer quality scores."
+    ]
+  }
+}

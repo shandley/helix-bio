@@ -298,7 +298,7 @@ export function AccessibilityTrack({
 					position: "relative",
 					borderRadius: "3px",
 					overflow: "hidden",
-					boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.08)",
+					outline: "1px solid rgba(28,26,22,0.08)",
 				}}
 			>
 				{!ready ? (
@@ -330,7 +330,7 @@ export function AccessibilityTrack({
 						padding: "6px 10px",
 						pointerEvents: "none",
 						zIndex: 9999,
-						boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
+						border: "1px solid rgba(255,255,255,0.08)",
 						whiteSpace: "nowrap",
 					}}
 				>

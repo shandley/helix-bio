@@ -1904,7 +1904,7 @@ export function PrimerPanel({
 						marginTop: "4px",
 					}}
 				>
-					⏎ design · ↑↓ navigate · Esc clear
+					⏎ design · ↑↓ navigate · Esc cancel/clear
 				</div>
 			</div>
 

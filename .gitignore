@@ -47,3 +47,12 @@ data/canonical_features_raw/
 data/embeddings*
 data/*.float32
 data/*.npz
+data/fill_missing/
+data/generation_log.txt
+data/test_synbio_construct.fasta
+
+# Development screenshots and artifacts
+*.png
+.playwright-mcp/
+designs/
+helix-feature-db/

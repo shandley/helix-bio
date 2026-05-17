@@ -916,7 +916,7 @@ export function PrimerPanel({
 	// can bypass state (which may not yet reflect the latest selectionStart/End props).
 	// Handles circular origin-spanning selections by rotating the sequence.
 	const runDesign = useCallback(
-		(s: number, e: number) => {
+		(s: number, e: number, overrides?: { maxTmDiff?: number; qpcrAmpliconMin?: number; qpcrAmpliconMax?: number }) => {
 			// Always clear any previous diagnosis when a new design is attempted
 			setDiagnoseState({ status: "idle" });
 			abortDiagnoseRef.current?.abort();
@@ -988,8 +988,11 @@ export function PrimerPanel({
 						: {}),
 					...(mode === "qpcr"
 						? {
-								productSizeRange: [qpcrAmpliconMin, qpcrAmpliconMax] as [number, number],
-								maxTmDiff,
+								productSizeRange: [
+									overrides?.qpcrAmpliconMin ?? qpcrAmpliconMin,
+									overrides?.qpcrAmpliconMax ?? qpcrAmpliconMax,
+								] as [number, number],
+								maxTmDiff: overrides?.maxTmDiff ?? maxTmDiff,
 							}
 						: {}),
 					tmTarget,
@@ -1081,10 +1084,10 @@ export function PrimerPanel({
 	const runDesignRef = useRef(runDesign);
 	runDesignRef.current = runDesign;
 
-	const design = useCallback(() => {
+	const design = useCallback((overrides?: { maxTmDiff?: number; qpcrAmpliconMin?: number; qpcrAmpliconMax?: number }) => {
 		const s = parseInt(start, 10);
 		const e = parseInt(end, 10);
-		runDesign(s, e);
+		runDesign(s, e, overrides);
 	}, [start, end, runDesign]);
 
 	// Auto-design when an annotation is clicked — use prop coords directly to avoid
@@ -1770,7 +1773,7 @@ export function PrimerPanel({
 
 				<button
 					type="button"
-					onClick={design}
+					onClick={() => design()}
 					disabled={running}
 					style={{
 						width: "100%",
@@ -1923,8 +1926,9 @@ export function PrimerPanel({
 								<button
 									type="button"
 									onClick={() => {
-										setMaxTmDiff(maxTmDiff + 1);
-										design();
+										const next = maxTmDiff + 1;
+										setMaxTmDiff(next);
+										design({ maxTmDiff: next });
 									}}
 									style={{
 										flex: 1,
@@ -1946,9 +1950,11 @@ export function PrimerPanel({
 								<button
 									type="button"
 									onClick={() => {
-										setQpcrAmpliconMin(Math.max(50, qpcrAmpliconMin - 20));
-										setQpcrAmpliconMax(Math.min(300, qpcrAmpliconMax + 50));
-										design();
+										const nextMin = Math.max(50, qpcrAmpliconMin - 20);
+										const nextMax = Math.min(300, qpcrAmpliconMax + 50);
+										setQpcrAmpliconMin(nextMin);
+										setQpcrAmpliconMax(nextMax);
+										design({ qpcrAmpliconMin: nextMin, qpcrAmpliconMax: nextMax });
 									}}
 									style={{
 										flex: 1,

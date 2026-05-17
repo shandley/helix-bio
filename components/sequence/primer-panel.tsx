@@ -1096,7 +1096,22 @@ export function PrimerPanel({
 					}
 					if (msg.result.warning) setWarning(msg.result.warning);
 				} else {
-					setError("Primer design failed. Check your sequence.");
+					// msg.message carries the actual primd error — show it directly
+					// when it's short and user-readable (e.g. input validation),
+					// otherwise compose a context-rich fallback.
+					const modeLabel = mode === "qpcr" ? "qPCR" : mode === "assembly" ? "Assembly" : "PCR";
+					const regionStr = `region ${s}–${e}`;
+					const hint =
+						mode === "qpcr"
+							? "Try increasing Max ΔTm or widening the amplicon range in Options."
+							: mode === "assembly"
+								? "Try increasing Search ± or check that the template is complete."
+								: "Try widening GC %, relaxing Tm target, or selecting a larger region.";
+					const reason =
+						msg.message && msg.message.length < 200 && !msg.message.includes("at ")
+							? msg.message
+							: `${modeLabel} design failed for ${regionStr}. ${hint}`;
+					setError(reason);
 					onPrimersDesigned?.(null);
 				}
 				setRunning(false);
@@ -1105,7 +1120,7 @@ export function PrimerPanel({
 			worker.onerror = () => {
 				worker.terminate();
 				workerRef.current = null;
-				setError("Primer design failed. Check your sequence.");
+				setError("Primer worker crashed. Try a shorter region, or reload the page if the problem persists.");
 				onPrimersDesigned?.(null);
 				setRunning(false);
 			};

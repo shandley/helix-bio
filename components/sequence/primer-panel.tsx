@@ -929,10 +929,17 @@ export function PrimerPanel({
 				!!el?.closest('[contenteditable="true"]');
 
 			if (e.key === "Escape" && !inInput) {
-				setPairs(null);
-				setAssemblyPairs(null);
-				setWarning(null);
-				setFocusedPairIndex(0);
+				if (running) {
+					workerRef.current?.terminate();
+					workerRef.current = null;
+					setRunning(false);
+					setError(null);
+				} else {
+					setPairs(null);
+					setAssemblyPairs(null);
+					setWarning(null);
+					setFocusedPairIndex(0);
+				}
 				return;
 			}
 
@@ -957,7 +964,7 @@ export function PrimerPanel({
 		};
 		document.addEventListener("keydown", handler);
 		return () => document.removeEventListener("keydown", handler);
-	}, [pairs]);
+	}, [pairs, running]);
 
 	// Core worker launch — accepts explicit 1-indexed coords so annotation auto-run
 	// can bypass state (which may not yet reflect the latest selectionStart/End props).
@@ -1835,34 +1842,58 @@ export function PrimerPanel({
 					</div>
 				)}
 
-				<button
-					type="button"
-					onClick={() => design()}
-					disabled={running}
-					style={{
-						width: "100%",
-						padding: "8px",
-						background: "#1a4731",
-						color: "white",
-						fontFamily: "var(--font-courier)",
-						fontSize: "9px",
-						letterSpacing: "0.12em",
-						textTransform: "uppercase",
-						border: "none",
-						borderRadius: "3px",
-						cursor: running ? "not-allowed" : "pointer",
-						opacity: running ? 0.7 : 1,
-						transition: "opacity 0.15s",
-					}}
-				>
-					{running
-						? "Designing…"
-						: mode === "qpcr"
+				{running ? (
+					<button
+						type="button"
+						onClick={() => {
+							workerRef.current?.terminate();
+							workerRef.current = null;
+							setRunning(false);
+							setError(null);
+						}}
+						style={{
+							width: "100%",
+							padding: "8px",
+							background: "#f5f0e8",
+							color: "#5a5648",
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							letterSpacing: "0.12em",
+							textTransform: "uppercase",
+							border: "1px solid #ddd8ce",
+							borderRadius: "3px",
+							cursor: "pointer",
+							transition: "background 0.1s",
+						}}
+					>
+						× Cancel
+					</button>
+				) : (
+					<button
+						type="button"
+						onClick={() => design()}
+						style={{
+							width: "100%",
+							padding: "8px",
+							background: "#1a4731",
+							color: "white",
+							fontFamily: "var(--font-courier)",
+							fontSize: "9px",
+							letterSpacing: "0.12em",
+							textTransform: "uppercase",
+							border: "none",
+							borderRadius: "3px",
+							cursor: "pointer",
+							transition: "opacity 0.15s",
+						}}
+					>
+						{mode === "qpcr"
 							? "Design qPCR Primers"
 							: mode === "assembly"
 								? "Design Assembly Primers"
 								: "Design Primers"}
-				</button>
+					</button>
+				)}
 				<div
 					style={{
 						fontFamily: "var(--font-courier)",

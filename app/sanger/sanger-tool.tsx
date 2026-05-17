@@ -1246,7 +1246,6 @@ export function SangerTool() {
 								ref={fileInputRef}
 								type="file"
 								multiple
-								accept=".ab1,.abi,.fa,.fasta,.fna"
 								style={{ display: "none" }}
 								onChange={(e) => e.target.files && void addFiles(e.target.files)}
 							/>

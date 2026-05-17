@@ -15,10 +15,18 @@ Open-source, web-based, LLM-powered molecular biology platform.
 - `scripts/update-parts-catalog.py` — Fetches real sequences from features.json for the parts catalog; re-run after Addgene expansion
 
 ## primd — primer design library
-Published on npm as **`@shandley/primd`** v0.3.2. Lives at `../primd` (sibling). Ori uses `^0.3.2` from npm.
-- After changing primd source: build → bump version → `npm publish --access public` → update `package.json` version → `pnpm install`
+Published on npm as **`@shandley/primd`** v0.3.6. Lives at `../primd` (sibling). Ori uses `^0.3.6` from npm.
+- After changing primd source: `npx tsc --project tsconfig.build.json` → bump version → `npm publish --access public` → update `package.json` version → `pnpm install`
 - Exports: `designPCR`, `designLAMP`, `designQPCR`, `designAssembly` (Gibson + Golden Gate), thermodynamic utilities
 - Web Worker: `components/sequence/primer-design.worker.ts` runs all design modes off the main thread
+
+### primd algorithm notes (v0.3.3+)
+- **Temperature**: secondary structure (hairpin, self-dimer, heterodimer ΔG) evaluated at annealing temperature, not hardcoded 37°C. `runDesign` accepts optional `overrides` parameter for quick-fix buttons.
+- **Assembly**: `AssemblyPrimerPair.fwd/rev` include `fullPrimerTm` (tail + annealing region Tm) — use this for ordering, not `annealingTm`
+- **LAMP**: `LAMPPrimerSet` includes `fipBipDimerDG` (bidirectional, at reaction temperature)
+- **Graduated GC clamp**: 3-level penalty (strong/single/none) via `calcClampPenalty(seq, maxPenalty)` in utils
+- **Input validation**: all `design*` functions validate inputs and return `{ pairs: [], warning }` on invalid input (never throw)
+- **`offTarget: 0`** on `PrimerCandidate` is hardcoded — not implemented; use external BLAST for specificity
 
 ## abif-ts — ABIF parser
 Published on npm as **`@shandley/abif-ts`** v0.1.0. Lives at `../abif-ts` (sibling). Same publish workflow as primd.
@@ -31,6 +39,21 @@ Published on npm as **`@shandley/abif-ts`** v0.1.0. Lives at `../abif-ts` (sibli
 - **SeqViz**: Pass `seq` + `annotations` props directly — do NOT use `file` prop (crashes on NCBI GenBank). Topology is controlled via `viewer` prop ("linear"/"circular"/"both"), not a `topology` prop.
 - **SeqViz `onSelection`**: When an annotation is clicked, the selection object has `type: "ANNOTATION"` and `name: "AmpR"` (etc). The `ref` field is stripped by SeqViz before reaching `onSelection` — use `name` not `ref`.
 - **Turbopack + symlinks**: Do not set `turbopack.root` to expand the filesystem root — it breaks tailwind CSS resolution. Use `file:` protocol for local packages instead.
+
+## Design system
+- **Files**: `PRODUCT.md` (strategic: users, brand, anti-references, principles) + `DESIGN.md` (visual: tokens, typography, components, do's/don'ts). Both committed to repo root.
+- **Sidecar**: `.impeccable/design.json` — component HTML/CSS snippets, tonal ramps, narrative for the live panel
+- **Critique history**: `.impeccable/critique/` — Nielsen heuristic snapshots (started 19/40, improved to ~26-29/40 over 8 passes)
+- **North Star**: "The Annotated Manuscript" — parchment palette, Courier Prime for data, Karla for prose, Playfair Display for nav wordmark only (never inside app shell), 4px corners, no box-shadows
+- **Color rule**: `#1a4731` (Deep Forest) = interactive affordances ONLY. `#2d7a54` (Forest Mid) = positive-state indicators. Never swap these.
+
+## Sequence viewer — key architecture decisions
+- **Annotation editor**: triggered by explicit ✎ button on the annotation badge in the Primers panel. Never auto-opens. Lives inside the panel content area below the tab bar (not above it).
+- **Mode-result cache**: switching PCR/qPCR/Assembly modes saves current results and restores the new mode's last results. Amber stale banner identifies which mode's results are showing.
+- **Keyboard shortcuts**: Enter (in coord inputs) = design, ↑/↓ = navigate pairs, Esc = cancel/clear, Alt+1-7 = switch tabs
+- **Cancel button**: Design button transforms to amber "× Cancel" while worker runs; also cancellable via Esc
+- **Error messages**: primd validation messages passed through directly; fallback is "[mode] design failed for region [s]–[e]. [mode-specific hint]"; worker crash distinguished
+- **Assembly options**: Overlap/Enzyme/Search ± live inside the collapsible Options section (not always-visible); Assembly mode auto-opens Options
 
 ## Supabase CLI
 
@@ -51,9 +74,6 @@ supabase db push --linked
 
 # Get API keys (anon + service_role)
 supabase --workdir . projects api-keys
-
-# List projects (● = linked)
-supabase projects list
 ```
 
 ### Gotchas
@@ -119,7 +139,7 @@ conda activate confphylo
 ## Testing
 
 ```bash
-pnpm test          # vitest — 54 tests across lib/bio/verify-clone.test.ts + lib/bio/codon-optimize.test.ts
+pnpm test          # vitest — tests in lib/bio/verify-clone.test.ts + lib/bio/codon-optimize.test.ts
 pnpm exec tsc --noEmit   # type check
 pnpm exec biome check .  # lint
 ```
@@ -163,21 +183,6 @@ Client-side, no API call. Integrated into Construct Designer modal as a "Protein
 - 23 unit tests in `lib/bio/codon-optimize.test.ts`
 - Live preview in modal: shows predicted length, CAI, GC% as user types protein sequence
 
-### qPCR improvements (PRIMERS tab)
-- `productSizeRange` and `maxTmDiff` now passed to primd for qPCR (were missing — caused "no compatible pairs" with no fix path)
-- Options section: Max ΔTm control (default 3°C), Amplicon size range (default 70-200 bp, qPCR only)
-- Amplicon size label next to mode toggle is dynamic (shows current range)
-- Quick-fix buttons: "Relax ΔTm (+1°)" and "Widen Amplicon" appear when "no compatible pairs" error fires
-- Efficiency display: color-coded progress bar in pair cards for qPCR (replaces small badge)
-- Bug fixed: PCR Diagnosis result no longer persists after region change or mode switch
-
-### Primer diagnostic plots (`components/primer-viz/`)
-"Plots" button in PRIMERS tab bottom bar opens a full-width bottom drawer with three tabs:
-- **Melt Curve** (qPCR only): Simulated −dF/dT vs temperature using logistic approximation parameterized by amplicon Tm and GC content. Sharp symmetric peak = specific amplicon.
-- **Amplicon Structure**: Per-base accessibility heatmap of the amplicon at the annealing temperature (via `calcAccessibilityProfile` from primd). Green = open, red = structured.
-- **Pair Overview**: Scatter plot — qPCR: amplicon Tm vs efficiency; PCR: product size vs Tm match. Interactive hover.
-- Pure canvas components in `components/primer-viz/` — no Ori coupling, designed for reuse in future primd web app
-
 ## Feature annotation database
 
 **Architecture**: The HTCF pipeline is an OFFLINE CURATION TOOL, not a runtime service.
@@ -186,30 +191,9 @@ The pipeline produces a static feature library that ships with the app.
 
 **Do not suggest wiring hmmscan or any HPC tool into the user-facing Ori pipeline.**
 
-### How it works
-1. HTCF pipeline (offline, our work): collect plasmid GenBanks → extract features → cluster → build HMMs
-2. Export step: cluster representative sequences → `data/features.json` (shipped with app)
-3. Ori annotation worker: k-mer matching against `features.json`, runs in browser, no server needed
-
-### HTCF pipeline status (as of 2026-05-14) — COMPLETE
-All jobs finished successfully. No jobs currently running.
-
-| Source | Files | Status |
-|--------|-------|--------|
-| SnapGene | 2,550 .gb | ✅ Complete |
-| iGEM Registry | 15,673 with sequences | ✅ Complete (finished 2026-05-09) |
-| RefSeq | 8 .gbff.gz | ❌ Unusable — WGS annotation-only, no actual bases |
-| Addgene | catalog only | ❌ Needs login credentials |
-
-| Step | Status | Output |
-|------|--------|--------|
-| Feature extraction | ✅ Done | 113,529 features, `all_features.fna` |
-| MMseqs2 clustering | ✅ Done | 31,020 clusters, `clusterDB_rep_seq.fasta` (36 MB) |
-| MAFFT + hmmbuild | ✅ Done | 26,832 HMM profiles |
-| hmmpress | ✅ Done | 14 GB database at `/scratch/sahlab/shandley/helix-feature-db/db/helix_features.hmm` |
-
 ### Status: COMPLETE
 - `public/data/features.json` deployed with 6,518 high-confidence features
+- Sources: SnapGene (2,550 plasmids) + iGEM Registry (15,673 with sequences), clustered at 80% identity
 - These features also power the Construct Designer parts catalog — `scripts/update-parts-catalog.py` extracts sequences for any named part from features.json
 
 ### Future expansion

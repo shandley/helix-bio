@@ -87,6 +87,7 @@ export function AnnotationEditor({ annotation, onSave, onDelete, onClose }: Anno
 	const [editing, setEditing] = useState(false);
 	const [name, setName] = useState(annotation.name);
 	const [color, setColor] = useState(annotation.color ?? "#85DAE9");
+	const [confirmDelete, setConfirmDelete] = useState(false);
 
 	const key = annKey(annotation);
 	const len = annotation.end - annotation.start;
@@ -107,6 +108,7 @@ export function AnnotationEditor({ annotation, onSave, onDelete, onClose }: Anno
 		setName(annotation.name);
 		setColor(annotation.color ?? "#85DAE9");
 		setEditing(false);
+		setConfirmDelete(false);
 	};
 
 	const s: React.CSSProperties = {
@@ -248,23 +250,63 @@ export function AnnotationEditor({ annotation, onSave, onDelete, onClose }: Anno
 
 					{/* Action buttons */}
 					<div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-						<button
-							type="button"
-							onClick={handleDelete}
-							style={{
-								...s,
-								letterSpacing: "0.06em",
-								textTransform: "uppercase",
-								color: "#a02828",
-								background: "none",
-								border: "1px solid rgba(160,40,40,0.3)",
-								borderRadius: "2px",
-								cursor: "pointer",
-								padding: "3px 8px",
-							}}
-						>
-							Delete
-						</button>
+						{!confirmDelete ? (
+							<button
+								type="button"
+								onClick={() => setConfirmDelete(true)}
+								style={{
+									...s,
+									letterSpacing: "0.06em",
+									textTransform: "uppercase",
+									color: "#a02828",
+									background: "none",
+									border: "1px solid rgba(160,40,40,0.3)",
+									borderRadius: "2px",
+									cursor: "pointer",
+									padding: "3px 8px",
+								}}
+							>
+								Delete
+							</button>
+						) : (
+							<span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+								<span style={{ ...s, color: "#a02828", letterSpacing: "0.04em" }}>Delete?</span>
+								<button
+									type="button"
+									onClick={handleDelete}
+									style={{
+										...s,
+										letterSpacing: "0.06em",
+										textTransform: "uppercase",
+										color: "#ffffff",
+										background: "#a02828",
+										border: "none",
+										borderRadius: "2px",
+										cursor: "pointer",
+										padding: "3px 8px",
+									}}
+								>
+									Yes
+								</button>
+								<button
+									type="button"
+									onClick={() => setConfirmDelete(false)}
+									style={{
+										...s,
+										letterSpacing: "0.06em",
+										textTransform: "uppercase",
+										color: "#9a9284",
+										background: "none",
+										border: "1px solid #ddd8ce",
+										borderRadius: "2px",
+										cursor: "pointer",
+										padding: "3px 8px",
+									}}
+								>
+									No
+								</button>
+							</span>
+						)}
 						<div style={{ flex: 1 }} />
 						<button
 							type="button"

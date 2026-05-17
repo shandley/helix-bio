@@ -351,7 +351,7 @@ export function AIPanel({ context }: AIPanelProps) {
 						letterSpacing: "-0.01em",
 					}}
 				>
-					Ask Ori
+					AI
 				</span>
 				<span
 					style={{
@@ -369,6 +369,21 @@ export function AIPanel({ context }: AIPanelProps) {
 
 			{/* Thread */}
 			<div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
+				{/* Empty state hint — shown before any message is sent */}
+				{messages.length === 0 && !streaming && (
+					<div
+						style={{
+							padding: "16px 14px",
+							fontFamily: "var(--font-courier)",
+							fontSize: "8.5px",
+							color: "#b8b0a4",
+							letterSpacing: "0.04em",
+							lineHeight: 1.6,
+						}}
+					>
+						Ask a question about this sequence — what a feature does, how to clone it, which primers to order, or how to interpret a result.
+					</div>
+				)}
 				{/* Initial loading state */}
 				{messages.length === 0 && streaming && (
 					<div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(221,216,206,0.4)" }}>

@@ -921,8 +921,12 @@ export function PrimerPanel({
 	//   Escape — clear results
 	useEffect(() => {
 		const handler = (e: KeyboardEvent) => {
-			const tag = (document.activeElement as HTMLElement)?.tagName?.toUpperCase();
-			const inInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT";
+			const el = document.activeElement as HTMLElement | null;
+			const tag = el?.tagName?.toUpperCase();
+			const inInput =
+				tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" ||
+				el?.contentEditable === "true" ||
+				!!el?.closest('[contenteditable="true"]');
 
 			if (e.key === "Escape" && !inInput) {
 				setPairs(null);

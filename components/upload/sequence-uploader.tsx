@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 
 const ACCEPTED = [".gb", ".gbk", ".genbank", ".fa", ".fasta", ".fna", ".dna", ".embl"];
 const ACCEPTED_SET = new Set(ACCEPTED);
+const SANGER_EXTS = new Set([".ab1", ".abi"]);
 
 function fileExt(name: string): string {
 	const idx = name.lastIndexOf(".");
@@ -58,6 +59,10 @@ export function SequenceUploader() {
 			const file = e.dataTransfer.files[0];
 			if (!file) return;
 			const ext = fileExt(file.name);
+			if (SANGER_EXTS.has(ext)) {
+				router.push("/sanger");
+				return;
+			}
 			if (!ACCEPTED_SET.has(ext)) {
 				setError(
 					`Unsupported file type "${ext || file.name}". Use GenBank, FASTA, SnapGene, or EMBL.`,
@@ -66,7 +71,7 @@ export function SequenceUploader() {
 			}
 			upload(file);
 		},
-		[upload],
+		[upload, router],
 	);
 
 	const iconColor = dragging ? "#1a4731" : uploading ? "#9a9284" : "#c8c0b4";
@@ -129,10 +134,15 @@ export function SequenceUploader() {
 							<input
 								type="file"
 								style={{ display: "none" }}
-								accept={ACCEPTED.join(",")}
+								accept={[...ACCEPTED, ".ab1", ".abi"].join(",")}
 								onChange={(e) => {
 									const f = e.target.files?.[0];
-									if (f) upload(f);
+									if (!f) return;
+									if (SANGER_EXTS.has(fileExt(f.name))) {
+										router.push("/sanger");
+										return;
+									}
+									upload(f);
 								}}
 							/>
 						</label>
@@ -148,7 +158,7 @@ export function SequenceUploader() {
 						textTransform: "uppercase",
 					}}
 				>
-					GenBank · FASTA · SnapGene · EMBL
+					GenBank · FASTA · SnapGene · EMBL · AB1
 				</p>
 			</div>
 

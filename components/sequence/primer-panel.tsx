@@ -92,7 +92,7 @@ function AccessBadge({ score }: { score: number }) {
 				cursor: "help",
 			}}
 		>
-			<span style={{ opacity: 0.6 }}>access</span>
+			<span style={{ opacity: 0.6 }}>site</span>
 			<span style={{ fontWeight: 700 }}>{label}</span>
 		</span>
 	);

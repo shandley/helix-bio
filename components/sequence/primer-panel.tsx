@@ -32,12 +32,14 @@ interface PrimerPanelProps {
 	sequenceName?: string;
 	/** Called when user opens the Plots drawer. */
 	onShowPlots?: (data: PrimerPlotsData) => void;
+	/** Called when user clicks the edit button on the annotation name badge. */
+	onEditAnnotation?: () => void;
 }
 
 function Badge({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
-	const color = warn ? "#b8933a" : "#1a4731";
-	const bg = warn ? "rgba(184,147,58,0.08)" : "rgba(26,71,49,0.06)";
-	const border = warn ? "rgba(184,147,58,0.25)" : "rgba(26,71,49,0.2)";
+	const color = warn ? "#b8933a" : "#2d7a54";
+	const bg = warn ? "rgba(184,147,58,0.08)" : "rgba(45,122,84,0.06)";
+	const border = warn ? "rgba(184,147,58,0.25)" : "rgba(45,122,84,0.2)";
 	return (
 		<span
 			style={{
@@ -202,16 +204,16 @@ function PairCard({ pair, rank, tmTarget, mode }: { pair: DesignPair; rank: numb
 	const effBadge =
 		eff !== undefined
 			? (() => {
-					const color = eff >= 0.8 ? "#1a4731" : eff >= 0.6 ? "#b8933a" : "#a02828";
+					const color = eff >= 0.8 ? "#2d7a54" : eff >= 0.6 ? "#b8933a" : "#a02828";
 					const bg =
 						eff >= 0.8
-							? "rgba(26,71,49,0.08)"
+							? "rgba(45,122,84,0.08)"
 							: eff >= 0.6
 								? "rgba(184,147,58,0.08)"
 								: "rgba(160,40,40,0.07)";
 					const border =
 						eff >= 0.8
-							? "rgba(26,71,49,0.2)"
+							? "rgba(45,122,84,0.2)"
 							: eff >= 0.6
 								? "rgba(184,147,58,0.25)"
 								: "rgba(160,40,40,0.25)";
@@ -263,7 +265,7 @@ function PairCard({ pair, rank, tmTarget, mode }: { pair: DesignPair; rank: numb
 							fontFamily: "var(--font-courier)",
 							fontSize: "9px",
 							letterSpacing: "0.1em",
-							color: isBest ? "#1a4731" : "#9a9284",
+							color: isBest ? "#2d7a54" : "#9a9284",
 							fontWeight: isBest ? 700 : 400,
 						}}
 					>
@@ -355,7 +357,7 @@ function PairCard({ pair, rank, tmTarget, mode }: { pair: DesignPair; rank: numb
 								borderRadius: "3px",
 								background:
 									pair.efficiencyScore >= 0.8
-										? "#1a4731"
+										? "#2d7a54"
 										: pair.efficiencyScore >= 0.6
 											? "#b8933a"
 											: "#a02828",
@@ -371,7 +373,7 @@ function PairCard({ pair, rank, tmTarget, mode }: { pair: DesignPair; rank: numb
 							flexShrink: 0,
 							color:
 								pair.efficiencyScore >= 0.8
-									? "#1a4731"
+									? "#2d7a54"
 									: pair.efficiencyScore >= 0.6
 										? "#b8933a"
 										: "#a02828",
@@ -456,7 +458,7 @@ function PrimerCard({
 						fontFamily: "var(--font-courier)",
 						fontSize: "8px",
 						letterSpacing: "0.1em",
-						color: highlight ? "#1a4731" : "#9a9284",
+						color: highlight ? "#2d7a54" : "#9a9284",
 						fontWeight: highlight ? 700 : 400,
 					}}
 				>
@@ -627,7 +629,7 @@ function AssemblyPairCard({ pair, rank }: { pair: AssemblyPrimerPair; rank: numb
 							fontFamily: "var(--font-courier)",
 							fontSize: "9px",
 							letterSpacing: "0.1em",
-							color: isBest ? "#1a4731" : "#9a9284",
+							color: isBest ? "#2d7a54" : "#9a9284",
 							fontWeight: isBest ? 700 : 400,
 						}}
 					>
@@ -841,6 +843,7 @@ export function PrimerPanel({
 	annotationName,
 	sequenceName,
 	onShowPlots,
+	onEditAnnotation,
 }: PrimerPanelProps) {
 	const [start, setStart] = useState<string>(
 		selectionStart !== undefined ? String(selectionStart + 1) : String(Math.floor(seqLen / 3) + 1),
@@ -1242,19 +1245,41 @@ export function PrimerPanel({
 						Primers
 					</span>
 					{annotationName ? (
-						<span
-							style={{
-								fontFamily: "var(--font-courier)",
-								fontSize: "9px",
-								color: "#1a4731",
-								background: "rgba(26,71,49,0.07)",
-								border: "1px solid rgba(26,71,49,0.2)",
-								borderRadius: "2px",
-								padding: "1px 6px",
-								letterSpacing: "0.04em",
-							}}
-						>
-							{annotationName}
+						<span style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
+							<span
+								style={{
+									fontFamily: "var(--font-courier)",
+									fontSize: "9px",
+									color: "#2d7a54",
+									background: "rgba(45,122,84,0.07)",
+									border: "1px solid rgba(45,122,84,0.2)",
+									borderRadius: "2px",
+									padding: "1px 6px",
+									letterSpacing: "0.04em",
+								}}
+							>
+								{annotationName}
+							</span>
+							{onEditAnnotation && (
+								<button
+									type="button"
+									onClick={onEditAnnotation}
+									title="Edit this annotation"
+									style={{
+										fontFamily: "var(--font-courier)",
+										fontSize: "10px",
+										color: "#9a9284",
+										background: "none",
+										border: "none",
+										cursor: "pointer",
+										padding: "0 1px",
+										lineHeight: 1,
+										flexShrink: 0,
+									}}
+								>
+									✎
+								</button>
+							)}
 						</span>
 					) : selectionStart !== undefined ? (
 						<span style={{ fontFamily: "var(--font-courier)", fontSize: "9px", color: "#9a9284" }}>
@@ -1805,7 +1830,7 @@ export function PrimerPanel({
 					style={{
 						width: "100%",
 						padding: "8px",
-						background: running ? "#2d7a54" : "#1a4731",
+						background: "#1a4731",
 						color: "white",
 						fontFamily: "var(--font-courier)",
 						fontSize: "9px",

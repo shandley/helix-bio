@@ -80,6 +80,7 @@ export function SequenceViewerWithPanel({
 	const [translationTarget, setTranslationTarget] = useState<TranslationTarget | null>(null);
 	const [primerPlotsData, setPrimerPlotsData] = useState<PrimerPlotsData | null>(null);
 	const [selectedAnnotation, setSelectedAnnotation] = useState<AnnotationLike | null>(null);
+	const [showAnnotationEditor, setShowAnnotationEditor] = useState(false);
 	const [overrides, setOverrides] = useState<OverrideMap>({});
 	const [autoAnnotations, setAutoAnnotations] = useState<Annotation[]>([]);
 	const [annotating, setAnnotating] = useState(false);
@@ -119,6 +120,7 @@ export function SequenceViewerWithPanel({
 				const ann = matches.find((a) => CDS_TYPES.has(a.type)) ?? matches[0];
 
 				setSelectedAnnotation(ann ?? null);
+				setShowAnnotationEditor(false);
 
 				if (ann && CDS_TYPES.has(ann.type)) {
 					setTranslationTarget({
@@ -137,6 +139,7 @@ export function SequenceViewerWithPanel({
 			} else {
 				setAnnotationName(null);
 				setSelectedAnnotation(null);
+				setShowAnnotationEditor(false);
 			}
 		},
 		[parsed, autoAnnotations, overrides],
@@ -384,7 +387,7 @@ export function SequenceViewerWithPanel({
 								fontFamily: "var(--font-courier)",
 								fontSize: "8px",
 								letterSpacing: "0.06em",
-								color: annotating ? "#9a9284" : "#1a4731",
+								color: annotating ? "#9a9284" : "#2d7a54",
 								backdropFilter: "blur(4px)",
 								pointerEvents: "none",
 							}}
@@ -406,7 +409,7 @@ export function SequenceViewerWithPanel({
 								</>
 							) : (
 								<>
-									<span style={{ color: "#1a4731" }}>●</span>
+									<span style={{ color: "#2d7a54" }}>●</span>
 									{dedupedAuto.length} feature{dedupedAuto.length !== 1 ? "s" : ""} detected
 								</>
 							)}
@@ -471,16 +474,6 @@ export function SequenceViewerWithPanel({
 						<CloningModal seq={parsed.seq} seqName={name} topology={topology} />
 					</div>
 
-					{/* Annotation editor — shown when an annotation is selected */}
-					{selectedAnnotation && (
-						<AnnotationEditor
-							annotation={selectedAnnotation}
-							onSave={handleOverrideSave}
-							onDelete={handleOverrideDelete}
-							onClose={() => setSelectedAnnotation(null)}
-						/>
-					)}
-
 					{/* Tab bar — two rows of 3 tabs each */}
 					<div style={{ flexShrink: 0, background: "#f5f0e8", borderBottom: "1px solid #ddd8ce" }}>
 						{[
@@ -498,7 +491,7 @@ export function SequenceViewerWithPanel({
 									<button
 										type="button"
 										key={tab}
-										onClick={() => setActiveTab(tab)}
+										onClick={() => { setActiveTab(tab); setShowAnnotationEditor(false); }}
 										style={{
 											flex: 1,
 											padding: "8px 0",
@@ -554,6 +547,17 @@ export function SequenceViewerWithPanel({
 
 					{/* Panel content */}
 					<div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+						{/* Annotation editor — inside content area, below the tab bar.
+						    Triggered explicitly via the ✎ button in the Primers panel,
+						    never auto-opened on annotation click. Tab bar stays stable. */}
+						{showAnnotationEditor && selectedAnnotation && (
+							<AnnotationEditor
+								annotation={selectedAnnotation}
+								onSave={handleOverrideSave}
+								onDelete={handleOverrideDelete}
+								onClose={() => setShowAnnotationEditor(false)}
+							/>
+						)}
 						{activeTab === "enzymes" && (
 							<EnzymePanel
 								seq={parsed.seq}
@@ -573,6 +577,7 @@ export function SequenceViewerWithPanel({
 								onPrimersDesigned={setBestPair}
 								annotationName={annotationName}
 								onShowPlots={setPrimerPlotsData}
+								onEditAnnotation={selectedAnnotation ? () => setShowAnnotationEditor(true) : undefined}
 							/>
 						)}
 						{activeTab === "digest" && (

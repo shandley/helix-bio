@@ -25,7 +25,7 @@ function scoreToRGB(score: number): [number, number, number] {
 }
 
 function interpretScore(score: number): { label: string; color: string } {
-	if (score >= 0.75) return { label: "Accessible", color: "#1a4731" };
+	if (score >= 0.75) return { label: "Accessible", color: "#2d7a54" };
 	if (score >= 0.4) return { label: "Marginal", color: "#b8933a" };
 	return { label: "Structured", color: "#a02828" };
 }
@@ -228,7 +228,7 @@ export function AccessibilityTrack({
 				{/* Legend */}
 				<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
 					{(["Structured", "Marginal", "Accessible"] as const).map((lbl) => {
-						const c = lbl === "Accessible" ? "#1a4731" : lbl === "Marginal" ? "#b8933a" : "#a02828";
+						const c = lbl === "Accessible" ? "#2d7a54" : lbl === "Marginal" ? "#b8933a" : "#a02828";
 						return (
 							<div key={lbl} style={{ display: "flex", alignItems: "center", gap: "3px" }}>
 								<div

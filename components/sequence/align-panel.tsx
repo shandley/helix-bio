@@ -830,6 +830,10 @@ export function AlignPanel({
 					<span style={{ fontFamily: "var(--font-courier)", fontSize: "8px", color: "#b8b0a4" }}>
 						or click to browse
 					</span>
+					<br />
+					<span style={{ fontFamily: "var(--font-courier)", fontSize: "7.5px", color: "#c8c0b8", letterSpacing: "0.02em" }}>
+						.ab1 files include chromatogram traces
+					</span>
 				</div>
 				<input
 					ref={fileInputRef}

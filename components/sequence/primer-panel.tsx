@@ -1390,7 +1390,7 @@ export function PrimerPanel({
 										marginBottom: "4px",
 									}}
 								>
-									Overlap (bp)
+									<span title="Length of shared sequence between adjacent fragments in Gibson Assembly. Longer overlaps (≥20 bp) improve ligation efficiency; keep below 40 bp to avoid recombination artifacts. Default: 20 bp.">Overlap (bp)</span>
 								</div>
 								<input
 									type="number"
@@ -1426,7 +1426,7 @@ export function PrimerPanel({
 										marginBottom: "4px",
 									}}
 								>
-									Enzyme
+									<span title="Type IIS restriction enzyme for Golden Gate cloning. BsaI (GGTCTC) is most common; choose BbsI or BsmBI if your insert contains internal BsaI sites.">Enzyme</span>
 								</div>
 								<select
 									value={ggEnzyme}
@@ -1465,7 +1465,7 @@ export function PrimerPanel({
 								whiteSpace: "nowrap",
 							}}
 						>
-							Search ±
+							<span title="Extra flanking sequence (bp) beyond the target region to search for primer annealing sites. Increase if AT-rich flanking regions prevent primers from landing within range. Default: 200 bp.">Search ±</span>
 						</div>
 						<div style={{ flex: 1 }}>
 							<input
@@ -1672,7 +1672,7 @@ export function PrimerPanel({
 								<div style={{ paddingTop: "2px" }}>
 									{/* Tm target */}
 									<div style={rowStyle}>
-										<span style={labelStyle}>Tm target</span>
+										<span style={labelStyle} title="Target melting temperature for primer hybridization. Higher Tm means more stable binding. Standard PCR: 58–62°C. Default: 60°C.">Tm target</span>
 										<input
 											type="number"
 											value={tmTarget}
@@ -1688,7 +1688,7 @@ export function PrimerPanel({
 									</div>
 									{/* Primer length */}
 									<div style={rowStyle}>
-										<span style={labelStyle}>Length</span>
+										<span style={labelStyle} title="Primer length range in bases. Shorter primers bind less specifically; longer primers can form hairpins. Default: 18–27 bp.">Length</span>
 										<input
 											type="number"
 											value={minLen}
@@ -1720,7 +1720,7 @@ export function PrimerPanel({
 									</div>
 									{/* GC range */}
 									<div style={rowStyle}>
-										<span style={labelStyle}>GC %</span>
+										<span style={labelStyle} title="GC content range (fraction of G and C bases). Higher GC raises Tm and binding stability; very high GC increases hairpin risk. Default: 40–65%.">GC %</span>
 										<input
 											type="number"
 											value={gcMin}
@@ -1752,7 +1752,7 @@ export function PrimerPanel({
 									</div>
 									{/* Max ΔTm — shown for all modes (stricter for qPCR) */}
 									<div style={rowStyle}>
-										<span style={labelStyle}>Max ΔTm</span>
+										<span style={labelStyle} title="Maximum allowed melting temperature difference between forward and reverse primers. Large ΔTm causes uneven annealing and reduces efficiency. Default: 3°C.">Max ΔTm</span>
 										<input
 											type="number"
 											value={maxTmDiff}
@@ -1771,7 +1771,7 @@ export function PrimerPanel({
 									{/* qPCR-specific: amplicon size range */}
 									{mode === "qpcr" && (
 										<div style={rowStyle}>
-											<span style={labelStyle}>Amplicon</span>
+											<span style={labelStyle} title="Target amplicon size for qPCR. Smaller amplicons (70–150 bp) give more reliable quantification and work better across GC extremes. Default: 70–200 bp.">Amplicon</span>
 											<input
 												type="number"
 												value={qpcrAmpliconMin}
@@ -2270,6 +2270,29 @@ export function PrimerPanel({
 					40% { opacity: 1; transform: scale(1); }
 				}
 			`}</style>
+
+			{/* Persistent Plots affordance — visible before design runs so users know it exists */}
+			{(mode === "pcr" || mode === "qpcr") && onShowPlots && !(pairs && pairs.length > 0) && (
+				<div
+					style={{
+						padding: "7px 12px",
+						borderTop: "1px solid rgba(221,216,206,0.5)",
+						flexShrink: 0,
+					}}
+				>
+					<span
+						style={{
+							fontFamily: "var(--font-courier)",
+							fontSize: "8px",
+							color: "#b8b0a4",
+							letterSpacing: "0.04em",
+						}}
+						title="After a design run, view melt curve, amplicon secondary structure, and pair overview plots"
+					>
+						Plots · melt curve, structure &amp; pairs — available after design
+					</span>
+				</div>
+			)}
 		</div>
 	);
 }

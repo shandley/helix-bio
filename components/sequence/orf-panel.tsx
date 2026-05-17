@@ -284,7 +284,7 @@ export function ORFPanel({ seq, topology }: ORFPanelProps) {
 						flexShrink: 0,
 					}}
 				>
-					Click an ORF to see translation
+					Click an ORF or CDS annotation on the map to view translation
 				</div>
 			)}
 		</div>

@@ -226,7 +226,10 @@ export function AccessibilityTrack({
 				</span>
 
 				{/* Legend */}
-				<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+				<div
+					style={{ display: "flex", alignItems: "center", gap: "8px" }}
+					title="Template accessibility: whether the primer binding site is single-stranded (open) or folded into secondary structure at the annealing temperature. Green = open and bindable; amber = partially folded; red = likely inaccessible — consider moving the primer site."
+				>
 					{(["Structured", "Marginal", "Accessible"] as const).map((lbl) => {
 						const c = lbl === "Accessible" ? "#2d7a54" : lbl === "Marginal" ? "#b8933a" : "#a02828";
 						return (
